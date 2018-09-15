@@ -1,0 +1,1 @@
+gcc -Ofast -shared -Wl,-soname,cfunc -o accumulate_array.so -fPIC accumulate_array.c

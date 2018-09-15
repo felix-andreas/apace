@@ -1,109 +1,162 @@
-import numpy as np
-
-
 class _Element:
-    def __init__(self, name, type, length):
+    '''
+    Basic class from which every other Element inherts.
+        Parameters / Attributes
+        ----------
+        name : str
+            Name of the element.
+        type : str
+            Type of the element.
+        l : float
+            Length of the element.
+        comment : str, optional
+            A brief comment on the element.
+    '''
+
+    def __init__(self, name, type, l, comment=None):
         self.name = name
         self.type = type
-        self.length = length
+        self.length = l
+        self.comment = comment
 
     def __repr__(self):
         return self.name
 
 
 class Drift(_Element):
-    def __init__(self, name, length):
-        super().__init__(name, 'Drift', length)
-
-    def computematrix(self, distance):
-        self.matrix = np.matrix(((1, distance, 0, 0, 0), (0, 1, 0, 0, 0), (0, 0, 1, distance, 0), (0, 0, 0, 1, 0), (0, 0, 0, 0, 1)))
+    def __init__(self, name, l):
+        super().__init__(name, 'Drift', l)
 
 
 class Bend(_Element):
-    def __init__(self, name, length, angle, e1=0, e2=0):
-        super().__init__(name, 'Bend', length)
+    def __init__(self, name, l, angle, e1=0, e2=0):
+        super().__init__(name, 'Bend', l)
         self.angle = angle
         self.e1 = e1
         self.e2 = e2
-
-    def computematrix(self):
-        if self.R == 0:
-            self.matrix = [np.matrix(((1, self.ss, 0, 0, 0), (0, 1, 0, 0, 0), (0, 0, 1, self.ss, 0), (0, 0, 0, 1, 0), (0, 0, 0, 0, 1)))] * self.n_kicks
-        else:
-            sin = np.sin(self.ss / self.R)
-            cos = np.cos(self.ss / self.R)
-            self.matrix = [np.matrix((
-                (cos, self.R * sin, 0, 0, self.R * (1 - cos)), (-1 / self.R * sin, cos, 0, 0, sin),
-                (0, 0, 1, self.ss, 0), (0, 0, 0, 1, 0), (0, 0, 0, 0, 1)))] * BEND.n_kicks
-            if self.e1:
-                tanR1 = np.tan(self.e1) / self.R
-                MEB1 = np.matrix(np.identity(5), copy=False)
-                MEB1[1, 0], MEB1[3, 2] = tanR1, -tanR1
-                self.matrix[0] = self.matrix[0] * MEB1
-            if self.e2:
-                tanR2 = np.tan(self.e2) / self.R
-                MEB2 = np.matrix(np.identity(5), copy=False)
-                MEB2[1, 0], MEB2[3, 2] = tanR2, -tanR2
-                self.matrix[-1] = MEB2 * self.matrix[-1]
+        self.r = l / angle
 
 
 class Quad(_Element):
-    def __init__(self, name, length):
-        super().__init__(name, 'Quad', length)
+    def __init__(self, name, l, k1):
+        super().__init__(name, 'Quad', l)
+        self.k = k1
 
 
-class Sext(Drift):
-    pass
+class Sext(_Element):
+    def __init__(self, name, l, k2):
+        super().__init__(name, 'Sext', l)
+        self.k2 = k2
 
 
-def _update_lattice(elements):
-    for x in elements:
-        if isinstance(x, Line):
-            yield from _update_lattice(x.lattice)
-        else:
-            yield x
+class Line:
+    """
+    Class that defines the order of elements in accelerator. Accepts also Lines as input.
+        Parameters
+        ----------
+        elements : list
+            List of elements/lines.
+        name : str
+            Name of the line.
 
+        Attributes
+        ----------
+        tree : list
+            Nested list of the lines/elements.
+        lattice : list
+            List that defines the physical order of elements in the magnetic lattice.
+            Corresponds to flattened tree attribute.
+        elements : set
+            Set of all elements.
+        lines : set
+            Set of all lines.
+        children_lines : set
+            Set of all children lines.
+        parent_lines : set
+            Set of all parent lines.
+    """
 
-class Line(_Element):
     def __init__(self, name, elements):
-        super().__init__(name, 'Line', length=0)
-        self.elements = list()
-        self.lines = set()
-        self.parent_lines = set()
+        self.name = name
+        self.tree = list()
+        self.children_lines = set()
+        self.parent_lines = set()  # !vll als weakref implementieren
         self.add_elements(elements, pos=-1)
 
     def update_lattice(self):
-        self.lattice = list(_update_lattice(self.elements))
+        '''Creates a list from tree that defines the physical order of elements in the magnetic lattice.
+        Corresponds to flattened tree attribute.'''
+        self.lattice = list(self.__class__._update_lattice(self.tree))
 
-    def update_lattice_set(self):
-        self.lattice_set = set(self.lattice)
+    @staticmethod
+    def _update_lattice(tree):
+        '''A recursive helper function for update_lattice.'''
+        for x in tree:
+            if isinstance(x, Line):
+                yield from Line._update_lattice(x.tree)
+            else:
+                yield x
 
-    def update_all(self):
-        self.update_lattice()
-        self.update_lattice_set()
-        for x in self.parent_lines:  # update parents
-            x.update_all()
+    def update_elements(self):
+        'Creates a set of all elements within the line.'
+        self.elements = set(self.lattice)
 
     def add_elements(self, elements, pos=-1):
-        self.elements[pos:pos] = elements
+        self.tree[pos:pos] = elements
         for x in elements:
             if isinstance(x, Line):
-                self.lines.add(x)
+                self.children_lines.add(x)
+                self.lines.add(x.lines)
                 x.parent_lines.add(self)
 
         self.update_all()
 
-    def remove_element(self, pos):
-        element = self.elements[pos]
-        self.elements.pop(pos)
-        if isinstance(element, Line) and element not in self.elements:
-            self.lines.remove(element)
-            x.parent_lines.remove(self)
+    def remove_elements(self, pos, num=1):
+        elements = self.tree[pos:pos + num]
+        self.tree[pos:pos + num] = []
+        for element in elements:
+            if isinstance(element, Line) and element not in self.tree:
+                self.children_lines.remove(element)
+                x.parent_lines.remove(self)
 
         self.update_all()
 
+    def update_lines(self):
+        """Creates a set of all lines within the line."""
+        self.lines = set()
+        _update_lines(self)
+
+    def _update_lines(self, line):
+        '''A recursive helper function for update_lines.'''
+        self.lines.add(line)
+        for x in line.children_lines:
+            if bool(x.lines):  # empty set
+                pass
+            else:
+                self._update_lines(x)
+
+    def update_all(self):
+        self.update()
+        self.update_all_parents()
+
+    def update(self):
+        self.update_lattice()
+        self.update_elements()
+
+    def update_all_parents(self):
+        '''Updates the lattice and elements attribute of all parent lines.'''
+        for x in self.parent_lines:  # update parents
+            self.__class__._update_all_parents(x)
+
+    @staticmethod
+    def _update_all_parents(line):
+        line.update_lattice()
+        line.update_elements()
+        for x in line.parent_lines:  # update parents
+            x.__class__._update_all_parents()
+
     def __iter__(self):
-        return _update_lattice(self.elements)
+        return _update_lattice(self.tree)
 
     def __del__(self):
         for x in self.lines:
