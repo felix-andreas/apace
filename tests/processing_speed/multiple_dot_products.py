@@ -34,7 +34,7 @@ def GPUimplementationwithopt_einsum():
     pass
 
 def einsum():
-    # BE =opt_einsum.contract('nij,jk->nik', a, b, backend='numpy')
+    # BE =opt_einsum.contract('nij,jk->nik', matrix_array, B0, backend='numpy')
     BE = np.einsum('nik,kj->nij', a, b, optimize='optimal')
     # twissdata = AttrDict()
     twissdata.betax = BE[0, 0]  # betax

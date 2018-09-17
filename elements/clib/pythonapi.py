@@ -2,7 +2,7 @@ import os
 import ctypes
 import numpy as np
 
-__all__ = ['accumulate_array', 'multiple_dot_products']
+__all__ = ['accumulate_array', 'multiple_dot_products', 'twiss_product','twiss_product_parallel', 'twissparameter']
 
 lib1 = ctypes.CDLL(os.path.dirname(__file__) + '/shared_objects/accumulate_array.so')
 lib1.accumulate_array.restype = None
@@ -61,6 +61,100 @@ def multiple_dot_products(A, B, out):
     if A.shape[1:3] == B.shape:
         n = A.shape[0]
         size = A.shape[1]
-        lib1.multiple_dot_products(ctypes.c_int(n), ctypes.c_int(size), np.ctypeslib.as_ctypes(A), np.ctypeslib.as_ctypes(B), np.ctypeslib.as_ctypes(out))
+        lib2.multiple_dot_products(ctypes.c_int(n), ctypes.c_int(size), np.ctypeslib.as_ctypes(A), np.ctypeslib.as_ctypes(B), np.ctypeslib.as_ctypes(out))
     else:
         raise ValueError("Wrong shapes! A {} and B {}".format(A.shape, B.shape))
+
+
+lib3 = ctypes.CDLL(os.path.dirname(__file__) + '/shared_objects/twiss_product.so')
+lib3.twiss_product.restype = None
+
+
+def twiss_product(A, B, out):
+    """
+    Twiss product of matrices of A times matrices of B as follows:
+        out[0] = A[0] * B[0] * AT[0}
+        out[1] = A[1] * B[1] * AT[1}
+        out[2] = A[2] * B[2] * AT[2}
+        ...
+
+    Parameters
+        ----------
+        A : ndarray
+            Input array with n matrices.
+            Shape = (n, size, size)
+        B : ndarray
+            Single matrix.
+            Shape = (size, size)
+        out : ndarray
+            The calculation is done into this array.
+            Shape : (n, size, size)
+    """
+    if A.shape[1:3] == B.shape:
+        n = A.shape[0]
+        size = A.shape[1]
+        lib3.twiss_product(ctypes.c_int(n), ctypes.c_int(size), np.ctypeslib.as_ctypes(A), np.ctypeslib.as_ctypes(B), np.ctypeslib.as_ctypes(out))
+    else:
+        raise ValueError("Wrong shapes! A {} and B {}".format(A.shape, B.shape))
+
+
+lib4 = ctypes.CDLL(os.path.dirname(__file__) + '/shared_objects/twiss_product_parallel.so')
+lib4.twiss_product_parallel.restype = None
+
+
+def twiss_product_parallel(A, B, out):
+    """
+    Twiss product of matrices of A times matrices of B as follows:
+        out[0] = A[0] * B[0] * AT[0}
+        out[1] = A[1] * B[1] * AT[1}
+        out[2] = A[2] * B[2] * AT[2}
+        ...
+
+    Parameters
+        ----------
+        A : ndarray
+            Input array with n matrices.
+            Shape = (n, size, size)
+        B : ndarray
+            Single matrix.
+            Shape = (size, size)
+        out : ndarray
+            The calculation is done into this array.
+            Shape : (n, size, size)
+    """
+    if A.shape[1:3] == B.shape:
+        n = A.shape[0]
+        size = A.shape[1]
+        lib4.twiss_product_parallel(ctypes.c_int(n), ctypes.c_int(size), np.ctypeslib.as_ctypes(A), np.ctypeslib.as_ctypes(B), np.ctypeslib.as_ctypes(out))
+    else:
+        raise ValueError("Wrong shapes! A {} and B {}".format(A.shape, B.shape))
+
+
+lib5 = ctypes.CDLL(os.path.dirname(__file__) + '/shared_objects/twissparameter.so')
+lib5.twissparameter.restype = None
+
+
+def twissparameter(matrixarray, B0vec, twiss):
+    """
+    Twiss product of matrices of A times matrices of B as follows:
+
+        ...
+
+    Parameters
+        ----------
+        matrixarray : ndarray
+            Input array with n matrices.
+            Shape = (n, size, size)
+        B0vec : ndarray
+            Vector with inital values of Twiss parameters.
+            Shape = (6)
+        twiss : ndarray
+            The calculation is done into this array.
+            Shape : (n, 6)
+    """
+    if matrixarray.shape[0] == twiss.shape[1]:
+        n = matrixarray.shape[0]
+        size = matrixarray.shape[1]
+        lib5.twissparameter(ctypes.c_int(n), ctypes.c_int(size), np.ctypeslib.as_ctypes(matrixarray), np.ctypeslib.as_ctypes(B0vec), np.ctypeslib.as_ctypes(twiss))
+    else:
+        raise ValueError("Wrong shapes! matrixarray {} and B0vec {}".format(matrixarray.shape, B0vec.shape))

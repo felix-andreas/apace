@@ -38,6 +38,7 @@ layout = go.Layout(
 
 )
 
+
 fig = go.Figure(layout=layout)
 rect.x1 = 4
 
