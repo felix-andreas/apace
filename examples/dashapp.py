@@ -1,24 +1,30 @@
 # -*- coding: utf-8 -*-
 import elements as el
 from elements.linbeamdyn import Latticedata, twissdata
-from elements.plotting import plotTwiss
+from elements.plotting import getTwissFigure
 import numpy as np
+
 D1 = el.Drift('D1', l=0.55)
 Q1 = el.Quad('Q1', l=0.2, k1=1.2)
 B1 = el.Bend('B1', l=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
 Q2 = el.Quad('Q2', l=0.4, k1=-1.2)
 FODO = el.Line('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 interFODO = el.Line('inter-Fodo', [FODO] * 10)
-ring = el.Mainline('fodo-ring', [FODO])
+ring = el.Mainline('fodo-ring', [FODO]*8)
 
 latticedata = Latticedata(ring)
 twiss = twissdata(latticedata)
-fig = plotTwiss(twiss, ring, path='test.pdf')
+fig = getTwissFigure(twiss, ring)
 
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import plotly.graph_objs as go
+import plotly
+
+# plotly.offline.plot(fig, 'offline')
+# exit()
+
 
 app = dash.Dash()
 
@@ -31,9 +37,6 @@ specification of Markdown.
 Check out their [60 Second Markdown Tutorial](http://commonmark.org/help/)
 if this is your first introduction to Markdown!
 '''
-
-
-
 
 app.layout = html.Div(children=[
     html.H1(
@@ -58,29 +61,35 @@ app.layout = html.Div(children=[
         multi=True
     ),
 
-    dcc.Graph(id='example-graph', figure=fig, animate=True),
+    dcc.Graph(id='example-graph', figure=fig),
     dcc.Markdown(children=markdown_text),
     html.P(id='placeholder', children='nope'),
     html.P(id='placeholder2', children='nope')
 ])
 
+
 @app.callback(dash.dependencies.Output('example-graph', 'figure'), [dash.dependencies.Input('button', 'n_clicks')])
 def update(input):
-    print('hallo', input)
+    print('input', input)
     trace1 = go.Scatter(x=twiss.s, y=np.ones(twiss.betax.shape), marker=dict(color='#c6262e'))
     # fig.data.update(trace1)
-    array = np.ones(twiss.betax.shape)
+    array = np.ones(twiss.betax.size)
+    if input == None: input = 0
     array *= input
-    twiss.betax = np.ones(twiss.betax.shape)
-    return fig
+    twiss.betax[:] = array #change in place
+    print('set', twiss.betax[0: 10])
+    return getTwissFigure(twiss,ring)
+
 
 @app.callback(dash.dependencies.Output('placeholder2', 'children'), [dash.dependencies.Input('button2', 'n_clicks')])
 def update(input):
-    print('hallo', twiss.betax[0 : 10])
+    print('input', input)
+    print('read', twiss.betax[0: 10])
     return 'nope'
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
     import time
-    time.sleep(2)
 
+    time.sleep(2)

@@ -36,6 +36,32 @@ layout = go.Layout(
     )
 )
 
+updatemenus=list([
+    dict(
+        buttons=list([
+            dict(
+                args=['type', 'line'],
+                label='line',
+                method='restyle'
+            ),
+            dict(
+                args=['type', 'bar'],
+                label='bar',
+                method='restyle'
+            )
+        ]),
+        direction = 'left',
+        pad = {'r': 10, 't': 10},
+        showactive = True,
+        type = 'buttons',
+        x = 0.,
+        xanchor = 'left',
+        y = -0.2,
+        yanchor = 'top'
+    ),
+])
+
+layout['updatemenus'] = updatemenus
 
 # rect = AttrDict(type='rect', x0=0, y0=0, x1=1, y1=1, fillcolor='rgba(128,0,0,1', line=dict(width=0))
 def plotTwiss(twiss, line, path):

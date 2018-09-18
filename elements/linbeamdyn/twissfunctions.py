@@ -42,6 +42,7 @@ def twissdata(latticedata):
     # beta, alpha, gamma
     B0vec = np.array([x_b0, y_b0, x_a0, y_a0, x_g0, y_g0, d0, d0ds])
     twissarray = np.empty((B0vec.size, acc_array.shape[0]))
+    twiss.twissarray = twissarray
     twiss.betax = twissarray[0]  # betax
     twiss.betay = twissarray[1]  # betay
     twiss.alphax = twissarray[2]  # alphax
