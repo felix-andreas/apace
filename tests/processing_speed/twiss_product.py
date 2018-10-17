@@ -2,7 +2,6 @@ import timeit
 from elements.utils import AttrDict, flatten
 import numpy as np
 import numba
-import opt_einsum
 from elements.clib import twiss_product, twiss_product_parallel, twissparameter
 from elements.utils import Structure, profile
 
