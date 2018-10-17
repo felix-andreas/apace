@@ -64,32 +64,38 @@ app.layout = html.Div(children=[
     dcc.Graph(id='example-graph', figure=fig),
     dcc.Markdown(children=markdown_text),
     html.P(id='placeholder', children='nope'),
-    html.P(id='placeholder2', children='nope')
+    html.P(id='placeholder2', children='nope'),
+    dcc.Slider(
+        id='slider',
+        min=0,
+        max=10
+    )
 ])
 
 
-@app.callback(dash.dependencies.Output('example-graph', 'figure'), [dash.dependencies.Input('button', 'n_clicks')])
-def update(input):
-    print('input', input)
-    trace1 = go.Scatter(x=twiss.s, y=np.ones(twiss.betax.shape), marker=dict(color='#c6262e'))
-    # fig.data.update(trace1)
-    array = np.ones(twiss.betax.size)
-    if input == None: input = 0
-    array *= input
-    twiss.betax[:] = array #change in place
-    print('set', twiss.betax[0: 10])
-    return getTwissFigure(twiss,ring)
+# @app.callback(dash.dependencies.Output('example-graph', 'figure'), [dash.dependencies.Input('slider', 'value')])
+# def update(input):
+#     print('callback update')
+#     print('input', input)
+#     trace1 = go.Scatter(x=twiss.s, y=np.ones(twiss.betax.shape), marker=dict(color='#c6262e'))
+#     # fig.data.update(trace1)
+#     array = np.ones(twiss.betax.size)
+#     if input == None:
+#         input = 0
+#     array *= input
+#     twiss.betax[:] = array #change in place
+#     print('set', twiss.betax[0: 10])
+#     return getTwissFigure(twiss,ring)
 
 
 @app.callback(dash.dependencies.Output('placeholder2', 'children'), [dash.dependencies.Input('button2', 'n_clicks')])
-def update(input):
+def update2(input):
+    print('callback update2')
     print('input', input)
     print('read', twiss.betax[0: 10])
+    twiss.betax[:] *= 0#change in place
     return 'nope'
 
 
 if __name__ == '__main__':
     app.run_server(debug=True)
-    import time
-
-    time.sleep(2)
