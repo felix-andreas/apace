@@ -1,5 +1,6 @@
 import weakref
 
+
 class _Element:
     '''
     Basic class from which every other Element inherts.
@@ -15,12 +16,12 @@ class _Element:
             A brief comment on the element.
     '''
 
-    def __init__(self, name, type, l, comment=None):
+    def __init__(self, name, type, l, comment=''):
         self.name = name
         self.type = type
         self.l = l
         self.comment = comment
-        self.nkicks = 20
+        self.nkicks = 100
         self.stepsize = l / self.nkicks
 
     def __repr__(self):
@@ -28,13 +29,13 @@ class _Element:
 
 
 class Drift(_Element):
-    def __init__(self, name, l):
-        super().__init__(name, 'Drift', l)
+    def __init__(self, name, l, comment=''):
+        super().__init__(name, 'Drift', l, comment)
 
 
 class Bend(_Element):
-    def __init__(self, name, l, angle, e1=0, e2=0):
-        super().__init__(name, 'Bend', l)
+    def __init__(self, name, l, angle, e1=0, e2=0, comment=''):
+        super().__init__(name, 'Bend', l, comment)
         self.angle = angle
         self.e1 = e1
         self.e2 = e2
@@ -42,14 +43,14 @@ class Bend(_Element):
 
 
 class Quad(_Element):
-    def __init__(self, name, l, k1):
-        super().__init__(name, 'Quad', l)
+    def __init__(self, name, l, k1, comment=''):
+        super().__init__(name, 'Quad', l, comment)
         self.k = k1
 
 
 class Sext(_Element):
-    def __init__(self, name, l, k2):
-        super().__init__(name, 'Sext', l)
+    def __init__(self, name, l, k2, comment=''):
+        super().__init__(name, 'Sext', l, comment)
         self.k2 = k2
 
 
@@ -82,17 +83,19 @@ class Line:
             Set of all parent lines.
     """
 
-    def __init__(self, name, tree, comment=None):
+    def __init__(self, name, tree, comment=''):
         self.name = name
+        self.l = 0
         self.tree = list()
         self.comment = comment
         self.child_lines = set()
         self.parent_lines = set()
         self.add_elements(tree, pos=-1)
 
-    def add_elements(self, elements, pos=-1):
+    def add_elements(self, elements, pos):
         self.tree[pos:pos] = elements
         for x in elements:
+            self.l += x.l
             if isinstance(x, Line):
                 self.child_lines.add(x)
                 x.parent_lines.add(weakref.ref(self))
@@ -101,6 +104,7 @@ class Line:
         elements = self.tree[pos:pos + num]
         self.tree[pos:pos + num] = []
         for element in elements:
+            self.l -= element.l
             if isinstance(element, Line) and element not in self.tree:
                 self.child_lines.remove(element)
                 x.parent_lines.remove(weakref.ref(self))
@@ -132,8 +136,8 @@ flatten2 = lambda n: (e for a in n
 
 
 class Mainline(Line):
-    def __init__(self, name, tree, comment=None):
-        super().__init__(name, tree, comment=comment)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.update()
 
     def update(self):
@@ -152,15 +156,15 @@ class Mainline(Line):
                 yield x
 
     def update_lines(self):
-        """Creates matrix_array set of all lines within the line."""
+        """Creates a set of all lines within the line."""
         self.lines = set()
-        _update_lines(self)
+        self._update_lines(self)
 
     def _update_lines(self, line):
         '''A recursive helper function for update_lines.'''
         self.lines.add(line)
         for x in line.children_lines:
-            if not bool(x.children_lines):  # not empty set
+            if x.children_lines:  # if not empty
                 self._update_lines(x)
 
     def __iter__(self):

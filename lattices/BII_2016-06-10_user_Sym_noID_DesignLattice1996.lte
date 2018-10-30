@@ -28,35 +28,35 @@ DL:		Drift,   l=2.80600
 DK:		Drift,   l=2.45300
 
 ##### Dipoles #####
-B:      Bend,    L=0.855, ANGLE=0.196349540849362, E1=0.09817477042, E2=0.09817477042
+B:      Bend,    l=0.855, angle=0.196349540849362, e1=0.09817477042, e2=0.09817477042
 
 ##### Lines #####
-ACHRH:  LINE = (S1, DS1, Q1, DQ1, S2, DS2, Q2, DQ2) # achromat right half
-ACHLH:  LINE = (DQ2, Q2, DS2, S2, DQ1, Q1, DS1, S1) # achromat left half
-TLH:    LINE = (DB, Q3T, DQ, S3T, DS3, Q4T, DQ, S4T, DQ, Q5T, DK) # triplet left half (only between dipoles)
-TRH:    LINE = (DK, Q5T, DQ, S4T, DQ, Q4T, DS3, S3T, DQ, Q3T, DB) # triplet right half
-DLH:    LINE = (DB, Q3D, DQ, S3D, DS3, Q4D, DQ, S4D, DL) # duplet left half (only between dipoles)
-DRH:    LINE = (DL, S4D, DQ, Q4D, DS3, S3D, DQ, Q3D, DB) # duplet right half
+ACHRH:  Line, (S1, DS1, Q1, DQ1, S2, DS2, Q2, DQ2) # achromat right half
+ACHLH:  Line, (DQ2, Q2, DS2, S2, DQ1, Q1, DS1, S1) # achromat left half
+TLH:    Line, (DB, Q3T, DQ, S3T, DS3, Q4T, DQ, S4T, DQ, Q5T, DK) # triplet left half (only between dipoles)
+TRH:    Line, (DK, Q5T, DQ, S4T, DQ, Q4T, DS3, S3T, DQ, Q3T, DB) # triplet right half
+DLH:    Line, (DB, Q3D, DQ, S3D, DS3, Q4D, DQ, S4D, DL) # duplet left half (only between dipoles)
+DRH:    Line, (DL, S4D, DQ, Q4D, DS3, S3D, DQ, Q3D, DB) # duplet right half
 
 # Full Triplet and Duplet sections (each 1/16 Ring)
-#D1:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T1:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D2:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T2:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D3:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T3:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D4:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T4:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D5:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T5:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D6:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T6:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D7:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T7:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
-D8:     LINE = (ACHRH, B, DLH, DRH, B, ACHLH)
-T8:     LINE = (ACHRH, B, TLH, TRH, B, ACHLH)
+#D1:    Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T1:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D2:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T2:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D3:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T3:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D4:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T4:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D5:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T5:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D6:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T6:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D7:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T7:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
+D8:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+T8:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
 
 # Injection is a center of D1
-RING:   LINE = (DRH, B,ACHLH, T1, D2, T2, D3,
-                T3, D4, T4, D5, T5, D6, T6,
-                D7, T7, D8, T8, ACHRH, B, DLH)
+RING:   Mainline, (DRH, B,ACHLH, T1, D2, T2, D3,
+                    T3, D4, T4, D5, T5, D6, T6,
+                    D7, T7, D8, T8, ACHRH, B, DLH)

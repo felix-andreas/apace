@@ -1,6 +1,5 @@
 import numpy as np
 from ..classes import Bend, Quad
-from ..utils import Structure
 
 matrix_size = 5
 

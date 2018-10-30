@@ -1,8 +1,8 @@
 import warnings
 
 import numpy as np
-from elements.clib import accumulate_array, twissparameter
-from elements.utils import Structure
+from ..clib import accumulate_array, twissparameter
+from ..utils import Structure
 
 matrix_size = 5
 

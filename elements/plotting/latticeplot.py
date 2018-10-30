@@ -1,23 +1,21 @@
 import plotly
 import plotly.io as pio
 import plotly.graph_objs as go
-import plotly.tools as tls
-# import matplotlib.pyplot as plt
 
-
-from elements import Drift, Bend, Quad
+from elements import Drift, Bend, Quad, Sext
 
 # # filled Rectangle
 # def generator_retangle():
 #     for xstart in range(50):
 #         yield AttrDict(type='rect', x0=0 + xstart, y0=0, x1=0.4 + xstart, y1=0.1, fillcolor='rgba(128,0,0,1)', line=dict(width=0))
 
-
+range = [0, 60]
 layout = go.Layout(
     hovermode='closest',
 
     xaxis=dict(
         showgrid=True,
+        range=range,
         zeroline=False,
         showline=True,
         mirror='ticks',
@@ -61,7 +59,7 @@ updatemenus=list([
     ),
 ])
 
-layout['updatemenus'] = updatemenus
+# layout['updatemenus'] = updatemenus
 
 # rect = AttrDict(type='rect', x0=0, y0=0, x1=1, y1=1, fillcolor='rgba(128,0,0,1', line=dict(width=0))
 def plotTwiss(twiss, line, path):
@@ -81,14 +79,15 @@ def getTwissFigure(twiss, line):
     x_names = []
     y_names = []
     start = 0
-    colors = {Bend:'#f9c440' , Quad: '#c6262e'}
+    colors = {Bend:'#f9c440' , Quad: '#c6262e', Sext: '#029868'}
     for i, element in enumerate(line.lattice):
         end = start + element.l
         if not isinstance(element, Drift):
             shapes.append(dict(type='rect', x0=start, x1=end, yref='paper', y0=1.05, y1=1.12, fillcolor=colors[element.__class__], line=dict(width=0)))
-            names.append(element.name)
-            x_names.append(start + element.l / 2)
-            y_names.append(10)
+            if element.l / line.l > 0.01:
+                names.append(element.name)
+                x_names.append(start + element.l / 2)
+                y_names.append(10)
         start = end
 
     trace_name = go.Scatter(x=x_names, y=y_names, text=names, mode='text')
