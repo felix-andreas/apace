@@ -81,12 +81,12 @@ def getTwissFigure(twiss, line):
     start = 0
     colors = {Bend:'#f9c440' , Quad: '#c6262e', Sext: '#029868'}
     for i, element in enumerate(line.lattice):
-        end = start + element.l
+        end = start + element.length
         if not isinstance(element, Drift):
             shapes.append(dict(type='rect', x0=start, x1=end, yref='paper', y0=1.05, y1=1.12, fillcolor=colors[element.__class__], line=dict(width=0)))
-            if element.l / line.l > 0.01:
+            if element.length / line.length > 0.01:
                 names.append(element.name)
-                x_names.append(start + element.l / 2)
+                x_names.append(start + element.length / 2)
                 y_names.append(10)
         start = end
 

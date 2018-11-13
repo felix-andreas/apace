@@ -7,11 +7,12 @@ from ..utils import Structure
 matrix_size = 5
 
 
-def twissdata(latticedata):
+def twissdata(transfer_matrices):
     twiss = Structure()
-    twiss.s = latticedata.s
-    acc_array = np.empty((latticedata.matrix_array.shape))
-    accumulate_array(latticedata.matrix_array, acc_array)
+
+
+    acc_array = np.empty(transfer_matrices.shape)
+    accumulate_array(transfer_matrices, acc_array)
     fullmatrix = acc_array[-1]
     const_c = 299792458
 

@@ -3,11 +3,9 @@ from ..classes import Bend, Quad
 
 matrix_size = 5
 
-
-def create_matrix(element, matrix_array, stepsize_array):
+def create_matrix(element, matrix_array):
     pos = element.pos  # pos in matrix array
-    nkicks = element.nkicks
-    stepsize_array[pos] = element.stepsize
+    nkicks = element._nkicks
     # Quads
     if isinstance(element, Quad) and element.k:  # Quad with k = 0 -> Drift
         sqk = np.sqrt(np.absolute(element.k))
@@ -16,13 +14,13 @@ def create_matrix(element, matrix_array, stepsize_array):
         cos = np.cos(om)
         sinh = np.sinh(om)
         cosh = np.cosh(om)
-        if element.k > 0:  # k > horizontal focustepsizeing
+        if element.k > 0:  # k > horizontal focussing
             matrix_array[pos] = np.matrix([[cos, 1 / sqk * sin, 0, 0, 0],
                                            [-sqk * sin, cos, 0, 0, 0],
                                            [0, 0, cosh, 1 / sqk * sinh, 0],
                                            [0, 0, sqk * sinh, cosh, 0],
                                            [0, 0, 0, 0, 1]])
-        else:  # k < vertical focustepsizeing
+        else:  # k < vertical focussing
             matrix_array[pos] = np.matrix([[cosh, 1 / sqk * sinh, 0, 0, 0],
                                            [sqk * sinh, cosh, 0, 0, 0],
                                            [0, 0, cos, 1 / sqk * sin, 0],
@@ -54,24 +52,23 @@ def create_matrix(element, matrix_array, stepsize_array):
         matrix_array[pos] = matrix
 
 
-class Latticedata:
-    def __init__(self, line):
-        self.line = line
+class Matrixarray:
+    def __init__(self, mainline):
+        """
+        Creates a matrix array for a give Mainline object.
+        Args:
+            Mainline:
+        """
+        self.mainline = mainline
         self.create_matrix_array()
 
     def create_matrix_array(self):
-        for element in self.line.lattice:  # set element pos to zero
-            element.pos = []
-        start = 1  # starts with 1 because 0th entry is identity matrix
-        for element in self.line.lattice:
-            end = start + element.nkicks
-            element.pos.extend(list(range(start, end)))
-            start = end
-        self.steps = end
-        self.matrix_array = np.empty((self.steps, matrix_size, matrix_size))
+        self.matrix_array = np.empty((self.mainline.nkicks, matrix_size, matrix_size))
         self.matrix_array[0] = np.identity(matrix_size)
-        self.stepsize = np.empty((self.steps))
-        self.stepsize[0] = 0
-        for element in self.line.elements:
-            create_matrix(element, self.matrix_array, self.stepsize)
-        self.s = np.add.accumulate(self.stepsize)
+        for element in self.mainline.elements:
+            create_matrix(element, self.matrix_array)
+
+    def update(self, elements):
+        for element in elements:
+            create_matrix(element, self.matrix_array)
+

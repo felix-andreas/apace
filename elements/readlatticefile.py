@@ -44,9 +44,10 @@ def readfile(filepath):
             del parameters[i]
 
         # create and execute string
-        lis =['{0} = {1}("{0}", {2}, comment="{3}")'.format(objectname[i], type[i], parameters[i], comments[i]) for i in range(len(objectname))]
+        lis = [f'{objectname[i]} = {type[i]}("{objectname[i]}", {parameters[i]}, comment="{comments[i]}")' for i in
+               range(len(objectname))]
         string = '\n'.join(lis)
-        print(string)
+        # print(string)
         exec(string)
         return list(locals().values())[-1]
 

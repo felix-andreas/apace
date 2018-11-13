@@ -1,34 +1,34 @@
 ##### Quadrupoles #####
-Q1:		Quad,    l=0.25,    k1=2.45190
-Q2:		Quad,    l=0.20,    k1=-1.89757
-Q3D:	Quad,    l=0.25,    k1=-2.020250494966872
-Q4D: 	Quad,    l=0.50,    k1=1.408159470450006
-Q3T: 	Quad,    l=0.25,    k1=-2.46319
-Q4T: 	Quad,    l=0.50,    k1=2.62081
-Q5T: 	Quad,    l=0.20,    k1=-2.6000
+Q1:		Quad,    length=0.25,    k1=2.45190
+Q2:		Quad,    length=0.20,    k1=-1.89757
+Q3D:	Quad,    length=0.25,    k1=-2.020250494966872
+Q4D: 	Quad,    length=0.50,    k1=1.408159470450006
+Q3T: 	Quad,    length=0.25,    k1=-2.46319
+Q4T: 	Quad,    length=0.50,    k1=2.62081
+Q5T: 	Quad,    length=0.20,    k1=-2.6000
 
 ##### Sextupoles #####
-S1:     Sext,    l=0.105,   k2=49.35808097165103
-S2:     Sext,    l=0.16,    k2=-41.52033512035799
-S3D:    Sext,    l=0.16,    k2=-46.66222668520843
-S4D:    Sext,    l=0.16,    k2=26.97788440561498
-S3T:    Sext,    l=0.16,    k2=-59.15244659713909
-S4T:    Sext,    l=0.16,    k2=85.76518842267137
+S1:     Sext,    length=0.105,   k2=49.35808097165103
+S2:     Sext,    length=0.16,    k2=-41.52033512035799
+S3D:    Sext,    length=0.16,    k2=-46.66222668520843
+S4D:    Sext,    length=0.16,    k2=26.97788440561498
+S3T:    Sext,    length=0.16,    k2=-59.15244659713909
+S4T:    Sext,    length=0.16,    k2=85.76518842267137
 
 ##### Drifts #####
 # Naming convention: D+previous element at first appearence
-DQ1:	Drift,   l=0.288
-DS1:	Drift,   l=0.16
-DQ2:	Drift,   l=0.42
-DS2:	Drift,   l=0.307
-DB:		Drift,   l=0.42
-DS3:	Drift,   l=0.153
-DQ:		Drift,   l=0.153
-DL:		Drift,   l=2.80600
-DK:		Drift,   l=2.45300
+DQ1:	Drift,   length=0.288
+DS1:	Drift,   length=0.16
+DQ2:	Drift,   length=0.42
+DS2:	Drift,   length=0.307
+DB:		Drift,   length=0.42
+DS3:	Drift,   length=0.153
+DQ:		Drift,   length=0.153
+DL:		Drift,   length=2.80600
+DK:		Drift,   length=2.45300
 
 ##### Dipoles #####
-B:      Bend,    l=0.855, angle=0.196349540849362, e1=0.09817477042, e2=0.09817477042
+B:      Bend,    length=0.855, angle=0.196349540849362, e1=0.09817477042, e2=0.09817477042
 
 ##### Lines #####
 ACHRH:  Line, (S1, DS1, Q1, DQ1, S2, DS2, Q2, DQ2) # achromat right half
@@ -40,6 +40,8 @@ DRH:    Line, (DL, S4D, DQ, Q4D, DS3, S3D, DQ, Q3D, DB) # duplet right half
 
 # Full Triplet and Duplet sections (each 1/16 Ring)
 #D1:    Line, (ACHRH, B, DLH, DRH, B, ACHLH)
+D1A:    Line, (ACHRH, B, DLH)
+D1B:    Line, ( DRH, B, ACHLH)
 T1:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
 D2:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
 T2:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
@@ -57,6 +59,6 @@ D8:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
 T8:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
 
 # Injection is a center of D1
-RING:   Mainline, (DRH, B,ACHLH, T1, D2, T2, D3,
+RING:   Mainline, (D1B, T1, D2, T2, D3,
                     T3, D4, T4, D5, T5, D6, T6,
-                    D7, T7, D8, T8, ACHRH, B, DLH)
+                    D7, T7, D8, T8, D1A)

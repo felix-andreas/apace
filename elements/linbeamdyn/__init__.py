@@ -1,2 +1,3 @@
-from .matrixmethod import Latticedata, create_matrix
-from .twissfunctions import twissdata
+from .classes import LinBeamDyn
+from .transfer_matrices import create_matrix
+from .twiss import twissdata
