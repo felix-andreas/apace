@@ -1,9 +1,9 @@
-import plotly
+
 import plotly.io as pio
 import plotly.graph_objs as go
 
 from elements import Drift, Bend, Quad, Sext
-
+__all__ = ["plotTwiss"]
 # # filled Rectangle
 # def generator_retangle():
 #     for xstart in range(50):

@@ -47,7 +47,7 @@ class _Element(_Base):
         self._nkicks = 100
         self.parent_lines = set()
         self.stepsize = self._length / self._nkicks
-        self._positons = []
+        self._positions = []
         self.mainline = None
 
     @property
@@ -59,7 +59,7 @@ class _Element(_Base):
         self._length = value
         self.stepsize = self._length / self._nkicks
         for x in self.parent_lines:
-            x.length_changed = True
+            x.length_trigger.changed = True
 
     @property
     def nkicks(self):
@@ -70,13 +70,14 @@ class _Element(_Base):
         self._nkicks = value
         self.stepsize = self._length / self._nkicks
         for x in self.parent_lines:
-            x.nicks_changed = True
+            x.nkicks_trigger.changed = True
 
     @property
     def positions(self):
-        if self.mainline and self.mainline.lattice_changed:
+        if self.mainline and self.mainline.elements_positon_trigger.changed:
             self.mainline.update_element_positions()
-        return self._positons
+        return self._positions
+
 
 
 class Drift(_Element):
@@ -150,18 +151,20 @@ class Line(_Base):
         self.tree = list()  # has strong links to objects
         self.child_lines = weakref.WeakSet()
         self.parent_lines = weakref.WeakSet()
+        self.tree_trigger = PropertyTrigger()
         self.mainline = None
-        # properties
+        # tree properties
+        self.tree_properties_trigger = PropertyTriggerLine(self, "tree_properties_trigger", depends_on=self.tree_trigger)
         self._lattice = None
         self._elements = None
         self._all_lines = None
+        # length
         self._length = None
+        self.length_trigger = PropertyTriggerLine(self, "length_trigger", depends_on=self.tree_trigger)
+        # nkicks
         self._nkicks = None
-        self.tree_trigger = self.trigger_property()
-        self.lattice_changed = PropertyTriggerLine(self, "lattice_changed")
-        self.length_changed = PropertyTriggerLine(self, "length_changed")
-        self.nkicks_changed = PropertyTriggerLine(self, "nkicks_changed")
-        # call methods
+        self.nkicks_trigger = PropertyTriggerLine(self, "nkicks_trigger", depends_on=self.tree_trigger)
+        # add objects
         self.add_objects(tree, pos=-1)
 
     # change tree
@@ -171,8 +174,7 @@ class Line(_Base):
             x.parent_lines.add(self)
             if isinstance(x, Line):
                 self.child_lines.add(x)
-        self.trigger_change_tree()
-
+        self.tree_trigger.trigger_dependents()
 
     def remove_objects(self, pos, num=1):
         elements = self.tree[pos:pos + num]
@@ -182,30 +184,25 @@ class Line(_Base):
                 self.child_lines.remove(x)
             if x not in self.tree:
                 x.parent_lines.remove(self)
-        self.trigger_change_tree()
+        self.tree_trigger.trigger_dependents()
 
-
-    def trigger_change_tree(self):
-        self.lattice_changed = True
-        self.nkicks_changed = True
-        self.length_changed = True
 
     # class properties
     @property
     def lattice(self):
-        if self.lattice_changed:
+        if self.tree_properties_trigger.changed:
             self.update_lattice_properties()
         return self._lattice
 
     @property
     def elements(self):
-        if self.lattice_changed:
+        if self.tree_properties_trigger.changed:
             self.update_lattice_properties()
         return self._elements
 
     @property
     def all_lines(self):
-        if self.lattice_changed:
+        if self.tree_properties_trigger.changed:
             self.update_lattice_properties()
         return self._all_lines
 
@@ -214,7 +211,7 @@ class Line(_Base):
         self._elements = weakref.WeakSet()
         self._all_lines = weakref.WeakSet()
         self._update_lattice_properties(self.tree)
-        self.lattice_changed = False
+        self.tree_properties_trigger.changed = False
 
     def _update_lattice_properties(self, tree):
         '''A recursive helper function for update_lattice_properties.'''
@@ -228,39 +225,25 @@ class Line(_Base):
 
     @property
     def length(self):
-        if self.length_changed:
+        if self.length_trigger.changed:
             self.update_length()
+            self.length_trigger.changed = False
         return self._length
 
     def update_length(self):  # is overwritten in Mainline class
         self._length = sum([x.length for x in self.tree])
-        self.length_changed = False
+        self.length_trigger.changed = False
+        print(self.name, "length update")
 
     @property
     def nkicks(self):
-        if self.nkicks_changed:
+        if self.nkicks_trigger.changed:
             self.update_nkicks()
+            self.nkicks_trigger.changed = False
         return self._nkicks
 
     def update_nkicks(self):  # is overwritten in Mainline class
         self._nkicks = sum([x.nkicks for x in self.tree])
-        self.nkicks_changed = False
-
-    def trigger_property(self, name):
-        private_name = "_" + name
-
-        @property
-        def prop(self):
-            return getattr(self, private_name)
-
-        @prop.setter
-        def prop(self, value):
-            setattr(self, private_name, value)
-            if value:  # change parentlines only if true
-                for x in self.parent_lines:
-                    setattr(x, name, value)
-
-        return prop
 
 
     def print_tree(self):
@@ -299,29 +282,34 @@ class Mainline(Line):
         super().__init__(*args, **kwargs)
         # attriutes
         methods = set()
-
         # properties
-        self._stepsize = PropertyTrigger()
-        self._s = PropertyTrigger(depends_on=[self._stepsize])
-        self.elements_positon_changed = PropertyTrigger()
+        # elements positon
+        self.elements_positon_trigger = PropertyTrigger(depends_on=[self.tree_trigger, self.nkicks_trigger])
         # set mainline link to all elements and lines
         for x in self.elements | self.all_lines:
             x.mainline = self
+        # stepsize
+        self._stepsize = None
+        self.stepsize_trigger = PropertyTrigger(depends_on=[self.nkicks_trigger, self.length_trigger, self.tree_trigger])
+        # orbit coordinate s
+        self._s = None
+        self.s_trigger = PropertyTrigger(depends_on=self.stepsize_trigger)
+
 
     @property
     def stepsize(self):
-        if self._stepsize.changed:
-            self._stepsize.data = np.empty(self.nkicks + 1)
-            self._stepsize.data[0] = 0
+        if self.stepsize_trigger.changed:
+            self._stepsize = np.empty(self.nkicks + 1)
+            self._stepsize[0] = 0
             for element in self.elements:
-                self._stepsize.data[element.positions] = element.stepsize
-            self._stepsize.changed = False
-        return self._stepsize.data
+                self._stepsize[element.positions] = element.stepsize
+            self.stepsize_trigger.changed = False
+        return self._stepsize
 
     @property
     def s(self):
-        if self._s.changed:
-            self._s.data = np.add.accumulate(self._stepsize.data)  # s corresponds to the orbit position
+        if self.s_trigger.changed:
+            self._s = np.add.accumulate(self.stepsize)  # s corresponds to the orbit position
         return self._s
 
     @Line.length.setter
@@ -333,32 +321,23 @@ class Mainline(Line):
 
     def update_nkicks(self):
         super().update_nkicks()
-        self.elements_positon_changed = True
-        self.stepsize_changed = True
+        self.elements_positon_trigger.changed = True
 
     def update_lattice_properties(self):
         super().update_lattice_properties()
-        self.elements_positon_changed = True
+        self.elements_positon_trigger.changed = True
+
 
     def update_element_positions(self):
+        self.elements_positon_trigger.changed = False
         for element in self.elements:  # clear element positons
-            element._positions = []
+            element._positions.clear()
         start = 1  # starts with 1 because 0th entry is identity matrix
         for element in self.lattice:
             end = start + element.nkicks
             element._positions.extend(list(range(start, end)))
             start = end
-        self.elements_positon_changed = False
-        self.stepsize_changed = True
 
-    def update_stepsize(self):
-        self._stepsize = np.empty(self.nkicks + 1)
-        self._stepsize[0] = 0
-        for element in self.elements:
-            self._stepsize[element.positions] = element.stepsize
-        self._s = np.add.accumulate(self._stepsize)  # s corresponds to the orbit position
-        self.stepsize_changed = False
-        self.method_nkicks_changed = True
 
 def change_element_type(element, new_type, *args, **kwargs):
     for key in list(element.__dict__):
@@ -367,18 +346,19 @@ def change_element_type(element, new_type, *args, **kwargs):
     element.__init__(*args, **kwargs)
 
 
-
-class PropertyTrigger:
-    def __init__(self, depends_on=None):
+class PropertyTrigger: # muss verbessert werden , name sollte nicht ubergeben werden
+    def __init__(self, depends_on=None, initial_state=True):
         """
         A container class for an attribute, which is only computed if one of the
         objects it depends on changes.
         Args:
             depends_on: list of objects the object depends on
         """
-        self._changed = True
+        self._changed = initial_state
         self.dependents = set()
-        self.depends_on = depends_on or []
+        # convert depends_on to list
+        tmp = depends_on or [] #check if None
+        self.depends_on = tmp if isinstance(tmp, list) else [tmp]
         for x in self.depends_on:
             x.dependents.add(self)
 
@@ -398,15 +378,16 @@ class PropertyTrigger:
 
 
 class PropertyTriggerLine(PropertyTrigger):
-    def __init__(self, line, triggername, dependes_on=None):
-        super().__init__(dependes_on)
+    def __init__(self, line, triggername, depends_on=None):
+        super().__init__(depends_on)
         self.line = line
         self.triggername = triggername
 
     def trigger_dependents(self):
         super().trigger_dependents()
         for x in self.line.parent_lines:
-            setattr(x, self.triggername, value)
+            getattr(x, self.triggername).changed = True
+
 
 class Method:
 

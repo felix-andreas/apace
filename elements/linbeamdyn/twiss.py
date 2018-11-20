@@ -10,8 +10,8 @@ matrix_size = 5
 def twissdata(transfer_matrices):
     twiss = Structure()
 
-
     acc_array = np.empty(transfer_matrices.shape)
+    print(transfer_matrices)
     accumulate_array(transfer_matrices, acc_array)
     fullmatrix = acc_array[-1]
     const_c = 299792458

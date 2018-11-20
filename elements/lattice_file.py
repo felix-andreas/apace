@@ -3,7 +3,7 @@ import re
 from .classes import Drift, Bend, Quad, Sext, Line, Mainline
 
 
-def readfile(filepath):
+def read_lattice_file(filepath):
     latticename = os.path.basename(filepath)
     with open(filepath) as file:
         lines = re.sub('[ \t]', '', file.read()).splitlines()
@@ -16,6 +16,7 @@ def readfile(filepath):
         parameters = [''] * length
         comments = [''] * length
         following_lines = []
+        starting_line = 0
         for i, line in enumerate(lines):
             # save comments
             _split = line.split('#')
@@ -51,7 +52,26 @@ def readfile(filepath):
         exec(string)
         return list(locals().values())[-1]
 
+def save_lattice_file(line, filepath):
+    elements_dict = dict()
+    for x in line.elements:
+        if type(x) in elements_dict:
+            elements_dict[type(x)].append(x)
+        else:
+            elements_dict[type(x)] = [x]
+    outputlist = []
+    for key, value in elements_dict.items():
+        outputlist.append(f"##### {key}s #####")
+        outputlist.extend([])
+
+    # with open(filepath, 'w') as file:
+    #
+    #     file.write()
+    #     file.write("\n".join())
+
 
 if __name__ == '__main__':
     filepath = os.getcwd() + '/lattices/BII_2016-06-10_user_Sym_noID_DesignLattice1996.lte'
-    readfile(filepath)
+    filepath2 = "test.lte"
+    line = read_lattice_file(filepath)
+    save_lattice_file(line, filepath2)

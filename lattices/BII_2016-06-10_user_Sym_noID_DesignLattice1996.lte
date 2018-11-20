@@ -41,7 +41,7 @@ DRH:    Line, (DL, S4D, DQ, Q4D, DS3, S3D, DQ, Q3D, DB) # duplet right half
 # Full Triplet and Duplet sections (each 1/16 Ring)
 #D1:    Line, (ACHRH, B, DLH, DRH, B, ACHLH)
 D1A:    Line, (ACHRH, B, DLH)
-D1B:    Line, ( DRH, B, ACHLH)
+D1B:    Line, (DRH, B, ACHLH)
 T1:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)
 D2:     Line, (ACHRH, B, DLH, DRH, B, ACHLH)
 T2:     Line, (ACHRH, B, TLH, TRH, B, ACHLH)

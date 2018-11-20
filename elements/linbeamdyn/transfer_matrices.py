@@ -3,72 +3,52 @@ from ..classes import Bend, Quad
 
 matrix_size = 5
 
-def create_matrix(element, matrix_array):
-    pos = element.pos  # pos in matrix array
-    nkicks = element._nkicks
-    # Quads
-    if isinstance(element, Quad) and element.k:  # Quad with k = 0 -> Drift
-        sqk = np.sqrt(np.absolute(element.k))
-        om = sqk * element.stepsize
-        sin = np.sin(om)
-        cos = np.cos(om)
-        sinh = np.sinh(om)
-        cosh = np.cosh(om)
-        if element.k > 0:  # k > horizontal focussing
-            matrix_array[pos] = np.matrix([[cos, 1 / sqk * sin, 0, 0, 0],
-                                           [-sqk * sin, cos, 0, 0, 0],
-                                           [0, 0, cosh, 1 / sqk * sinh, 0],
-                                           [0, 0, sqk * sinh, cosh, 0],
-                                           [0, 0, 0, 0, 1]])
-        else:  # k < vertical focussing
-            matrix_array[pos] = np.matrix([[cosh, 1 / sqk * sinh, 0, 0, 0],
-                                           [sqk * sinh, cosh, 0, 0, 0],
-                                           [0, 0, cos, 1 / sqk * sin, 0],
-                                           [0, 0, -sqk * sin, cos, 0],
-                                           [0, 0, 0, 0, 1]])
-    # Bends
-    elif isinstance(element, Bend) and element.angle:  # Bend with angle = 0 -> Drift
-        sin = np.sin(element.stepsize / element.r)
-        cos = np.cos(element.stepsize / element.r)
-        matrix_array[pos] = np.array([[cos, element.r * sin, 0, 0, element.r * (1 - cos)],
-                                      [-1 / element.r * sin, cos, 0, 0, sin],
-                                      [0, 0, 1, element.stepsize, 0],
-                                      [0, 0, 0, 1, 0],
-                                      [0, 0, 0, 0, 1]])
-        if element.e1:
-            tanR1 = np.tan(element.e1) / element.r
-            MEB1 = np.identity(matrix_size)
-            MEB1[1, 0], MEB1[3, 2] = tanR1, -tanR1
-            matrix_array[pos[::nkicks]] = np.dot(matrix_array[pos[0]], MEB1)
-        if element.e2:
-            tanR2 = np.tan(element.e2) / element.r
-            MEB2 = np.identity(matrix_size)
-            MEB2[1, 0], MEB2[3, 2] = tanR2, -tanR2
-            matrix_array[pos[nkicks - 1::nkicks]] = np.dot(MEB2, matrix_array[pos[-1]])
-    # Drifts and others
-    else:
-        matrix = np.identity(matrix_size)
-        matrix[0, 1] = matrix[2, 3] = element.stepsize
-        matrix_array[pos] = matrix
-
-
-class Matrixarray:
-    def __init__(self, mainline):
-        """
-        Creates a matrix array for a give Mainline object.
-        Args:
-            Mainline:
-        """
-        self.mainline = mainline
-        self.create_matrix_array()
-
-    def create_matrix_array(self):
-        self.matrix_array = np.empty((self.mainline.nkicks, matrix_size, matrix_size))
-        self.matrix_array[0] = np.identity(matrix_size)
-        for element in self.mainline.elements:
-            create_matrix(element, self.matrix_array)
-
-    def update(self, elements):
-        for element in elements:
-            create_matrix(element, self.matrix_array)
+def get_transfer_matrices(elements, matrix_array):
+    for element in elements:
+        pos = element.positions  # pos in matrix array
+        nkicks = element._nkicks
+        # Quads
+        if isinstance(element, Quad) and element.k:  # Quad with k = 0 -> Drift
+            sqk = np.sqrt(np.absolute(element.k))
+            om = sqk * element.stepsize
+            sin = np.sin(om)
+            cos = np.cos(om)
+            sinh = np.sinh(om)
+            cosh = np.cosh(om)
+            if element.k > 0:  # k > horizontal focussing
+                matrix_array[pos] = np.matrix([[cos, 1 / sqk * sin, 0, 0, 0],
+                                               [-sqk * sin, cos, 0, 0, 0],
+                                               [0, 0, cosh, 1 / sqk * sinh, 0],
+                                               [0, 0, sqk * sinh, cosh, 0],
+                                               [0, 0, 0, 0, 1]])
+            else:  # k < vertical focussing
+                matrix_array[pos] = np.matrix([[cosh, 1 / sqk * sinh, 0, 0, 0],
+                                               [sqk * sinh, cosh, 0, 0, 0],
+                                               [0, 0, cos, 1 / sqk * sin, 0],
+                                               [0, 0, -sqk * sin, cos, 0],
+                                               [0, 0, 0, 0, 1]])
+        # Bends
+        elif isinstance(element, Bend) and element.angle:  # Bend with angle = 0 -> Drift
+            sin = np.sin(element.stepsize / element.radius)
+            cos = np.cos(element.stepsize / element.radius)
+            matrix_array[pos] = np.array([[cos, element.radius * sin, 0, 0, element.radius * (1 - cos)],
+                                          [-1 / element.radius * sin, cos, 0, 0, sin],
+                                          [0, 0, 1, element.stepsize, 0],
+                                          [0, 0, 0, 1, 0],
+                                          [0, 0, 0, 0, 1]])
+            if element.e1:
+                tanR1 = np.tan(element.e1) / element.radius
+                MEB1 = np.identity(matrix_size)
+                MEB1[1, 0], MEB1[3, 2] = tanR1, -tanR1
+                matrix_array[pos[::nkicks]] = np.dot(matrix_array[pos[0]], MEB1)
+            if element.e2:
+                tanR2 = np.tan(element.e2) / element.radius
+                MEB2 = np.identity(matrix_size)
+                MEB2[1, 0], MEB2[3, 2] = tanR2, -tanR2
+                matrix_array[pos[nkicks - 1::nkicks]] = np.dot(MEB2, matrix_array[pos[-1]])
+        # Drifts and others
+        else:
+            matrix = np.identity(matrix_size)
+            matrix[0, 1] = matrix[2, 3] = element.stepsize
+            matrix_array[pos] = matrix
 
