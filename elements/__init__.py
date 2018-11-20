@@ -1,3 +1,5 @@
 from .classes import *
-# from . import plotting
-from . import linbeamdyn
+from .linbeamdyn import LinBeamDyn
+
+__version__ = 0.1
+

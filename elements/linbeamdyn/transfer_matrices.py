@@ -6,16 +6,16 @@ matrix_size = 5
 def get_transfer_matrices(elements, matrix_array):
     for element in elements:
         pos = element.positions  # pos in matrix array
-        nkicks = element._nkicks
+        nkicks = element.nkicks
         # Quads
-        if isinstance(element, Quad) and element.k:  # Quad with k = 0 -> Drift
-            sqk = np.sqrt(np.absolute(element.k))
+        if isinstance(element, Quad) and element.k1:  # Quad with k = 0 -> Drift
+            sqk = np.sqrt(np.absolute(element.k1))
             om = sqk * element.stepsize
             sin = np.sin(om)
             cos = np.cos(om)
             sinh = np.sinh(om)
             cosh = np.cosh(om)
-            if element.k > 0:  # k > horizontal focussing
+            if element.k1 > 0:  # k > horizontal focussing
                 matrix_array[pos] = np.matrix([[cos, 1 / sqk * sin, 0, 0, 0],
                                                [-sqk * sin, cos, 0, 0, 0],
                                                [0, 0, cosh, 1 / sqk * sinh, 0],
@@ -51,4 +51,3 @@ def get_transfer_matrices(elements, matrix_array):
             matrix = np.identity(matrix_size)
             matrix[0, 1] = matrix[2, 3] = element.stepsize
             matrix_array[pos] = matrix
-

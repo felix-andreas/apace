@@ -20,9 +20,25 @@ class _Base:
         return self.name
 
     def __str__(self):
-        attributes = [f"{key:}: {value:}" for key, value in self.__dict__.items() if key[0] != '_']
-        properties = [f"{x}: {getattr(self.__class__,x).fget(self)}" for x in dir(self.__class__) if
-                      isinstance(getattr(self.__class__, x), property)]
+        attributes = []
+        for key, value in self.__dict__.items():
+            if key[0] != '_' and key != "mainline" and not "trigger" in key:
+                if isinstance(value, weakref.WeakSet):
+                    string = f"{', '.join(e.name for e in value):}"
+                else:
+                    string = str(value)
+                attributes.append(f"{key:12}: {string:}")
+
+        properties = []
+        for x in dir(self.__class__):
+            x_attr = getattr(self.__class__, x)
+            if isinstance(x_attr, property):
+                x_attr = x_attr.fget(self)
+                if isinstance(x_attr, weakref.WeakSet):
+                    string = ', '.join(e.name for e in x_attr)
+                else:
+                    string = str(x_attr)
+                properties.append(f"{x:12}: {string}")
         return "\n".join(attributes + properties)
 
 
@@ -79,7 +95,6 @@ class _Element(_Base):
         return self._positions
 
 
-
 class Drift(_Element):
     def __init__(self, name, length, comment=''):
         """
@@ -107,7 +122,7 @@ class Bend(_Element):
 class Quad(_Element):
     def __init__(self, name, length, k1, comment=''):
         super().__init__(name, 'Quad', length, comment)
-        self.k = k1
+        self.k1 = k1
 
 
 class Sext(_Element):
@@ -154,7 +169,8 @@ class Line(_Base):
         self.tree_trigger = PropertyTrigger()
         self.mainline = None
         # tree properties
-        self.tree_properties_trigger = PropertyTriggerLine(self, "tree_properties_trigger", depends_on=self.tree_trigger)
+        self.tree_properties_trigger = PropertyTriggerLine(self, "tree_properties_trigger",
+                                                           depends_on=self.tree_trigger)
         self._lattice = None
         self._elements = None
         self._all_lines = None
@@ -185,7 +201,6 @@ class Line(_Base):
             if x not in self.tree:
                 x.parent_lines.remove(self)
         self.tree_trigger.trigger_dependents()
-
 
     # class properties
     @property
@@ -233,7 +248,6 @@ class Line(_Base):
     def update_length(self):  # is overwritten in Mainline class
         self._length = sum([x.length for x in self.tree])
         self.length_trigger.changed = False
-        print(self.name, "length update")
 
     @property
     def nkicks(self):
@@ -244,7 +258,6 @@ class Line(_Base):
 
     def update_nkicks(self):  # is overwritten in Mainline class
         self._nkicks = sum([x.nkicks for x in self.tree])
-
 
     def print_tree(self):
         self.depth = 0
@@ -290,11 +303,11 @@ class Mainline(Line):
             x.mainline = self
         # stepsize
         self._stepsize = None
-        self.stepsize_trigger = PropertyTrigger(depends_on=[self.nkicks_trigger, self.length_trigger, self.tree_trigger])
+        self.stepsize_trigger = PropertyTrigger(
+            depends_on=[self.nkicks_trigger, self.length_trigger, self.tree_trigger])
         # orbit coordinate s
         self._s = None
         self.s_trigger = PropertyTrigger(depends_on=self.stepsize_trigger)
-
 
     @property
     def stepsize(self):
@@ -327,7 +340,6 @@ class Mainline(Line):
         super().update_lattice_properties()
         self.elements_positon_trigger.changed = True
 
-
     def update_element_positions(self):
         self.elements_positon_trigger.changed = False
         for element in self.elements:  # clear element positons
@@ -346,7 +358,7 @@ def change_element_type(element, new_type, *args, **kwargs):
     element.__init__(*args, **kwargs)
 
 
-class PropertyTrigger: # muss verbessert werden , name sollte nicht ubergeben werden
+class PropertyTrigger:  # muss verbessert werden , name sollte nicht ubergeben werden
     def __init__(self, depends_on=None, initial_state=True):
         """
         A container class for an attribute, which is only computed if one of the
@@ -357,7 +369,7 @@ class PropertyTrigger: # muss verbessert werden , name sollte nicht ubergeben we
         self._changed = initial_state
         self.dependents = set()
         # convert depends_on to list
-        tmp = depends_on or [] #check if None
+        tmp = depends_on or []  # check if None
         self.depends_on = tmp if isinstance(tmp, list) else [tmp]
         for x in self.depends_on:
             x.dependents.add(self)
