@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
 name=twissparameter
-gcc -Ofast -shared -Wl,-soname,cfunc -o ../../shared_objects/$name.so -fPIC $name.c
-echo $name compiled!
+
+if $(gcc -Ofast -shared -Wl,-soname,cfunc -fPIC $name.c -o ../../shared_objects/$name.so); then
+    echo $name compiled!
+
+    apy="$HOME/anaconda3/bin/python"
+    export PYTHONPATH="${PYTHONPATH}:$HOME/git/elements"
+    $apy ../../../../tests/processing_speed/twiss_product.py
+fi

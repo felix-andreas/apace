@@ -2,7 +2,6 @@ import sys
 
 sys.path.append('..')
 
-import elements as el
 from elements.utils import AttrDict
 
 import plotly.io as pio

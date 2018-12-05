@@ -2,7 +2,7 @@ import numpy as np
 import timeit
 from functools import reduce
 from itertools import accumulate
-import numba
+# import numba
 from elements.clib import accumulate_array
 
 # Test of matrices accumulation:
@@ -11,7 +11,7 @@ from elements.clib import accumulate_array
 #     B[1] = A[1] * matrix_array[0]
 #     B[2] = A[1] * A[0] * B[0]
 
-__all__ = ['forloop', 'forloop_numba', 'cCode', 'ft_reduce', 'it_accumulate']
+__all__ = ['forloop',  'cCode', 'ft_reduce', 'it_accumulate']
 
 
 def ft_reduce():
@@ -42,13 +42,13 @@ def forloop():
     return array
 
 
-@numba.jit(nopython=True)
-def forloop_numba():
-    array = np.empty((n + 1, size, size))
-    array[0] = np.identity(size)
-    for i in range(n):
-        array[i + 1] = np.dot(a_array[i], array[i])
-    return array
+# @numba.jit(nopython=True)
+# def forloop_numba():
+#     array = np.empty((n + 1, size, size))
+#     array[0] = np.identity(size)
+#     for i in range(n):
+#         array[i + 1] = np.dot(a_array[i], array[i])
+#     return array
 
 
 if __name__ == '__main__':

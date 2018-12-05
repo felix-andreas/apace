@@ -1,8 +1,7 @@
 import timeit
-from elements.utils import AttrDict, flatten
+from elements.utils import AttrDict
 import numpy as np
 import numba
-import opt_einsum
 from elements.clib import multiple_dot_products
 
 # Test of multiple dot products:

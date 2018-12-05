@@ -1,4 +1,4 @@
-#include <stdio.h>
+  #include <stdio.h>
 
 void accumulate_array(int n, int size, double (*ina)[size][size], double (*outa)[size][size])
 {
