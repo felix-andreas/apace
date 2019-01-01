@@ -33,5 +33,5 @@ twiss = LinBeamDyn(ring).twiss
 
 Plot twissfunctions:
 ```python
-plot(twiss.s, twiss.betax, twiss.betay, twiss.etax
+plot(twiss.s, twiss.betax, twiss.betay, twiss.etax)
 ```
