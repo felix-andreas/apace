@@ -9,6 +9,7 @@ import elements
 
 ### Linear Beam Dynamics
 Import the linear beam dynamics module:
+
 ```from elements.linbeamdyn import LinBeamDyn```
 
 Create a ring consting out of FODO cells:  
@@ -22,7 +23,11 @@ ring = el.Mainline('fodo-ring', [fodo] * 8)
 ```
 
 Get twiss parameters:
-``` twiss = LinBeamDyn(ring).twiss```
+
+```
+twiss = LinBeamDyn(ring).twiss
+```
 
 Plot twissfunctions:
+
 ```plot(twiss.s, twiss.betax, twiss.betay, twiss.etax```
