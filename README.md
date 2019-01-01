@@ -1,4 +1,4 @@
-<img src="images/icons/svg/icon.svg" width="64" height="64" align="left"/>
+<img src="images/icons/svg/logo.svg" width="64" height="64" align="left"/>
 
 # elements
 
