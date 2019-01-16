@@ -1,9 +1,3 @@
-import plotly
-plotly.io.orca.config.executable = '/home/felix/anaconda3/bin/orca'
-plotly.io.orca.config.save()
-
-
-
 import elements as el
 from elements.linbeamdyn import LinBeamDyn
 
@@ -17,5 +11,6 @@ ring = el.Mainline('fodo-ring', [fodo] * 8)
 lin = LinBeamDyn(ring)
 import matplotlib.pyplot as plt
 
+print(lin.twiss.betax[0])
 plt.plot(ring.s, lin.twiss.betax)
 plt.show()

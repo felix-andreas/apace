@@ -60,7 +60,7 @@ class _Element(_Base):
     def __init__(self, name, type, length, comment):
         super().__init__(name, type, comment)
         self._length = length
-        self._nkicks = 100
+        self._nkicks = 10
         self.parent_lines = set()
         self.stepsize = self._length / self._nkicks
         self._positions = []
