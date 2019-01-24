@@ -1,18 +1,22 @@
-<img src="images/icons/svg/icon.svg" width="64" height="64" align="left"/>
+<img src="images/icons/svg/logo.svg" width="64" height="64" align="left"/>
 
 # elements
 
 
 ## Usage
 import elements
-```import elements as el```
+```python
+import elements as el
+```
 
 ### Linear Beam Dynamics
 Import the linear beam dynamics module:
-```from elements.linbeamdyn import LinBeamDyn```
+```python
+from elements.linbeamdyn import LinBeamDyn
+```
 
 Create a ring consting out of FODO cells:  
-```
+```python
 D1 = el.Drift('D1', length=0.55)
 Q1 = el.Quad('Q1', length=0.2, k1=1.2)
 B1 = el.Bend('B1', length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
@@ -22,7 +26,12 @@ ring = el.Mainline('fodo-ring', [fodo] * 8)
 ```
 
 Get twiss parameters:
-``` twiss = LinBeamDyn(ring).twiss```
+```python
+twiss = LinBeamDyn(ring).twiss
+```
+
 
 Plot twissfunctions:
-```plot(twiss.s, twiss.betax, twiss.betay, twiss.etax```
+```python
+plot(twiss.s, twiss.betax, twiss.betay, twiss.etax)
+```
