@@ -1,10 +1,10 @@
-from elements.classes import Bend, Quad, Line, change_element_type
+from elements.classes import Bend, Quad, Cell, change_element_type
 
 b1 = Bend('B1', 1, 1, 1)
 print(id(b1))
 print(b1)
 
-line = Line("LINE1", [b1, b1, b1], comment="Mainline of the Ring")
+line = Cell("LINE1", [b1, b1, b1], comment="Mainline of the Ring")
 change_element_type(b1, Quad, 'Q2', l=0.4, k1=-1.2)
 print('\n')
 print(line)
