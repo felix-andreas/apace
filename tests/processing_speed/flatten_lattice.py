@@ -9,14 +9,14 @@ Q1 = el.Quad('Q1', length=2, k1=1)
 B1 = el.Bend('B1', length=1, angle=np.pi / 4)
 Q2 = el.Quad('Q2', length=2, k1=-1)
 D1 = el.Drift('D1', length=1)
-FODO = el.Line('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1])
-interFODO = el.Line('inter-Fodo', [FODO] * 100)
-ring = el.Mainline('fodo-ring', [interFODO] * 100)
+FODO = el.Cell('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1])
+interFODO = el.Cell('inter-Fodo', [FODO] * 100)
+ring = el.MainCell('fodo-ring', [interFODO] * 100)
 
 
 def update_lattice(tree):
     for x in tree:
-        if isinstance(x, el.Line):
+        if isinstance(x, el.Cell):
             yield from update_lattice(x.tree)
         else:
             yield x
@@ -32,7 +32,7 @@ def fun1():
 def fun2():
     def update_lattice2(tree):
         for x in tree:
-            if isinstance(x, el.Line):
+            if isinstance(x, el.Cell):
                 update_lattice2(x.tree)
             else:
                 liste.append(x)

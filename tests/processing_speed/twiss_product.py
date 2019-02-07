@@ -1,7 +1,8 @@
 import numpy as np
 from timeit import timeit
 from elements.clib import twiss_product, twiss_product_parallel, twissparameter, twissparameter_parallel
-from elements.utils import Structure, profile
+from elements.utils import Structure
+from elements.utils.profiler import profile
 
 __all__ = ['einsum', 'cCode_new', "cCode_new_parallel", 'cCode', 'cCode_parallel', 'dot_app']
 __all__ = ["cCode_new_parallel", 'cCode_new']# ,'cCode', 'cCode_parallel']

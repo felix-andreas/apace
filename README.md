@@ -1,7 +1,7 @@
 <img src="images/icons/svg/logo.svg" width="64" height="64" align="left"/>
 
 # elements
-
+Depends on Python 3.7 
 
 ## Usage
 import elements

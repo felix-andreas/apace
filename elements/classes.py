@@ -1,4 +1,5 @@
 import weakref  # only tree should contain strong ref
+from .utils import WeakList
 import numpy as np
 
 
@@ -6,7 +7,7 @@ class _Base:
 
     def __init__(self, name, type, comment):
         """
-        A base class for elements and lines.
+        A base class for elements and cells.
         Args:
             name: name of object
             type: type of object
@@ -22,7 +23,7 @@ class _Base:
     def __str__(self):
         attributes = []
         for key, value in self.__dict__.items():
-            if key[0] != '_' and key != "mainline" and not "trigger" in key:
+            if key[0] != '_' and key != "main_cell" and not "flag" in key:
                 if isinstance(value, weakref.WeakSet):
                     string = f"{', '.join(e.name for e in value):}"
                 else:
@@ -61,10 +62,10 @@ class _Element(_Base):
         super().__init__(name, type, comment)
         self._length = length
         self._nkicks = 10
-        self.parent_lines = set()
+        self.parent_cells = set() #weakref.WeakSet()
         self.stepsize = self._length / self._nkicks
         self._positions = []
-        self.mainline = None
+        self.main_cell = None
 
     @property
     def length(self):
@@ -74,8 +75,8 @@ class _Element(_Base):
     def length(self, value):
         self._length = value
         self.stepsize = self._length / self._nkicks
-        for x in self.parent_lines:
-            x.length_trigger.changed = True
+        for x in self.parent_cells:
+            x.length_flag.has_changed = True
 
     @property
     def nkicks(self):
@@ -85,13 +86,13 @@ class _Element(_Base):
     def nkicks(self, value):
         self._nkicks = value
         self.stepsize = self._length / self._nkicks
-        for x in self.parent_lines:
-            x.nkicks_trigger.changed = True
+        for x in self.parent_cells:
+            x.nkicks_flag.has_changed = True
 
     @property
     def positions(self):
-        if self.mainline and self.mainline.elements_positon_trigger.changed:
-            self.mainline.update_element_positions()
+        if self.main_cell and self.main_cell.elements_positon_flag.has_changed:
+            self.main_cell.update_element_positions()
         return self._positions
 
 
@@ -131,132 +132,146 @@ class Sext(_Element):
         self.k2 = k2
 
 
-class Line(_Base):
+class Cell(_Base):
     """
-    Class that defines the order of elements in accelerator. Accepts also Lines as input.
+    Class that defines the order of elements in accelerator. Accepts also cells as input.
         Parameters
         ----------
         name : str
-            Name of the line.
+            Name of the cell.
         tree : list
-            (Nested) list of elements/lines.
+            (Nested) list of elements/cells.
         comment : str, optional
-            A brief comment on the line.
+            A brief comment on the cell.
 
         Attributes
         ----------
         tree : list
-            (Nested) list of the lines/elements.
+            (Nested) list of the cells/elements.
+        child_cells : set
+            Set of all children cells.
+        parent_cells : set
+            Set of all parent cells.
+
+        Properties
+        ----------
         lattice : list
             List that defines the physical order of elements in the magnetic lattice.
             Corresponds to flattened tree attribute.
         elements : set
             Set of all elements.
-        all_lines : set
-            Set of all lines.
-        child_lines : set
-            Set of all children lines.
-        parent_lines : set
-            Set of all parent lines.
+        cells : set
+            Set of all cells.
     """
 
     def __init__(self, name, tree, comment=''):
-        super().__init__(name, "Line", comment)
+        super().__init__(name, "Cell", comment)
         # attributes
-        self.tree = list()  # has strong links to objects
-        self.child_lines = weakref.WeakSet()
-        self.parent_lines = weakref.WeakSet()
-        self.tree_trigger = PropertyTrigger()
-        self.mainline = None
+        self._tree = list()  # has strong links to objects
+        self.tree_flag = CachedPropertyFlag(depends_on=None)
+        self.child_cells = set() #weakref.WeakSet()
+        self.parent_cells = set() #weakref.WeakSet()
+        self.main_cell = None
         # tree properties
-        self.tree_properties_trigger = PropertyTriggerLine(self, "tree_properties_trigger",
-                                                           depends_on=self.tree_trigger)
-        self._lattice = None
-        self._elements = None
-        self._all_lines = None
+        self.tree_properties_flag = CachedPropertyFlagCell(self, "tree_properties_flag", depends_on=[self.tree_flag])
+        self._lattice = list() #WeakList()  ##TODO: check performance vs list
+        self._elements = dict() #weakref.WeakValueDictionary
+        self._cells = dict() #weakref.WeakValueDictionary
         # length
-        self._length = None
-        self.length_trigger = PropertyTriggerLine(self, "length_trigger", depends_on=self.tree_trigger)
+        self._length = 0
+        self.length_flag = CachedPropertyFlagCell(self, "length_flag", depends_on=[self.tree_flag])
         # nkicks
-        self._nkicks = None
-        self.nkicks_trigger = PropertyTriggerLine(self, "nkicks_trigger", depends_on=self.tree_trigger)
+        self._nkicks = 0
+        self.nkicks_flag = CachedPropertyFlagCell(self, "nkicks_flag", depends_on=[self.tree_flag])
         # add objects
-        self.add_objects(tree, pos=-1)
+        self.tree_add_objects(tree, pos=len(self.tree))
 
-    # change tree
-    def add_objects(self, elements, pos):
-        self.tree[pos:pos] = elements
-        for x in elements:
-            x.parent_lines.add(self)
-            if isinstance(x, Line):
-                self.child_lines.add(x)
-        self.tree_trigger.trigger_dependents()
+    @property
+    def tree(self):
+        return self._tree
 
-    def remove_objects(self, pos, num=1):
-        elements = self.tree[pos:pos + num]
-        self.tree[pos:pos + num] = []
-        for x in elements:
-            if isinstance(x, Line):
-                self.child_lines.remove(x)
-            if x not in self.tree:
-                x.parent_lines.remove(self)
-        self.tree_trigger.trigger_dependents()
+    # tree setter 1
+    def tree_add_objects(self, new_objects_list, pos):
+        self.tree_properties_flag.has_changed = True
+        self._tree[pos:pos] = new_objects_list
+        for obj in set(new_objects_list):
+            obj.parent_cells.add(self)
+            if isinstance(obj, Cell):
+                self.child_cells.add(obj)
+        self.tree_flag.has_changed = False
+
+    # tree setter 2
+    def tree_remove_objects(self, pos, num=1):
+        self.tree_properties_flag.has_changed = True
+        removed_objects = self.tree[pos:pos + num]
+        self._tree[pos:pos + num] = []
+        for obj in set(removed_objects):
+            if obj not in self._tree:
+                if isinstance(obj, Cell):
+                    self.child_cells.remove(obj)
+                print(obj.name, obj.parent_cells, self.tree)
+                obj.parent_cells.remove(self)
+        self.tree_flag.has_changed = False
 
     # class properties
     @property
     def lattice(self):
-        if self.tree_properties_trigger.changed:
-            self.update_lattice_properties()
+        if self.tree_properties_flag.has_changed:
+            self.update_tree_properties()
         return self._lattice
 
     @property
     def elements(self):
-        if self.tree_properties_trigger.changed:
-            self.update_lattice_properties()
+        if self.tree_properties_flag.has_changed:
+            self.update_tree_properties()
         return self._elements
 
     @property
-    def all_lines(self):
-        if self.tree_properties_trigger.changed:
-            self.update_lattice_properties()
-        return self._all_lines
+    def cells(self):
+        if self.tree_properties_flag.has_changed:
+            self.update_tree_properties()
+        return self._cells
 
-    def update_lattice_properties(self):
-        self._lattice = list()  ## should be weakref
-        self._elements = weakref.WeakSet()
-        self._all_lines = weakref.WeakSet()
-        self._update_lattice_properties(self.tree)
-        self.tree_properties_trigger.changed = False
+    def update_tree_properties(self):
+        self._lattice.clear()
+        self._elements.clear()
+        self._cells.clear()
+        self._update_tree_properties(self.tree)
+        self.tree_properties_flag.has_changed = False
 
-    def _update_lattice_properties(self, tree):
-        '''A recursive helper function for update_lattice_properties.'''
+
+    def _update_tree_properties(self, tree):
+        '''A recursive helper function for update_tree_properties.'''
         for x in tree:
-            if isinstance(x, Line):
-                self._all_lines.add(x)
-                self._update_lattice_properties(x.tree)
+            # x = weakref.proxy(x) # all references should be weak!
+            if isinstance(x, Cell):
+                if x.name not in self._cells:
+                    self._cells[x.name] = x
+                self._update_tree_properties(x.tree)
             else:
                 self._lattice.append(x)
-                self._elements.add(x)
+                if x.name not in self._elements:
+                    self._elements[x.name] = x
 
     @property
     def length(self):
-        if self.length_trigger.changed:
+        if self.length_flag.has_changed:
             self.update_length()
-            self.length_trigger.changed = False
+            self.length_flag.has_changed = False
         return self._length
 
-    def update_length(self):  # is overwritten in Mainline class
+    def update_length(self):  # is overwritten in Maincell class
         self._length = sum([x.length for x in self.tree])
-        self.length_trigger.changed = False
+        self.length_flag.has_changed = False
 
     @property
     def nkicks(self):
-        if self.nkicks_trigger.changed:
+        if self.nkicks_flag.has_changed:
             self.update_nkicks()
-            self.nkicks_trigger.changed = False
+            self.nkicks_flag.has_changed = False
         return self._nkicks
 
-    def update_nkicks(self):  # is overwritten in Mainline class
+    def update_nkicks(self):  # is overwritten in Maincell class
         self._nkicks = sum([x.nkicks for x in self.tree])
 
     def print_tree(self):
@@ -269,15 +284,15 @@ class Line(_Base):
         del self.filler
         del self.start
 
-    def _print_tree(self, line):
-        length = len(line.tree)
-        for i, x in enumerate(line.tree):
+    def _print_tree(self, cell):
+        length = len(cell.tree)
+        for i, x in enumerate(cell.tree):
             is_last = i == length - 1
             fill = "└───" if is_last else "├───"
             print(f"{self.filler}{fill} {x.name}")
             if is_last and self.depth == 0:
                 self.start = "    "
-            if isinstance(x, Line):
+            if isinstance(x, Cell):
                 self.depth += 1
                 self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ("    " if is_last else "│   ")
                 self._print_tree(x)
@@ -285,64 +300,58 @@ class Line(_Base):
                 self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ("    " if is_last else "│   ")
 
     def __del__(self):
-        # print('delete {}'.format(self.name))
-        for x in self.child_lines:
-            x.parent_lines.discard(self)
+        for x in self.child_cells:
+            x.parent_cells.discard(self)
 
 
-class Mainline(Line):
+class MainCell(Cell):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # attriutes
-        methods = set()
-        # properties
-        # elements positon
-        self.elements_positon_trigger = PropertyTrigger(depends_on=[self.tree_trigger, self.nkicks_trigger])
-        # set mainline link to all elements and lines
-        for x in self.elements | self.all_lines:
-            x.mainline = self
-        # stepsize
+        self.elements_positon_flag = CachedPropertyFlag(depends_on=[self.tree_properties_flag, self.nkicks_flag])
+        # set maincell link to all elements and cells
+        for x in self.elements.values():
+            x.main_cell = self
+        for x in self.cells.values():
+            x.main_cell = self
         self._stepsize = None
-        self.stepsize_trigger = PropertyTrigger(
-            depends_on=[self.nkicks_trigger, self.length_trigger, self.tree_trigger])
-        # orbit coordinate s
+        self.stepsize_flag = CachedPropertyFlag(depends_on=[self.nkicks_flag, self.length_flag, self.tree_properties_flag])
         self._s = None
-        self.s_trigger = PropertyTrigger(depends_on=self.stepsize_trigger)
+        self.s_flag = CachedPropertyFlag(depends_on=[self.stepsize_flag])
 
     @property
     def stepsize(self):
-        if self.stepsize_trigger.changed:
+        if self.stepsize_flag.has_changed:
             self._stepsize = np.empty(self.nkicks + 1)
             self._stepsize[0] = 0
-            for element in self.elements:
+            for element in self.elements.values():
                 self._stepsize[element.positions] = element.stepsize
-            self.stepsize_trigger.changed = False
+            self.stepsize_flag.has_changed = False
         return self._stepsize
 
     @property
     def s(self):
-        if self.s_trigger.changed:
+        if self.s_flag.has_changed:
             self._s = np.add.accumulate(self.stepsize)  # s corresponds to the orbit position
         return self._s
 
-    @Line.length.setter
+    @Cell.length.setter
     def length(self, new_length):
         ratio = new_length / self._length
         self._length = new_length
-        for x in self.elements:
+        for x in self.elements.values():
             x.length = x.length * ratio
 
     def update_nkicks(self):
         super().update_nkicks()
-        self.elements_positon_trigger.changed = True
+        self.elements_positon_flag.has_changed = True
 
-    def update_lattice_properties(self):
-        super().update_lattice_properties()
-        self.elements_positon_trigger.changed = True
+    def update_tree_properties(self):
+        super().update_tree_properties()
+        self.elements_positon_flag.has_changed = True
 
     def update_element_positions(self):
-        self.elements_positon_trigger.changed = False
-        for element in self.elements:  # clear element positons
+        self.elements_positon_flag.has_changed = False
+        for element in self.elements.values():  # clear element positons
             element._positions.clear()
         start = 1  # starts with 1 because 0th entry is identity matrix
         for element in self.lattice:
@@ -358,51 +367,45 @@ def change_element_type(element, new_type, *args, **kwargs):
     element.__init__(*args, **kwargs)
 
 
-class PropertyTrigger:  # muss verbessert werden , name sollte nicht ubergeben werden
-    def __init__(self, depends_on=None, initial_state=True):
+class CachedPropertyFlag:
+    def __init__(self, depends_on, initial_state=True):
         """
         A container class for an attribute, which is only computed if one of the
         objects it depends on changes.
         Args:
             depends_on: list of objects the object depends on
         """
-        self._changed = initial_state
+        self._has_changed = initial_state
         self.dependents = set()
-        # convert depends_on to list
-        tmp = depends_on or []  # check if None
-        self.depends_on = tmp if isinstance(tmp, list) else [tmp]
-        for x in self.depends_on:
-            x.dependents.add(self)
+        self.depends_on = depends_on
+
+        if depends_on is not None:
+            for x in self.depends_on:
+                x.dependents.add(self)
 
     @property
-    def changed(self):
-        return self._changed
+    def has_changed(self):
+        return self._has_changed
 
-    @changed.setter
-    def changed(self, value):
-        self._changed = value
+    @has_changed.setter
+    def has_changed(self, value):
+        self._has_changed = value
         if value:
-            self.trigger_dependents()
+            self.set_dependents_flags()
 
-    def trigger_dependents(self):
+    def set_dependents_flags(self):
         for x in self.dependents:
-            x.changed = True
+            x.has_changed = True
 
 
-class PropertyTriggerLine(PropertyTrigger):
-    def __init__(self, line, triggername, depends_on=None):
+class CachedPropertyFlagCell(CachedPropertyFlag): # muss verbessert werden , name sollte nicht ubergeben werden
+    def __init__(self, cell, flag_name, depends_on=None):
         super().__init__(depends_on)
-        self.line = line
-        self.triggername = triggername
+        self.cell = cell
+        self.flag_name = flag_name
 
-    def trigger_dependents(self):
-        super().trigger_dependents()
-        for x in self.line.parent_lines:
-            getattr(x, self.triggername).changed = True
+    def set_dependents_flags(self):
+        super().set_dependents_flags()
+        for x in self.cell.parent_cells:
+            getattr(x, self.flag_name).has_changed = True
 
-
-class Method:
-
-    def __init__(self, mainline):
-        self.mainline = mainline
-        self.mainline.methods.add(self)

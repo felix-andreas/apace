@@ -1,6 +1,6 @@
-import os
-import re
-from .classes import Drift, Bend, Quad, Sext, Line, Mainline
+import os, re, inspect, json
+
+from . import classes
 
 
 def read_lattice_file(filepath):
@@ -52,26 +52,41 @@ def read_lattice_file(filepath):
         exec(string)
         return list(locals().values())[-1]
 
-def save_lattice_file(line, filepath):
-    elements_dict = dict()
-    for x in line.elements:
-        if type(x) in elements_dict:
-            elements_dict[type(x)].append(x)
-        else:
-            elements_dict[type(x)] = [x]
-    outputlist = []
-    for key, value in elements_dict.items():
-        outputlist.append(f"##### {key}s #####")
-        outputlist.extend([])
 
-    # with open(filepath, 'w') as file:
-    #
-    #     file.write()
-    #     file.write("\n".join())
+def from_json(json_data):
+    objects = {}  # dictionary for all objects (elements + lines)
+    for k, v in json_data['elements'].items():
+        type_ = v.pop('type')
+        class_ = getattr(classes, type_)
+        objects[k] = class_(name=k, **v)
+    for cell_name, elements_name_list in json_data['cells'].items():
+        tree = [objects[name] for name in elements_name_list]
+        objects[cell_name] = classes.Cell(name=cell_name, tree=tree)
+    main_tree = [objects[name] for name in json_data["maincell"]]
+    return classes.MainCell(name=json_data["name"], tree=main_tree)
 
 
-if __name__ == '__main__':
-    filepath = os.getcwd() + '/lattices/BII_2016-06-10_user_Sym_noID_DesignLattice1996.lte'
-    filepath2 = "test.lte"
-    line = read_lattice_file(filepath)
-    save_lattice_file(line, filepath2)
+def read_lattice_file_json(filepath):
+    with open(filepath) as f:
+        json_data = json.load(f)
+    return from_json(json_data)
+
+
+def save_lattice_file_json(mainline, filepath):
+    with open(filepath, 'w') as outfile:
+        json.dump(as_dict(mainline), outfile, indent=2)
+
+
+def as_dict(mainline):
+    elements_dict = {}
+    for element in mainline.elements.values():
+        elements_dict[element.name] = {key: getattr(element, key) for (key, value) in inspect.signature(element.__class__).parameters.items()}
+        elements_dict[element.name]["type"] = element.__class__.__name__
+
+    lines_dict = {line.name: str(line.tree) for line in mainline.cells.values()}
+    main_dict = dict(name=mainline.name, elements=elements_dict, cells=lines_dict, maincell=str(mainline.tree))
+    return main_dict
+
+
+def as_json(mainline, indent=None):
+    return json.dumps(as_dict(mainline), indent=indent)
