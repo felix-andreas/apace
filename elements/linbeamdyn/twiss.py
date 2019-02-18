@@ -2,13 +2,11 @@ import warnings
 
 import numpy as np
 from ..clib import accumulate_array, twissparameter_parallel, twissparameter
-from elements.utils import Structure
 
 matrix_size = 5
 
 
-def twissdata(transfer_matrices):
-    twiss = Structure()
+def twissdata(twiss, transfer_matrices):
     acc_array = np.empty(transfer_matrices.shape)
     accumulate_array(transfer_matrices, acc_array)
     fullmatrix = acc_array[-1]
@@ -51,5 +49,3 @@ def twissdata(transfer_matrices):
     twiss.etax = twissarray[6]  # gammay
     twiss.ddsetax = twissarray[7]  # gammay
     twissparameter(acc_array, B0vec, twissarray)
-    print(twiss.betax[0])
-    return twiss

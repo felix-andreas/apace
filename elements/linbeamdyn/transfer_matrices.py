@@ -4,7 +4,7 @@ from ..classes import Bend, Quad
 matrix_size = 5
 
 def get_transfer_matrices(elements, matrix_array):
-    for element in elements.values():
+    for element in elements:
         pos = element.positions  # pos in matrix array
         nkicks = element.nkicks
         # Quads
