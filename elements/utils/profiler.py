@@ -4,7 +4,7 @@ import pstats
 from time import process_time as timer, perf_counter as timer2
 
 
-def profile(fun, num=1, print_pstats=True):
+def profile(fun, num=1, out_lines="all"):
 
     """A decorator that uses cProfile to profile a function."""
 
@@ -22,9 +22,11 @@ def profile(fun, num=1, print_pstats=True):
         s = io.StringIO()
         sortby = 'cumulative'
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-        if print_pstats:
+        if out_lines:
             ps.print_stats()
-            print(s.getvalue())
+            tmp = s.getvalue()
+            tmp = tmp if out_lines == "all" else "\n".join(tmp.splitlines()[0:out_lines])
+            print(tmp)
         return retval
 
     return inner

@@ -95,6 +95,9 @@ class _Element(_Base):
             self.main_cell.update_element_positions()
         return self._positions
 
+    def value_changed(self):
+        self.main_cell.set_changed_element(self)
+
 
 class Drift(_Element):
     def __init__(self, name, length, comment=''):
@@ -111,9 +114,36 @@ class Drift(_Element):
 class Bend(_Element):
     def __init__(self, name, length, angle, e1=0, e2=0, comment=''):
         super().__init__(name, 'Bend', length, comment)
-        self.angle = angle
-        self.e1 = e1
-        self.e2 = e2
+        self._angle = angle
+        self._e1 = e1
+        self._e2 = e2
+        
+    @property
+    def angle(self):
+        return self._angle
+
+    @angle.setter
+    def angle(self, value):
+        self._angle = value
+        self.value_changed()
+    
+    @property
+    def e1(self):
+        return self._e1
+
+    @e1.setter
+    def e1(self, value):
+        self._e1 = value
+        self.value_changed()
+        
+    @property
+    def e2(self):
+        return self._e2
+
+    @e2.setter
+    def e2(self, value):
+        self._e2 = value
+        self.value_changed()
 
     @property
     def radius(self):
@@ -123,13 +153,31 @@ class Bend(_Element):
 class Quad(_Element):
     def __init__(self, name, length, k1, comment=''):
         super().__init__(name, 'Quad', length, comment)
-        self.k1 = k1
+        self._k1 = k1
+
+    @property
+    def k1(self):
+        return self._k1
+
+    @k1.setter
+    def k1(self, value):
+        self._k1 = value
+        self.value_changed()
 
 
 class Sext(_Element):
     def __init__(self, name, length, k2, comment=''):
         super().__init__(name, 'Sext', length, comment)
-        self.k2 = k2
+        self._k2 = k2
+
+    @property
+    def k2(self):
+        return self._k2
+
+    @k2.setter
+    def k2(self, value):
+        self._k2 = value
+        self.value_changed()
 
 
 class Cell(_Base):
@@ -317,6 +365,10 @@ class MainCell(Cell):
         self.stepsize_flag = CachedPropertyFlag(depends_on=[self.nkicks_flag, self.length_flag, self.tree_properties_flag])
         self._s = None
         self.s_flag = CachedPropertyFlag(depends_on=[self.stepsize_flag])
+        self._changed_elements = set()
+        self.changed_elements_flag = CachedPropertyFlag()
+        self.methods = []
+
 
     @property
     def stepsize(self):
@@ -359,6 +411,11 @@ class MainCell(Cell):
             element._positions.extend(list(range(start, end)))
             start = end
 
+    def set_changed_element(self, element):
+        self.changed_elements_flag.set_dependents_flags()
+        for method in self.methods:
+            method.changed_elements(element)
+
 
 def change_element_type(element, new_type, *args, **kwargs):
     for key in list(element.__dict__):
@@ -368,7 +425,7 @@ def change_element_type(element, new_type, *args, **kwargs):
 
 
 class CachedPropertyFlag:
-    def __init__(self, depends_on, initial_state=True):
+    def __init__(self, depends_on=None, initial_state=True):
         """
         A container class for an attribute, which is only computed if one of the
         objects it depends on changes.
@@ -379,7 +436,7 @@ class CachedPropertyFlag:
         self.dependents = set()
         self.depends_on = depends_on
 
-        if depends_on is not None:
+        if depends_on:
             for x in self.depends_on:
                 x.dependents.add(self)
 

@@ -62,7 +62,7 @@ def from_json(json_data):
     for cell_name, elements_name_list in json_data['cells'].items():
         tree = [objects[name] for name in elements_name_list]
         objects[cell_name] = classes.Cell(name=cell_name, tree=tree)
-    main_tree = [objects[name] for name in json_data["maincell"]]
+    main_tree = [objects[name] for name in json_data["main_cell"]]
     return classes.MainCell(name=json_data["name"], tree=main_tree)
 
 
@@ -84,7 +84,7 @@ def as_dict(mainline):
         elements_dict[element.name]["type"] = element.__class__.__name__
 
     lines_dict = {line.name: str(line.tree) for line in mainline.cells.values()}
-    main_dict = dict(name=mainline.name, elements=elements_dict, cells=lines_dict, maincell=str(mainline.tree))
+    main_dict = dict(name=mainline.name, elements=elements_dict, cells=lines_dict, main_cell=str(mainline.tree))
     return main_dict
 
 
