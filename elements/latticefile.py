@@ -60,10 +60,13 @@ def from_json(json_data):
         class_ = getattr(classes, type_)
         objects[k] = class_(name=k, **v)
     for cell_name, elements_name_list in json_data['cells'].items():
+        objects[cell_name] = classes.Cell(name=cell_name)
+    for cell_name, elements_name_list in json_data['cells'].items():
         tree = [objects[name] for name in elements_name_list]
-        objects[cell_name] = classes.Cell(name=cell_name, tree=tree)
+        objects[cell_name].tree_add_objects(tree)
+
     main_tree = [objects[name] for name in json_data["main_cell"]]
-    return classes.MainCell(name=json_data["name"], tree=main_tree)
+    return classes.MainCell(name=json_data["name"], tree=main_tree, description=json_data.get("description", ""))
 
 
 def read_lattice_file_json(filepath):
@@ -72,21 +75,27 @@ def read_lattice_file_json(filepath):
     return from_json(json_data)
 
 
-def save_lattice_file_json(mainline, filepath):
+def save_lattice_file_json(main_cell, filepath=None):
+    filepath = filepath if filepath else f"{main_cell.name}.json"
+    dirname = os.path.dirname(filepath)
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
     with open(filepath, 'w') as outfile:
-        json.dump(as_dict(mainline), outfile, indent=2)
+        json.dump(as_dict(main_cell), outfile, indent=2)
 
 
-def as_dict(mainline):
+def as_dict(main_cell):
     elements_dict = {}
-    for element in mainline.elements.values():
-        elements_dict[element.name] = {key: getattr(element, key) for (key, value) in inspect.signature(element.__class__).parameters.items()}
+    for element in main_cell.elements.values():
+        tmp = {key: getattr(element, key) for (key, value) in inspect.signature(element.__class__).parameters.items()}
+        tmp.pop("name")
+        elements_dict[element.name] = tmp
         elements_dict[element.name]["type"] = element.__class__.__name__
 
-    lines_dict = {line.name: str(line.tree) for line in mainline.cells.values()}
-    main_dict = dict(name=mainline.name, elements=elements_dict, cells=lines_dict, main_cell=str(mainline.tree))
+    cells_dict = {cell.name: [obj.name for obj in cell.tree] for cell in main_cell.cells.values()}
+    main_dict = dict(name=main_cell.name, description=main_cell.description, elements=elements_dict, cells=cells_dict, main_cell=[obj.name for obj in main_cell.tree])
     return main_dict
 
 
-def as_json(mainline, indent=None):
-    return json.dumps(as_dict(mainline), indent=indent)
+def as_json(main_cell, indent=None):
+    return json.dumps(as_dict(main_cell), indent=indent)

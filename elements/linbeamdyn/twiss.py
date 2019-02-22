@@ -19,7 +19,8 @@ def twissdata(twiss, transfer_matrices, interpolate=None):
     twiss.stable = twiss.stable_x and twiss.stable_y
 
     if not twiss.stable:
-        warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
+        ...
+        # warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
     else:
         x_b0 = np.abs(2 * fullmatrix[0, 1]) / np.sqrt(tmp_x)
         x_a0 = (fullmatrix[0, 0] - fullmatrix[1, 1]) / (2 * fullmatrix[0, 1]) * x_b0

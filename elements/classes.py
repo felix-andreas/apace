@@ -212,7 +212,7 @@ class Cell(_Base):
             Set of all cells.
     """
 
-    def __init__(self, name, tree, comment=''):
+    def __init__(self, name, tree=None, comment=''):
         super().__init__(name, "Cell", comment)
         # attributes
         self._tree = list()  # has strong links to objects
@@ -232,16 +232,21 @@ class Cell(_Base):
         self._nkicks = 0
         self.nkicks_flag = CachedPropertyFlagCell(self, "nkicks_flag", depends_on=[self.tree_flag])
         # add objects
-        self.tree_add_objects(tree, pos=len(self.tree))
+        if tree:
+            self.tree_add_objects(tree, pos=len(self.tree))
 
     @property
     def tree(self):
         return self._tree
 
     # tree setter 1
-    def tree_add_objects(self, new_objects_list, pos):
+    def tree_add_objects(self, new_objects_list, pos=None):
         self.tree_properties_flag.has_changed = True
-        self._tree[pos:pos] = new_objects_list
+        if pos:
+            self._tree[pos:pos] = new_objects_list
+        else:
+            self._tree.extend(new_objects_list)
+
         for obj in set(new_objects_list):
             obj.parent_cells.add(self)
             if isinstance(obj, Cell):
@@ -353,7 +358,8 @@ class Cell(_Base):
 
 
 class MainCell(Cell):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, description="", **kwargs):
+        self.description = description
         super().__init__(*args, **kwargs)
         self.elements_positon_flag = CachedPropertyFlag(depends_on=[self.tree_properties_flag, self.nkicks_flag])
         # set maincell link to all elements and cells
