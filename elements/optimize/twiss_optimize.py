@@ -20,7 +20,7 @@ def fit_twiss_to_ref_twiss(elements, attributes, linbeamdyn, ref_twiss, method="
         betaxres = betaxres ** 4
         betayres = betayres ** 4
         beta_mean_res = np.mean([betaxres, betayres])
-        # beta_max = np.max([twiss.betax, twiss.betay])
+        # beta_max = np.max([twiss.beta_x, twiss.beta_y])
         # beta_value_max = beta_max
 
         # nonlocal iter

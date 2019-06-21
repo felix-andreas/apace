@@ -4,7 +4,6 @@ import numpy as np
 
 
 class _Base:
-
     def __init__(self, name, type, comment):
         """
         A base class for elements and cells.
@@ -16,6 +15,7 @@ class _Base:
         self.name = name
         self.comment = comment
         self.type = type
+        self.parent_cells = set()  # weakref.WeakSet()
 
     def __repr__(self):
         return self.name
@@ -61,9 +61,8 @@ class _Element(_Base):
     def __init__(self, name, type, length, comment):
         super().__init__(name, type, comment)
         self._length = length
-        self._nkicks = 10
-        self.parent_cells = set() #weakref.WeakSet()
-        self.stepsize = self._length / self._nkicks
+        self._n_kicks = 10
+        self.step_size = self._length / self._n_kicks
         self._positions = []
         self.main_cell = None
 
@@ -74,24 +73,24 @@ class _Element(_Base):
     @length.setter
     def length(self, value):
         self._length = value
-        self.stepsize = self._length / self._nkicks
+        self.step_size = self._length / self._n_kicks
         for x in self.parent_cells:
             x.length_flag.has_changed = True
 
     @property
-    def nkicks(self):
-        return self._nkicks
+    def n_kicks(self):
+        return self._n_kicks
 
-    @nkicks.setter
-    def nkicks(self, value):
-        self._nkicks = value
-        self.stepsize = self._length / self._nkicks
+    @n_kicks.setter
+    def n_kicks(self, value):
+        self._n_kicks = value
+        self.step_size = self._length / self._n_kicks
         for x in self.parent_cells:
             x.nkicks_flag.has_changed = True
 
     @property
     def positions(self):
-        if self.main_cell and self.main_cell.elements_positon_flag.has_changed:
+        if self.main_cell and self.main_cell.elements_position_flag.has_changed:
             self.main_cell.update_element_positions()
         return self._positions
 
@@ -117,7 +116,7 @@ class Bend(_Element):
         self._angle = angle
         self._e1 = e1
         self._e2 = e2
-        
+
     @property
     def angle(self):
         return self._angle
@@ -126,7 +125,7 @@ class Bend(_Element):
     def angle(self, value):
         self._angle = value
         self.value_changed()
-    
+
     @property
     def e1(self):
         return self._e1
@@ -135,7 +134,7 @@ class Bend(_Element):
     def e1(self, value):
         self._e1 = value
         self.value_changed()
-        
+
     @property
     def e2(self):
         return self._e2
@@ -148,6 +147,10 @@ class Bend(_Element):
     @property
     def radius(self):
         return self.length / self.angle
+
+    @radius.setter
+    def radius(self, value):
+        self.angle = value
 
 
 class Quad(_Element):
@@ -217,20 +220,19 @@ class Cell(_Base):
         # attributes
         self._tree = list()  # has strong links to objects
         self.tree_flag = CachedPropertyFlag(depends_on=None)
-        self.child_cells = set() #weakref.WeakSet()
-        self.parent_cells = set() #weakref.WeakSet()
+        self.child_cells = set()  # weakref.WeakSet()
         self.main_cell = None
         # tree properties
         self.tree_properties_flag = CachedPropertyFlagCell(self, "tree_properties_flag", depends_on=[self.tree_flag])
-        self._lattice = list() #WeakList()  ##TODO: check performance vs list
-        self._elements = dict() #weakref.WeakValueDictionary
-        self._cells = dict() #weakref.WeakValueDictionary
+        self._lattice = list()  # WeakList()  ##TODO: check performance vs list
+        self._elements = dict()  # weakref.WeakValueDictionary
+        self._cells = dict()  # weakref.WeakValueDictionary
         # length
         self._length = 0
         self.length_flag = CachedPropertyFlagCell(self, "length_flag", depends_on=[self.tree_flag])
-        # nkicks
-        self._nkicks = 0
-        self.nkicks_flag = CachedPropertyFlagCell(self, "nkicks_flag", depends_on=[self.tree_flag])
+        # n_kicks
+        self._n_kicks = 0
+        self.n_kicks_flag = CachedPropertyFlagCell(self, "n_kicks_flag", depends_on=[self.tree_flag])
         # add objects
         if tree:
             self.tree_add_objects(tree, pos=len(self.tree))
@@ -292,7 +294,6 @@ class Cell(_Base):
         self._update_tree_properties(self.tree)
         self.tree_properties_flag.has_changed = False
 
-
     def _update_tree_properties(self, tree):
         '''A recursive helper function for update_tree_properties.'''
         for x in tree:
@@ -313,19 +314,19 @@ class Cell(_Base):
             self.length_flag.has_changed = False
         return self._length
 
-    def update_length(self):  # is overwritten in Maincell class
+    def update_length(self):  # is overwritten in main cell class
         self._length = sum([x.length for x in self.tree])
         self.length_flag.has_changed = False
 
     @property
-    def nkicks(self):
-        if self.nkicks_flag.has_changed:
-            self.update_nkicks()
-            self.nkicks_flag.has_changed = False
-        return self._nkicks
+    def n_kicks(self):
+        if self.n_kicks_flag.has_changed:
+            self.update_n_kicks()
+            self.n_kicks_flag.has_changed = False
+        return self._n_kicks
 
-    def update_nkicks(self):  # is overwritten in Maincell class
-        self._nkicks = sum([x.nkicks for x in self.tree])
+    def update_n_kicks(self):  # is overwritten in main cell class
+        self._n_kicks = sum([x.n_kicks for x in self.tree])
 
     def print_tree(self):
         self.depth = 0
@@ -361,35 +362,35 @@ class MainCell(Cell):
     def __init__(self, *args, description="", **kwargs):
         self.description = description
         super().__init__(*args, **kwargs)
-        self.elements_positon_flag = CachedPropertyFlag(depends_on=[self.tree_properties_flag, self.nkicks_flag])
-        # set maincell link to all elements and cells
+        self.elements_position_flag = CachedPropertyFlag(depends_on=[self.tree_properties_flag, self.n_kicks_flag])
+        # set main_cell link to all elements and cells
         for x in self.elements.values():
             x.main_cell = self
         for x in self.cells.values():
             x.main_cell = self
-        self._stepsize = None
-        self.stepsize_flag = CachedPropertyFlag(depends_on=[self.nkicks_flag, self.length_flag, self.tree_properties_flag])
+        self._step_size = None
+        self.step_size_flag = CachedPropertyFlag(
+            depends_on=[self.n_kicks_flag, self.length_flag, self.tree_properties_flag])
         self._s = None
-        self.s_flag = CachedPropertyFlag(depends_on=[self.stepsize_flag])
+        self.s_flag = CachedPropertyFlag(depends_on=[self.step_size_flag])
         self._changed_elements = set()
         self.changed_elements_flag = CachedPropertyFlag()
         self.methods = []
 
-
     @property
-    def stepsize(self):
-        if self.stepsize_flag.has_changed:
-            self._stepsize = np.empty(self.nkicks + 1)
-            self._stepsize[0] = 0
+    def step_size(self):
+        if self.step_size_flag.has_changed:
+            self._step_size = np.empty(self.n_kicks + 1)
+            self._step_size[0] = 0
             for element in self.elements.values():
-                self._stepsize[element.positions] = element.stepsize
-            self.stepsize_flag.has_changed = False
-        return self._stepsize
+                self._step_size[element.positions] = element.step_size
+            self.step_size_flag.has_changed = False
+        return self._step_size
 
     @property
     def s(self):
         if self.s_flag.has_changed:
-            self._s = np.add.accumulate(self.stepsize)  # s corresponds to the orbit position
+            self._s = np.add.accumulate(self.step_size)  # s corresponds to the orbit position
         return self._s
 
     @Cell.length.setter
@@ -399,21 +400,21 @@ class MainCell(Cell):
         for x in self.elements.values():
             x.length = x.length * ratio
 
-    def update_nkicks(self):
-        super().update_nkicks()
-        self.elements_positon_flag.has_changed = True
+    def update_n_kicks(self):
+        super().update_n_kicks()
+        self.elements_position_flag.has_changed = True
 
     def update_tree_properties(self):
         super().update_tree_properties()
-        self.elements_positon_flag.has_changed = True
+        self.elements_position_flag.has_changed = True
 
     def update_element_positions(self):
-        self.elements_positon_flag.has_changed = False
+        self.elements_position_flag.has_changed = False
         for element in self.elements.values():  # clear element positons
             element._positions.clear()
         start = 1  # starts with 1 because 0th entry is identity matrix
         for element in self.lattice:
-            end = start + element.nkicks
+            end = start + element.n_kicks
             element._positions.extend(list(range(start, end)))
             start = end
 
@@ -461,7 +462,7 @@ class CachedPropertyFlag:
             x.has_changed = True
 
 
-class CachedPropertyFlagCell(CachedPropertyFlag): # muss verbessert werden , name sollte nicht ubergeben werden
+class CachedPropertyFlagCell(CachedPropertyFlag):  # muss verbessert werden , name sollte nicht ubergeben werden
     def __init__(self, cell, flag_name, depends_on=None):
         super().__init__(depends_on)
         self.cell = cell
@@ -471,4 +472,3 @@ class CachedPropertyFlagCell(CachedPropertyFlag): # muss verbessert werden , nam
         super().set_dependents_flags()
         for x in self.cell.parent_cells:
             getattr(x, self.flag_name).has_changed = True
-

@@ -6,11 +6,11 @@ matrix_size = 5
 def get_transfer_matrices(elements, matrix_array):
     for element in elements:
         pos = element.positions  # pos in matrix array
-        nkicks = element.nkicks
+        nkicks = element.n_kicks
         # Quads
         if isinstance(element, Quad) and element.k1:  # Quad with k = 0 -> Drift
             sqk = np.sqrt(np.absolute(element.k1))
-            om = sqk * element.stepsize
+            om = sqk * element.step_size
             sin = np.sin(om)
             cos = np.cos(om)
             sinh = np.sinh(om)
@@ -29,11 +29,11 @@ def get_transfer_matrices(elements, matrix_array):
                                                [0, 0, 0, 0, 1]])
         # Bends
         elif isinstance(element, Bend) and element.angle:  # Bend with angle = 0 -> Drift
-            sin = np.sin(element.stepsize / element.radius)
-            cos = np.cos(element.stepsize / element.radius)
+            sin = np.sin(element.step_size / element.radius)
+            cos = np.cos(element.step_size / element.radius)
             matrix_array[pos] = np.array([[cos, element.radius * sin, 0, 0, element.radius * (1 - cos)],
                                           [-1 / element.radius * sin, cos, 0, 0, sin],
-                                          [0, 0, 1, element.stepsize, 0],
+                                          [0, 0, 1, element.step_size, 0],
                                           [0, 0, 0, 1, 0],
                                           [0, 0, 0, 0, 1]])
             if element.e1:
@@ -49,5 +49,5 @@ def get_transfer_matrices(elements, matrix_array):
         # Drifts and others
         else:
             matrix = np.identity(matrix_size)
-            matrix[0, 1] = matrix[2, 3] = element.stepsize
+            matrix[0, 1] = matrix[2, 3] = element.step_size
             matrix_array[pos] = matrix

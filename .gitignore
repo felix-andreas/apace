@@ -1,8 +1,13 @@
-# Byte-compiled / optimized / DLL files
+# Python byte code
 __pycache__/
 *.py[cod]
-*$py.class
+$py.class
+
+
+# IDE
+.vscode
+.idea
 
 output/
-out.pdf
+*.pdf
 out.json

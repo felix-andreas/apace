@@ -36,24 +36,24 @@ def einsum():
     # BE =opt_einsum.contract('nij,jk->nik', matrix_array, B0, backend='numpy')
     BE = np.einsum('nik,kj->nij', a, b, optimize='optimal')
     # twissdata = AttrDict()
-    twissdata.betax = BE[0, 0]  # betax
-    twissdata.betay = BE[2, 2]  # betay
-    twissdata.alphax = -BE[0, 1]  # alphax
-    twissdata.alphay = -BE[2, 3]  # alphay
-    twissdata.gammax = BE[1, 1]  # gammax
-    twissdata.gammay = BE[3, 3]  # gammay
+    twissdata.betax = BE[0, 0]  # beta_x
+    twissdata.betay = BE[2, 2]  # beta_y
+    twissdata.alphax = -BE[0, 1]  # alpha_x
+    twissdata.alphay = -BE[2, 3]  # alpha_y
+    twissdata.gammax = BE[1, 1]  # gamma_x
+    twissdata.gammay = BE[3, 3]  # gamma_y
     return BE
 
 
 def cCode():
     BE = np.empty((n, size, size))
     multiple_dot_products(a, b, BE)
-    twissdata.betax = BE[0, 0]  # betax
-    twissdata.betay = BE[2, 2]  # betay
-    twissdata.alphax = -BE[0, 1]  # alphax
-    twissdata.alphay = -BE[2, 3]  # alphay
-    twissdata.gammax = BE[1, 1]  # gammax
-    twissdata.gammay = BE[3, 3]  # gammay
+    twissdata.betax = BE[0, 0]  # beta_x
+    twissdata.betay = BE[2, 2]  # beta_y
+    twissdata.alphax = -BE[0, 1]  # alpha_x
+    twissdata.alphay = -BE[2, 3]  # alpha_y
+    twissdata.gammax = BE[1, 1]  # gamma_x
+    twissdata.gammay = BE[3, 3]  # gamma_y
     return BE
 
 def dot_app():
@@ -63,12 +63,12 @@ def dot_app():
     BE.shape = n, size, size
     # print(c.flags)
     twissdata = AttrDict()
-    twissdata.betax = BE[0, 0]  # betax
-    twissdata.betay = BE[2, 2]  # betay
-    twissdata.alphax = -BE[0, 1]  # alphax
-    twissdata.alphay = -BE[2, 3]  # alphay
-    twissdata.gammax = BE[1, 1]  # gammax
-    twissdata.gammay = BE[3, 3]  # gammay
+    twissdata.betax = BE[0, 0]  # beta_x
+    twissdata.betay = BE[2, 2]  # beta_y
+    twissdata.alphax = -BE[0, 1]  # alpha_x
+    twissdata.alphay = -BE[2, 3]  # alpha_y
+    twissdata.gammax = BE[1, 1]  # gamma_x
+    twissdata.gammay = BE[3, 3]  # gamma_y
     return BE
 
 
@@ -83,12 +83,12 @@ def forloop():
 def dot_simple():
     BE = np.dot(a_list, b)
     # twissdata = Structure()
-    twissdata.betax = BE[0, 0]  # betax
-    twissdata.betay = BE[2, 2]  # betay
-    twissdata.alphax = -BE[0, 1]  # alphax
-    twissdata.alphay = -BE[2, 3]  # alphay
-    twissdata.gammax = BE[1, 1]  # gammax
-    twissdata.gammay = BE[3, 3]  # gammay
+    twissdata.betax = BE[0, 0]  # beta_x
+    twissdata.betay = BE[2, 2]  # beta_y
+    twissdata.alphax = -BE[0, 1]  # alpha_x
+    twissdata.alphay = -BE[2, 3]  # alpha_y
+    twissdata.gammax = BE[1, 1]  # gamma_x
+    twissdata.gammay = BE[3, 3]  # gamma_y
     return BE
 
 
@@ -103,12 +103,12 @@ def forloop_list():
     twissdata.gammay = np.empty(len(a_list))
     for i, x in enumerate(a_list):
         matrix_array[i, :, :] = BE = np.dot(x, b)
-        twissdata.betax[i] = BE[0, 0]  # betax
-        twissdata.betay[i] = BE[2, 2]  # betay
-        twissdata.alphax[i] = -BE[0, 1]  # alphax
-        twissdata.alphay[i] = -BE[2, 3]  # alphay
-        twissdata.gammax[i] = BE[1, 1]  # gammax
-        twissdata.gammay[i] = BE[3, 3]  # gammay
+        twissdata.betax[i] = BE[0, 0]  # beta_x
+        twissdata.betay[i] = BE[2, 2]  # beta_y
+        twissdata.alphax[i] = -BE[0, 1]  # alpha_x
+        twissdata.alphay[i] = -BE[2, 3]  # alpha_y
+        twissdata.gammax[i] = BE[1, 1]  # gamma_x
+        twissdata.gammay[i] = BE[3, 3]  # gamma_y
     return matrix_array
 
 
@@ -126,12 +126,12 @@ def einsum_list2array():
     a_array = np.array([y for x in a_nested_list for y in x])
     BE = np.einsum('nij,jk->nik', a_array, b)
     twissdata = AttrDict()
-    twissdata.betax = BE[0, 0]  # betax
-    twissdata.betay = BE[2, 2]  # betay
-    twissdata.alphax = -BE[0, 1]  # alphax
-    twissdata.alphay = -BE[2, 3]  # alphay
-    twissdata.gammax = BE[1, 1]  # gammax
-    twissdata.gammay = BE[3, 3]  # gammay
+    twissdata.betax = BE[0, 0]  # beta_x
+    twissdata.betay = BE[2, 2]  # beta_y
+    twissdata.alphax = -BE[0, 1]  # alpha_x
+    twissdata.alphay = -BE[2, 3]  # alpha_y
+    twissdata.gammax = BE[1, 1]  # gamma_x
+    twissdata.gammay = BE[3, 3]  # gamma_y
     return BE
 
 
