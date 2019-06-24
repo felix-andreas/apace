@@ -1,6 +1,6 @@
 from .transfer_matrices import get_transfer_matrices, matrix_size
 import numpy as np
-from .twiss import twissdata
+from .twiss import twiss_data
 from ..classes import CachedPropertyFlag
 from elements.utils import Structure
 
@@ -62,7 +62,7 @@ class LinBeamDyn:
     def get_twiss(self, **options):
         self.twiss_options = options
         self._twissdata.s = self.main_cell.s
-        twissdata(self._twissdata, self.transfer_matrices, **options)
+        twiss_data(self._twissdata, self.transfer_matrices, **options)
         self.flag_twissdata.has_changed = False
         return self.twiss
 

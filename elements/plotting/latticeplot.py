@@ -10,6 +10,7 @@ cmap = mpl.cm.Set1
 
 
 def paint_lattice(ax, main_cell, xmin, xmax, ymin, ymax, annotate_elements, annotate_cells):
+    # TODO: height should depented on plot_height, not on y_max!!!
     yspan = ymax - ymin
     rec_height = yspan / 16
 
@@ -21,13 +22,15 @@ def paint_lattice(ax, main_cell, xmin, xmax, ymin, ymax, annotate_elements, anno
         if element != next_element:
             if end > xmin and start < xmax and element.type != "Drift":
                 rec_length = (end if end < xmax else xmax) - (start if start > xmin else xmin)
-                rectangle = plt.Rectangle((start if start > xmin else xmin, ymax - rec_height / 2), rec_length, rec_height, fc=colors[element.type], clip_on=False, zorder=10)
+                rectangle = plt.Rectangle((start if start > xmin else xmin, ymax - rec_height / 2), rec_length,
+                                          rec_height, fc=colors[element.type], clip_on=False, zorder=10)
                 ax.add_patch(rectangle)
 
             if start > xmin and end < xmax and element.type != "Drift":
                 if annotate_elements:
                     sign, va = (1, "bottom") if element.type == "Quad" else (-1, "top")
-                    ax.annotate(element.name, xy=((start + end) / 2, ymax + sign * 0.6 * rec_height), fontsize=fs, va=va, ha='center', annotation_clip=False, zorder=11)
+                    ax.annotate(element.name, xy=((start + end) / 2, ymax + sign * 0.6 * rec_height), fontsize=fs,
+                                va=va, ha='center', annotation_clip=False, zorder=11)
 
             start = end
 
@@ -41,7 +44,7 @@ def paint_lattice(ax, main_cell, xmin, xmax, ymin, ymax, annotate_elements, anno
             pos += cell.length
 
 
-def plot_twiss(ax, twiss, linestyle="solid", linewidth=1.3, alpha=1, etax_scale=10):
+def plot_twiss(ax, twiss, linestyle="solid", linewidth=1.3, alpha=1.0, etax_scale=10):
     ax.plot(twiss.s, twiss.eta_x * etax_scale, color=cmap(2 / 9), linewidth=linewidth, linestyle=linestyle, alpha=alpha)
     ax.plot(twiss.s, twiss.beta_y, color=cmap(1 / 9), linewidth=linewidth, linestyle=linestyle, alpha=alpha)
     ax.plot(twiss.s, twiss.beta_x, color=cmap(0 / 9), linewidth=linewidth, linestyle=linestyle, alpha=alpha)
@@ -58,18 +61,18 @@ def set_limits(ax, main_cell, xmin=None, xmax=None, ymin=None, ymax=None):
     return xmin, xmax, ymin, ymax
 
 
-def set_grid(ax, main_cell, xmin, xmax, ymin, ymax, N_xticks, N_yticks):
+def set_grid(ax, main_cell, x_min, x_max, y_min, y_max, N_xticks, N_yticks):
     ax.xaxis.grid(which='minor', linestyle='dotted')
     ax.yaxis.grid(alpha=0.5, zorder=0, linestyle='dotted')
     if N_xticks:
-        linspace = np.linspace(xmin, xmax, N_xticks)
+        linspace = np.linspace(x_min, x_max, N_xticks)
         cell_length_list = [0]
         cell_length_list.extend([cell.length for cell in main_cell.tree])
-        pos_tick = np.add.accumulate(cell_length_list) if not (xmin and xmax) else linspace
+        pos_tick = np.add.accumulate(cell_length_list) if not (x_min and x_max) else linspace
         ax.set_xticks(pos_tick, minor=True)
         ax.set_xticks(linspace)
-    # if N_yticks:
-    #     ax.set_yticks(np.arange(int(ymin), int(ymax), N_yticks))
+    if N_yticks:
+        ax.set_yticks(np.arange(int(y_min), int(y_max), N_yticks))
     ax.set_xlabel('orbit position $s$/m')
 
 
@@ -79,7 +82,8 @@ def annotate_info(main_cell, twiss, etax_scale=10):
     margin = 0.02
     fs = 15
 
-    ax.annotate(main_cell.name, xy=(1 - margin, 1 - margin), xycoords='figure fraction', va='top', ha='right', fontsize=fs)
+    ax.annotate(main_cell.name, xy=(1 - margin, 1 - margin), xycoords='figure fraction', va='top', ha='right',
+                fontsize=fs)
     # annolist_string1 = f"$Q_x$: {twiss.Qx:.2f} ({twiss.Qx_freq:.0f} kHz)   $Q_y$: {twiss.Qy:.2f} ({twiss.Qy_freq:.0f} kHz)   $\\alpha_C$: {twiss.alphac:.2e}"
     # fig.annotate(annolist_string1, xy=(start, height_1), xycoords='figure fraction', va='center', ha='left', fontsize=fs)
 
@@ -88,7 +92,8 @@ def annotate_info(main_cell, twiss, etax_scale=10):
     w = margin
 
     for i, s in enumerate(string):
-        plt.annotate(s, xy=(w, 1 - margin), xycoords='figure fraction', color=mpl.cm.Set1(i / 9), fontsize=fs, va="top", ha="left")
+        plt.annotate(s, xy=(w, 1 - margin), xycoords='figure fraction', color=mpl.cm.Set1(i / 9), fontsize=fs, va="top",
+                     ha="left")
         w += len(s) * 0.005
 
     # space = 0
@@ -102,26 +107,29 @@ def annotate_info(main_cell, twiss, etax_scale=10):
 
 
 def plot_full(ax,
-              linbeamdyn,
-              xmin=None, xmax=None, ymin=None, ymax=None,
+              twiss,
+              main_cell=None,
+              x_min=None, x_max=None, y_min=None, y_max=None,
               N_xticks=17, N_yticks=4,
               annotate_elements=True, annotate_cells=True,
-              linestyle="solid", linewidth=1.3,
+              line_style="solid", linewidth=1.3,
               ref_twiss=None,
               ref_linestyle="dashed", ref_linewidth=2.5,
               etax_scale=10,
               overwrite=False):
-    main_cell = linbeamdyn.main_cell
-
     if overwrite: ax.clear()
     if ref_twiss: plot_twiss(ax, ref_twiss, linestyle=ref_linestyle, linewidth=ref_linewidth, alpha=0.5)
-    plot_twiss(ax, linbeamdyn.twiss, linestyle=linestyle, linewidth=linewidth, etax_scale=etax_scale)
-    xmin, xmax, ymin, ymax = set_limits(ax, main_cell, xmin, xmax, ymin, ymax)
-    set_grid(ax, main_cell, xmin, xmax, ymin, ymax, N_xticks, N_yticks)
-    paint_lattice(ax, main_cell, xmin, xmax, ymin, ymax, annotate_elements, annotate_cells)
+    plot_twiss(ax, twiss, linestyle=line_style, linewidth=linewidth, etax_scale=etax_scale)
+    if main_cell:
+        x_min, x_max, y_min, y_max = set_limits(ax, main_cell, x_min, x_max, y_min, y_max)
+        set_grid(ax, main_cell, x_min, x_max, y_min, y_max, N_xticks, N_yticks)
+        paint_lattice(ax, main_cell, x_min, x_max, y_min, y_max, annotate_elements, annotate_cells)
 
 
-def plot_lattice(linbeamdyn,
+
+
+def plot_lattice(twiss,
+                 main_cell=None,
                  main=True,
                  figsize=(16, 9),
                  sections=None,
@@ -135,7 +143,8 @@ def plot_lattice(linbeamdyn,
 
     if main:
         ax = fig.add_subplot(main_grid[0])
-        plot_full(ax, linbeamdyn, ref_twiss=ref_twiss, ymin=ymin, ymax=ymax, annotate_elements=False, etax_scale=etax_scale)
+        plot_full(ax, twiss, main_cell, ref_twiss=ref_twiss, y_min=ymin, y_max=ymax, annotate_elements=False,
+                  etax_scale=etax_scale)
 
     if sections:
         if isinstance(sections, str) or not isinstance(sections[0], Iterable): sections = [sections]
@@ -151,11 +160,12 @@ def plot_lattice(linbeamdyn,
             else:
                 xmin, xmax = section[0], section[1]
 
-            plot_full(ax, linbeamdyn, ref_twiss=ref_twiss, xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax, annotate_elements=True, N_xticks=None)
+            plot_full(ax, twiss, main_cell, ref_twiss=ref_twiss, x_min=xmin, x_max=xmax, y_min=ymin, y_max=ymax,
+                      annotate_elements=True, N_xticks=None)
 
     fig.tight_layout()
     fig.subplots_adjust(top=0.93)
-    annotate_info(linbeamdyn.main_cell, linbeamdyn.twiss, etax_scale=etax_scale)
+    annotate_info(main_cell, twiss, etax_scale=etax_scale)
     if path: fig.savefig(path)
     return fig
 

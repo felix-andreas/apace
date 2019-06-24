@@ -6,7 +6,7 @@ from ..clib import accumulate_array, twiss_product
 matrix_size = 5
 
 
-def twissdata(twiss, transfer_matrices, interpolate=None):
+def twiss_data(twiss, transfer_matrices, interpolate=None):
     acc_array = np.empty(transfer_matrices.shape)
     accumulate_array(transfer_matrices, acc_array)
     full_matrix = acc_array[-1]
@@ -33,6 +33,7 @@ def twissdata(twiss, transfer_matrices, interpolate=None):
         d0 = (full_matrix[0, 1] * d0ds + full_matrix[0, 4]) / (1 - full_matrix[1, 1])
 
         # beta, alpha, gamma
+        # TODO: make lazy evaluated!
         B0vec = np.array([x_b0, y_b0, x_a0, y_a0, x_g0, y_g0, d0, d0ds])
         twiss_array = np.empty((B0vec.size, acc_array.shape[0]))
         twiss.twiss_array = twiss_array
@@ -46,7 +47,7 @@ def twissdata(twiss, transfer_matrices, interpolate=None):
         twiss.dds_eta_x = twiss_array[7]  # gamma_y
         twiss_product(acc_array, B0vec, twiss_array, mode="twiss_product_reduced")
 
-        if interpolate:
+        if interpolate: # TODO return interploated instead of new values?? or different function! def twiss_interpolate
             twiss.s_int = np.linspace(0, twiss.s[-1], interpolate)
             twiss.beta_x_int = np.interp(twiss.s_int, twiss.s, twiss.beta_x)
             twiss.beta_y_int = np.interp(twiss.s_int, twiss.s, twiss.beta_y)
