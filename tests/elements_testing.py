@@ -10,11 +10,10 @@ ring = el.MainCell('fodo-ring', [fodo] * 4)
 lin = el.LinBeamDyn(ring)
 
 import matplotlib.pyplot as plt
-plt.plot(ring.s, lin.twiss.betax)
+plt.plot(ring.s, lin.twiss.beta_x)
 Q1.k1 = 1.5
 Q2.k1 = -1.5
-lin.changed_elements([Q1, Q2])
-plt.plot(ring.s, lin.twiss.betax)
+plt.plot(ring.s, lin.twiss.beta_x)
 plt.show()
 
 

@@ -69,18 +69,18 @@ def from_json(json_data):
     return classes.MainCell(name=json_data["name"], tree=main_tree, description=json_data.get("description", ""))
 
 
-def read_lattice_file_json(filepath):
-    with open(filepath) as f:
+def read_lattice_file_json(file_path):
+    with open(file_path) as f:
         json_data = json.load(f)
     return from_json(json_data)
 
 
-def save_lattice_file_json(main_cell, filepath=None):
-    filepath = filepath if filepath else f"{main_cell.name}.json"
-    dirname = os.path.dirname(filepath)
-    if not os.path.exists(dirname):
-        os.makedirs(dirname)
-    with open(filepath, 'w') as outfile:
+def save_lattice_file_json(main_cell, file_path=None):
+    file_path = file_path if file_path else f"{main_cell.name}.json"
+    # dirname = os.path.dirname(file_path)
+    # if not os.path.exists(dirname):
+    #     os.makedirs(dirname)
+    with open(file_path, 'w') as outfile:
         json.dump(as_dict(main_cell), outfile, indent=2)
 
 

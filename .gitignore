@@ -1,13 +1,31 @@
-# Python byte code
+.DS_Store
+.env
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-$py.class
+*$py.class
 
+# C extensions
+# TODO: .o/.c files should be delted automatically
+elements/**/*.so
+elements/**/*.o
+elements/**/*.c
+
+
+# Distribution / packaging
+.Python
+build/
+dist/
+sdist/
+*.egg
+*.egg-info/
 
 # IDE
-.vscode
 .idea
+.vscode
 
+# output
 output/
 *.pdf
 out.json

@@ -1,0 +1,7 @@
+__title__ = 'Elements'
+__description__ = 'A Python package for particle beam dynamics and lattice development.'
+__url__ = 'https://github.com/andreasfelix/elements'
+__version__ = '0.1'
+__author__ = 'Felix Andreas'
+__license__ = 'GNU General Public License v3.0'
+__copyright__ = 'Copyright 2019 Felix Andreas'

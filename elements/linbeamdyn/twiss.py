@@ -1,7 +1,7 @@
 import warnings
 
 import numpy as np
-from ..clib import accumulate_array, twiss_product
+from ..clib.twiss_product import twiss_product, accumulate_array
 
 matrix_size = 5
 
@@ -45,7 +45,7 @@ def twiss_data(twiss, transfer_matrices, interpolate=None):
         twiss.gamma_y = twiss_array[5]  # gamma_y
         twiss.eta_x = twiss_array[6]  # gamma_y
         twiss.dds_eta_x = twiss_array[7]  # gamma_y
-        twiss_product(acc_array, B0vec, twiss_array, mode="twiss_product_reduced")
+        twiss_product(acc_array, B0vec, twiss_array)
 
         if interpolate: # TODO return interploated instead of new values?? or different function! def twiss_interpolate
             twiss.s_int = np.linspace(0, twiss.s[-1], interpolate)
