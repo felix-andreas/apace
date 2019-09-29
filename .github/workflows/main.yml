@@ -1,4 +1,4 @@
-name: Python application
+name: CI
 
 on: [push]
 
@@ -13,6 +13,6 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
-    - name: Install application
+    - name: Build
       run: |
         pip install .
