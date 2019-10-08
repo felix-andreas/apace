@@ -3,6 +3,7 @@ from cffi import FFI
 
 SOURCES = ('twiss_product_serial.c', 'twiss_product_parallel.c', 'accumulate_array.c')
 SRC_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../src')
+SIZE = 6
 
 ffi_builder = FFI()
 ffi_builder.set_source(
@@ -14,10 +15,10 @@ ffi_builder.set_source(
 )
 
 ffi_builder.cdef(
-    '''
-    void twiss_product_serial(int n, double (*matrix_array)[5][5], double *B0, double (*twiss_array)[]);
-    void twiss_product_parallel(int n, double (*matrix_array)[5][5], double *B0, double (*twiss_array)[]);
-    void accumulate_array(int n, int size, double (*ina)[5][5], double (*outa)[5][5]);
+    f'''
+    void twiss_product_serial(int n, double (*matrix_array)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
+    void twiss_product_parallel(int n, double (*matrix_array)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
+    void accumulate_array(int n, int size, double (*ina)[{SIZE}][{SIZE}], double (*outa)[{SIZE}][{SIZE}]);
     '''
 )
 

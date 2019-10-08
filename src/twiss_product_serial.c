@@ -3,10 +3,10 @@
 // method 2 of klaus wille chapter 3.10
 // 0 betax 1 betay 2 alphax 3 alphay 4 gammax 5 gammay 6 etax 7 d/ds etax
 
-void twiss_product_serial (int n, double (*matrix_array)[5][5], double *B0, double (*twiss_array)[n]) {
+void twiss_product_serial (int n, double (*matrix_array)[6][6], double *B0, double (*twiss_array)[n]) {
   for (int pos = 0; pos < n; pos++) {
 
-    double(*m)[5] = matrix_array[pos];
+    double(*m)[6] = matrix_array[pos];
 
     // beta
     twiss_array[0][pos] = m[0][0] * m[0][0] * B0[0] - 2. * m[0][0] * m[0][1] * B0[2] + m[0][1] * m[0][1] * B0[4];
@@ -21,8 +21,8 @@ void twiss_product_serial (int n, double (*matrix_array)[5][5], double *B0, doub
     twiss_array[5][pos] = m[3][2] * m[3][2] * B0[1] - 2. * m[3][3] * m[3][2] * B0[3] + m[3][3] * m[3][3] * B0[5];
 
     // eta_x
-    twiss_array[6][pos] = m[0][0] * B0[6] + m[0][1] * B0[7] + m[0][4];
-    twiss_array[7][pos] = m[1][0] * B0[6] + m[1][1] * B0[7] + m[1][4];
+    twiss_array[6][pos] = m[0][0] * B0[6] + m[0][1] * B0[7] + m[0][5];
+    twiss_array[7][pos] = m[1][0] * B0[6] + m[1][1] * B0[7] + m[1][5];
   }
 }
 

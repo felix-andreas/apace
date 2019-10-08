@@ -1,15 +1,16 @@
-from .transfer_matrices import get_transfer_matrices, matrix_size
+from .transfer_matrices import get_transfer_matrices, MATRIX_SIZE
 import numpy as np
 from .twiss import twiss_data
 from ..classes import CachedPropertyFlag
 from elements.utils import Structure
+
 
 class LinBeamDyn:
     def __init__(self, main_cell):
         """
         Creates
         Args:
-            Mainline:
+            main_cell:
         """
         self.main_cell = main_cell
         self.main_cell.methods.append(self)
@@ -18,10 +19,12 @@ class LinBeamDyn:
         self._transfer_matrices = None
         self.flag_allocate_transfer_matrices = CachedPropertyFlag(depends_on=[self.main_cell.step_size_flag])
         self.flag_transfer_matrices_all = CachedPropertyFlag(depends_on=[self.flag_allocate_transfer_matrices])
-        self.flag_transfer_matrices_partial = CachedPropertyFlag(depends_on=[self.main_cell.changed_elements_flag], initial_state=False)
+        self.flag_transfer_matrices_partial = CachedPropertyFlag(depends_on=[self.main_cell.changed_elements_flag],
+                                                                 initial_state=False)
         self.flag_twiss_data = CachedPropertyFlag(depends_on=[self.flag_transfer_matrices_all,
                                                               self.flag_transfer_matrices_partial])
         self._twiss_data = Structure()
+        self._twiss_data.lin = self
         self._tracking_data = Structure()
         self.twiss_data_changed = True
         self.twiss_options = dict()
@@ -49,8 +52,8 @@ class LinBeamDyn:
         return self._transfer_matrices
 
     def allocate_transfer_matrices(self):
-        self._transfer_matrices = np.empty((self.main_cell.step_size.size, matrix_size, matrix_size))
-        self._transfer_matrices[0] = np.identity(matrix_size)
+        self._transfer_matrices = np.empty((self.main_cell.step_size.size, MATRIX_SIZE, MATRIX_SIZE))
+        self._transfer_matrices[0] = np.identity(MATRIX_SIZE)
 
     @property
     def twiss(self):
@@ -64,4 +67,3 @@ class LinBeamDyn:
         twiss_data(self._twiss_data, self.transfer_matrices, **options)
         self.flag_twiss_data.has_changed = False
         return self.twiss
-

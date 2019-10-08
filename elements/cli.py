@@ -9,7 +9,7 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 from .__about__ import __version__
-from .latticefile import read_lattice_file_json
+from .io import read_lattice_file_json
 from .linbeamdyn import LinBeamDyn
 from .plotting import plot_lattice
 

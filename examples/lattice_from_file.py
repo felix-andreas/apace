@@ -1,5 +1,5 @@
 from elements.linbeamdyn import LinBeamDyn
-from elements.latticefile import read_lattice_file_json
+from elements.io import read_lattice_file_json
 
 import matplotlib.pyplot as plt
 
