@@ -1,9 +1,11 @@
 import warnings
 
 import numpy as np
+from scipy import integrate
 from ..clib.twiss_product import twiss_product, accumulate_array
 
 CONST_C = 299_792_458
+TWO_PI = 2 * np.pi
 
 
 def twiss_data(twiss, transfer_matrices, interpolate=None, betatron_phase=False):
@@ -22,32 +24,32 @@ def twiss_data(twiss, transfer_matrices, interpolate=None, betatron_phase=False)
         ...
         # warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
     else:
-        x_b0 = np.abs(2 * full_matrix[0, 1]) / np.sqrt(tmp_x)
-        x_a0 = (full_matrix[0, 0] - full_matrix[1, 1]) / (2 * full_matrix[0, 1]) * x_b0
-        x_g0 = (1 + x_a0 ** 2) / x_b0
-        y_b0 = np.abs(2 * full_matrix[2, 3]) / np.sqrt(tmp_y)
-        y_a0 = (full_matrix[2, 2] - full_matrix[3, 3]) / (2 * full_matrix[2, 3]) * y_b0
-        y_g0 = (1 + y_a0 ** 2) / y_b0
-        d0ds = (full_matrix[1, 0] * full_matrix[0, 4] + full_matrix[1, 4] * (1 - full_matrix[0, 0])) / (
+        beta_x0 = np.abs(2 * full_matrix[0, 1]) / np.sqrt(tmp_x)
+        alpha_x0 = (full_matrix[0, 0] - full_matrix[1, 1]) / (2 * full_matrix[0, 1]) * beta_x0
+        gamma_x0 = (1 + alpha_x0 ** 2) / beta_x0
+        beta_y0 = np.abs(2 * full_matrix[2, 3]) / np.sqrt(tmp_y)
+        alpha_y0 = (full_matrix[2, 2] - full_matrix[3, 3]) / (2 * full_matrix[2, 3]) * beta_y0
+        gamma_y0 = (1 + alpha_y0 ** 2) / beta_y0
+        eta_x_dds0 = (full_matrix[1, 0] * full_matrix[0, 5] + full_matrix[1, 5] * (1 - full_matrix[0, 0])) / (
                 2 - full_matrix[0, 0] - full_matrix[1, 1])
-        d0 = (full_matrix[0, 1] * d0ds + full_matrix[0, 4]) / (1 - full_matrix[1, 1])
+        eta_x0 = (full_matrix[0, 1] * eta_x_dds0 + full_matrix[0, 5]) / (1 - full_matrix[1, 1])
 
         # beta, alpha, gamma
         # TODO: make lazy evaluated!
-        B0vec = np.array([x_b0, y_b0, x_a0, y_a0, x_g0, y_g0, d0, d0ds])
+        B0vec = np.array([beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0])
         twiss_array = np.empty((B0vec.size, acc_array.shape[0]))
         twiss.twiss_array = twiss_array
-        twiss.beta_x = twiss_array[0]  # beta_x
-        twiss.beta_y = twiss_array[1]  # beta_y
-        twiss.alpha_x = twiss_array[2]  # alpha_x
-        twiss.alpha_y = twiss_array[3]  # alpha_y
-        twiss.gamma_x = twiss_array[4]  # gamma_x
-        twiss.gamma_y = twiss_array[5]  # gamma_y
-        twiss.eta_x = twiss_array[6]  # gamma_y
-        twiss.dds_eta_x = twiss_array[7]  # gamma_y
+        twiss.beta_x = twiss_array[0]
+        twiss.beta_y = twiss_array[1]
+        twiss.alpha_x = twiss_array[2]
+        twiss.alpha_y = twiss_array[3]
+        twiss.gamma_x = twiss_array[4]
+        twiss.gamma_y = twiss_array[5]
+        twiss.eta_x = twiss_array[6]
+        twiss.eta_x_dds = twiss_array[7]
         twiss_product(acc_array, B0vec, twiss_array)
 
-        if interpolate:  # TODO return interploated instead of new values?? or different function! def twiss_interpolate
+        if interpolate:  # TODO return interpolated instead of new values?? or different function! def twiss_interpolate
             twiss.s_int = np.linspace(0, twiss.s[-1], interpolate)
             twiss.beta_x_int = np.interp(twiss.s_int, twiss.s, twiss.beta_x)
             twiss.beta_y_int = np.interp(twiss.s_int, twiss.s, twiss.beta_y)
@@ -57,17 +59,14 @@ def twiss_data(twiss, transfer_matrices, interpolate=None, betatron_phase=False)
             twiss.psi_y = np.empty(acc_array.shape[0])
             beta_x_inverse = 1 / twiss.beta_x
             beta_y_inverse = 1 / twiss.beta_y
-            # integration
-            twiss.psi_x[-1] = 0  # important for the integral
-            twiss.psi_y[-1] = 0
-            for i, s in enumerate(twiss.s): # TODO: use faster integration!
-                twiss.psi_x[i] = s / 2 * (beta_x_inverse[i - 1] + beta_x_inverse[i]) + twiss.psi_x[i - 1]
-                twiss.psi_y[i] = s / 2 * (beta_y_inverse[i - 1] + beta_y_inverse[i]) + twiss.psi_y[i - 1]
+            # TODO: use faster integration!
+            twiss.psi_x = integrate.cumtrapz(beta_x_inverse, twiss.s)
+            twiss.psi_y = integrate.cumtrapz(beta_y_inverse, twiss.s)
 
-            twiss.tune_x = twiss.psi_x[-1] / (2 * np.pi)
-            twiss.tune_y = twiss.psi_y[-1] / (2 * np.pi)
-            twiss.tune_x_fractional = twiss.tune_x % 1
-            twiss.tune_y_fractional = twiss.tune_y % 1
+            twiss.tune_x = twiss.psi_x[-1] / TWO_PI
+            twiss.tune_y = twiss.psi_y[-1] / TWO_PI
+            twiss.tune_x_fractional = np.arccos((full_matrix[0, 0] + full_matrix[1, 1]) / 2) / TWO_PI
+            twiss.tune_y_fractional = np.arccos((full_matrix[2, 2] + full_matrix[3, 3]) / 2) / TWO_PI
             lattice_length = twiss.s[-1]
             tmp = CONST_C / lattice_length / 1000 # kHz
             twiss.tune_x_fractional_kHz = twiss.tune_x_fractional * tmp

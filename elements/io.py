@@ -3,15 +3,15 @@ import os, re, inspect, json
 from . import classes
 
 
-def read_lattice_file(filepath):
-    latticename = os.path.basename(filepath)
-    with open(filepath) as file:
+def read_lattice_file(file_path):
+    lattice_name = os.path.basename(file_path)
+    with open(file_path) as file:
         lines = re.sub('[ \t]', '', file.read()).splitlines()
         lines = [line for line in lines if line and line[0] != '#']
 
-        # devide lines into elementname, type, parameter and comment
+        # divide lines into object_name, type, parameter and comment
         length = len(lines)
-        objectname = [''] * length
+        object_name = [''] * length
         type = [''] * length
         parameters = [''] * length
         comments = [''] * length
@@ -28,7 +28,7 @@ def read_lattice_file(filepath):
             _split = _split.split(':')
             if len(_split) > 1:
                 starting_line = i
-                objectname[i] = _split[0]
+                object_name[i] = _split[0]
                 _split = _split[1].split(',', maxsplit=1)
                 type[i] = _split[0]
                 parameters[i] = _split[1]
@@ -40,13 +40,13 @@ def read_lattice_file(filepath):
 
         # delete following lines (in reverse order)
         for i in following_lines[::-1]:
-            del objectname[i]
+            del object_name[i]
             del comments[i]
             del parameters[i]
 
         # create and execute string
-        lis = [f'{objectname[i]} = {type[i]}("{objectname[i]}", {parameters[i]}, comment="{comments[i]}")' for i in
-               range(len(objectname))]
+        lis = [f'{object_name[i]} = {type[i]}("{object_name[i]}", {parameters[i]}, comment="{comments[i]}")' for i in
+               range(len(object_name))]
         string = '\n'.join(lis)
         # print(string)
         exec(string)
