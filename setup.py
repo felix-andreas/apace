@@ -23,4 +23,5 @@ setup(
     cffi_modules=[
         "cffi_build/build_twiss_product.py:ffi_builder",
     ],
+    entry_points={"console_scripts": ["elements = elements.cli:main"]},
 )

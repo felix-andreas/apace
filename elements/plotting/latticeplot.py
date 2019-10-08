@@ -135,13 +135,13 @@ def plot_full(ax,
 def plot_lattice(twiss,
                  main_cell=None,
                  main=True,
-                 figsize=(16, 9),
+                 fig_size=(16, 9),
                  sections=None,
                  y_min=None, y_max=None,
                  eta_x_scale=10,
                  ref_twiss=None,
                  path=None):
-    fig = plt.figure(figsize=figsize)  # , constrained_layout=True)
+    fig = plt.figure(figsize=fig_size)  # , constrained_layout=True)
     height_ratios = [2, 7] if (main and sections) else [1]
     main_grid = gridspec.GridSpec(len(height_ratios), 1, figure=fig, height_ratios=height_ratios)
 

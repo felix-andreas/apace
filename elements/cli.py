@@ -1,19 +1,17 @@
-import sys, os, ast, io, argparse
+import argparse
+import ast
+import io
+import os
+import sys
 
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
+from matplotlib.backends.backend_pdf import PdfPages
 
-from . import __version__
-from .plotting import plot_lattice
+from .__about__ import __version__
 from .latticefile import read_lattice_file_json
 from .linbeamdyn import LinBeamDyn
-
-
-def read_lattice(path):
-    main_cell = read_lattice_file_json(path)
-    lin = LinBeamDyn(main_cell)
-    return main_cell, lin
+from .plotting import plot_lattice
 
 
 def main():
@@ -31,8 +29,8 @@ def main():
     parser_plot.add_argument('-q', '--quiet', action='store_true', help='Quiet')
     parser_plot.add_argument('-show', '--show_plot', action='store_true', help='show interactive plot')
     parser_plot.add_argument('-ref', '--ref_lattice_path', type=str, help='Path to reference lattice')
-    parser_plot.add_argument('-ymin', type=int, help='Min Y-value')
-    parser_plot.add_argument('-ymax', type=int, help='Max Y-value')
+    parser_plot.add_argument('-y_min', type=int, help='Min Y-value')
+    parser_plot.add_argument('-y_max', type=int, help='Max Y-value')
     parser_plot.add_argument('-s', '--sections', type=str,  # should be own argument for print twiss parameter
                              help='Plot Twiss parameter at given sections. '
                                   'Can be a 2-tuple (START, END), the name of the section '
@@ -41,13 +39,18 @@ def main():
     parser_plot.add_argument('-pos', '--positions', type=str,  # should be own argument for print twiss parameter
                              help='Print Twiss parameter at given positions. '
                                   'Can be a number, a 2-tuple (START, END), a section name or sequence of those.')
-    parser_plot.add_argument('-m', '--multiknob', type=str, help='Mutiknob (Assumes plot)')
+    parser_plot.add_argument('-m', '--multi_knob', type=str, help='Multi-knob (Assumes plot)')
 
     parser_lattice = subparsers.add_parser('convert', help='convert lattice files.')
     parser_lattice.set_defaults(func=convert_lattice)
 
     args = parser.parse_args()
-    if args.sections:
+
+    if len(sys.argv) < 2 or args.subparser == "help":
+        parser.print_help()
+        return
+
+    if args.sections: # TODO: only check if func == plot
         args.sections = ast.literal_eval(args.sections)
         if is_section(args.sections):  # check if sections is list/tuple of sections
             args.sections = [args.sections]
@@ -55,7 +58,7 @@ def main():
             raise Exception('Section argument is not valid! '
                             'Must be string (section_name), tuple (x_min, x_max) or list of these.')
 
-    if args.positions:
+    if args.positions: # TODO: only check if func == plot
         args.positions = ast.literal_eval(args.positions)
         if isinstance(args.positions, (int, float)):
             args.positions = [args.positions]
@@ -64,15 +67,18 @@ def main():
             raise Exception('Position argument is not valid! '
                             'Must be string (section_name), tuple (x_min, x_max), a number or list of these.')
 
-    if len(sys.argv) < 2 or args.subparser == "help":
-        parser.print_help()
-    else:
-        args.func(args)
+    args.func(args)
+
+
+def read_lattice(path):
+    main_cell = read_lattice_file_json(path)
+    lin = LinBeamDyn(main_cell)
+    return main_cell, lin
 
 
 def plot(args):
-    if args.multiknob:
-        plot_multiknob_quads(args)
+    if args.multi_knob:
+        plot_multi_knob_quads(args)
     else:
         plot_multiple(args)
 
@@ -86,8 +92,9 @@ def print_twiss_array(s, twiss_array):
     io_string = io.StringIO()
     width = 10
     np.savetxt(io_string, np.column_stack((s, twiss_array.T)), fmt=f'%{width}.3f', delimiter=',',
-               header=',  '.join(f'{x:>{width-2}}' for x in ('s', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y',
-                                                   'gamma_x', 'gamma_y', 'eta_x', 'dds_eta_x')))
+               header=',  '.join(f'{x:>{width - 2}}' for x in (
+                's', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'gamma_x', 'gamma_y', 'eta_x', 'dds_eta_x')))
+
     output = io_string.getvalue()
     print(output)
 
@@ -136,7 +143,7 @@ def plot_multiple(args):
             ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
             ref_twiss = LinBeamDyn(ref_main_cell).get_twiss() if ref_main_cell else None
             fig = plot_lattice(twiss, main_cell, ref_twiss=ref_twiss,
-                               sections=args.sections, ymin=args.ymin, ymax=args.ymax)
+                               sections=args.sections, y_min=args.y_min, y_max=args.y_max)
             figs.append(fig)
 
     if args.output_path:
@@ -148,9 +155,9 @@ def plot_multiple(args):
         plt.show()
 
 
-def plot_multiknob_quads(args):
+def plot_multi_knob_quads(args):
     lattice1 = read_lattice_file_json(args.path[0])
-    lattice2 = read_lattice_file_json(args.multiknob)
+    lattice2 = read_lattice_file_json(args.multi_knob)
     lattice_out = read_lattice_file_json(args.path[0])
     lin_out = LinBeamDyn(lattice_out)
     ref_path = os.path.abspath(args.ref_lattice_path) if args.ref_lattice_path else None
@@ -171,7 +178,7 @@ def plot_multiknob_quads(args):
             lin_out.get_twiss()
             ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
             ref_twiss = LinBeamDyn(ref_main_cell).get_twiss() if ref_main_cell else None
-            plot_lattice(lin_out, ref_twiss=ref_twiss, sections=args.sections, ymin=args.ymin, ymax=args.ymax)
+            plot_lattice(lin_out, ref_twiss=ref_twiss, sections=args.sections, y_min=args.y_min, y_max=args.y_max)
             pdf.savefig()
 
 

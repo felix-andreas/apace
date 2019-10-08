@@ -1,3 +1,4 @@
+from .__about__ import *
 from .classes import *
 from .linbeamdyn import LinBeamDyn
 from .latticefile import *
