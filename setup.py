@@ -17,7 +17,10 @@ setup(
     author=about['__author__'],
     license=about['__license__'],
     packages=find_packages(),
-    install_requires=['numpy', 'matplotlib', 'cffi>=1.0.0'],
+    package_data = {
+        'data': ['data'],
+    },
+    install_requires=['numpy', 'scipy', 'matplotlib', 'cffi>=1.0.0'],
     setup_requires=['cffi>=1.0.0'],
     python_requires='>=3.6',
     cffi_modules=[
