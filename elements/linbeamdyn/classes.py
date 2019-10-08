@@ -15,7 +15,6 @@ class LinBeamDyn:
         self.main_cell.methods.append(self)
         self._changed_elements = set()
 
-        # properties
         self._transfer_matrices = None
         self.flag_allocate_transfer_matrices = CachedPropertyFlag(depends_on=[self.main_cell.step_size_flag])
         self.flag_transfer_matrices_all = CachedPropertyFlag(depends_on=[self.flag_allocate_transfer_matrices])

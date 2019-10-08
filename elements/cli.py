@@ -113,14 +113,18 @@ def plot_multiple(args):
     figs = []
     for file_path in lattice_files:
         main_cell, lin = read_lattice(file_path)
-        twiss = lin.get_twiss()
+        twiss = lin.get_twiss(betatron_phase=True)
 
         if args.verbose:
-            print(f'Name: {main_cell.name}')
-            print(f'Description: {main_cell.description}')
-            print(f'Length: {main_cell.length}')
-            print(f'Number of elements: {len(main_cell.lattice)}')
-            print(f'Number of independent elements: {len(main_cell.elements)}', end='\n\n')
+            print(
+                f'Name: {main_cell.name}\n'
+                f'Description: {main_cell.description}\n'
+                f'Length: {main_cell.length}\n'
+                f'Number of elements: {len(main_cell.lattice)}\n'
+                f'Number of independent elements: {len(main_cell.elements)}\n'
+                f'Horizontal Tune: {twiss.tune_x:.0f}\n'
+                f'Vertical Tune: {twiss.tune_y:.0f}\n',
+            )
 
         if args.positions:
             tmp_mask = [np.searchsorted(twiss.s, position) for position in args.positions]

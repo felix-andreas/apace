@@ -3,10 +3,10 @@ import warnings
 import numpy as np
 from ..clib.twiss_product import twiss_product, accumulate_array
 
-matrix_size = 5
+CONST_C = 299_792_458
 
 
-def twiss_data(twiss, transfer_matrices, interpolate=None):
+def twiss_data(twiss, transfer_matrices, interpolate=None, betatron_phase=False):
     acc_array = np.empty(transfer_matrices.shape)
     accumulate_array(transfer_matrices, acc_array)
     full_matrix = acc_array[-1]
@@ -29,7 +29,7 @@ def twiss_data(twiss, transfer_matrices, interpolate=None):
         y_a0 = (full_matrix[2, 2] - full_matrix[3, 3]) / (2 * full_matrix[2, 3]) * y_b0
         y_g0 = (1 + y_a0 ** 2) / y_b0
         d0ds = (full_matrix[1, 0] * full_matrix[0, 4] + full_matrix[1, 4] * (1 - full_matrix[0, 0])) / (
-                    2 - full_matrix[0, 0] - full_matrix[1, 1])
+                2 - full_matrix[0, 0] - full_matrix[1, 1])
         d0 = (full_matrix[0, 1] * d0ds + full_matrix[0, 4]) / (1 - full_matrix[1, 1])
 
         # beta, alpha, gamma
@@ -47,7 +47,28 @@ def twiss_data(twiss, transfer_matrices, interpolate=None):
         twiss.dds_eta_x = twiss_array[7]  # gamma_y
         twiss_product(acc_array, B0vec, twiss_array)
 
-        if interpolate: # TODO return interploated instead of new values?? or different function! def twiss_interpolate
+        if interpolate:  # TODO return interploated instead of new values?? or different function! def twiss_interpolate
             twiss.s_int = np.linspace(0, twiss.s[-1], interpolate)
             twiss.beta_x_int = np.interp(twiss.s_int, twiss.s, twiss.beta_x)
             twiss.beta_y_int = np.interp(twiss.s_int, twiss.s, twiss.beta_y)
+
+        if betatron_phase: # TODO: should this be its own function?
+            twiss.psi_x = np.empty(acc_array.shape[0])
+            twiss.psi_y = np.empty(acc_array.shape[0])
+            beta_x_inverse = 1 / twiss.beta_x
+            beta_y_inverse = 1 / twiss.beta_y
+            # integration
+            twiss.psi_x[-1] = 0  # important for the integral
+            twiss.psi_y[-1] = 0
+            for i, s in enumerate(twiss.s): # TODO: use faster integration!
+                twiss.psi_x[i] = s / 2 * (beta_x_inverse[i - 1] + beta_x_inverse[i]) + twiss.psi_x[i - 1]
+                twiss.psi_y[i] = s / 2 * (beta_y_inverse[i - 1] + beta_y_inverse[i]) + twiss.psi_y[i - 1]
+
+            twiss.tune_x = twiss.psi_x[-1] / (2 * np.pi)
+            twiss.tune_y = twiss.psi_y[-1] / (2 * np.pi)
+            twiss.tune_x_fractional = twiss.tune_x % 1
+            twiss.tune_y_fractional = twiss.tune_y % 1
+            lattice_length = twiss.s[-1]
+            tmp = CONST_C / lattice_length / 1000 # kHz
+            twiss.tune_x_fractional_kHz = twiss.tune_x_fractional * tmp
+            twiss.tune_y_fractional_kHz = twiss.tune_y_fractional * tmp
