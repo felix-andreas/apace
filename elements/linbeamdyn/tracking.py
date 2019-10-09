@@ -1,11 +1,20 @@
 import numpy as np
-
-
-def tracking(lin_beam_dyn, initial_distribution, turns):
-    pass
-
-
 from enum import Enum
+from .classes import LinBeamDyn
+
+
+def tracking(lin : LinBeamDyn, initial_distribution, turns, position=0):
+    n_kicks = lin.main_cell.n_kicks
+    n = turns if position else turns * n_kicks
+    result = np.empty((n, *initial_distribution.shape))
+    transfer_matrices = lin.transfer_matrices
+    if position == 0:
+        for i in range(turns):
+            result[i] = np.dot(transfer_matrices[0], initial_distribution)
+    elif position is None: # calc for all positions
+        result[0:n_kicks] = np.dot(transfer_matrices, initial_distribution)
+        for i in range(1, turns):
+            result[i:i+n_kicks] = np.dot(transfer_matrices, result[i - 1])
 
 
 class Distribution(Enum):
@@ -14,27 +23,43 @@ class Distribution(Enum):
     GAUSS = 2
 
 
-class ParticleDistribution:
-    def __init__(
-            self,
-            n_particles,
-            x=None,
-            x_width=None,
-            y=None,
-            y_width=None,
-            x_dds=None,
-            x_dds_width=None,
-            y_dds=None,
-            y_dds_width=None,
-            delta=None,
-            delta_width=None,
-    ):
-        self.n_particles = n_particles
-        particle_distribution = np.zeros(6, n_particles)
-        if x:
-            particle_distribution[0] = self.create_distribution('uniform', None, None) # TODO: change
+def create_particle_distribution(
+        n_particles,
+        x=None,
+        x_center=0,
+        x_width=0,
+        y=None,
+        y_center=0,
+        y_width=0,
+        x_dds=None,
+        x_dds_center=0,
+        x_dds_width=0,
+        y_dds=None,
+        y_dds_center=0,
+        y_dds_width=0,
+        l=None,
+        l_center=0,
+        l_width=0,
+        delta=None,
+        delta_center=0,
+        delta_width=None,
+):
+    n_particles = n_particles
+    particle_distribution = np.zeros((6, n_particles))
+    particle_distribution[0] = _create_distribution(x, x_center, x_width)
+    particle_distribution[1] = _create_distribution(y, y_center, y_width)
+    particle_distribution[2] = _create_distribution(x_dds, x_dds_center, x_dds_width)
+    particle_distribution[3] = _create_distribution(y_dds, y_dds_center, y_dds_width)
+    particle_distribution[4] = _create_distribution(l, l_center, l_width)
+    particle_distribution[5] = _create_distribution(delta, delta_center, delta_width)
+    return particle_distribution
 
-    def create_distribution(self, name, center, width):
-        if name == 'uniform':
-            tmp = width / 2
-            return np.linspace(center - tmp, center + tmp)
+
+def _create_distribution(distribution, center, width):
+    if distribution == None:
+        pass
+    elif distribution == 'uniform':
+        tmp = width / 2
+        return np.linspace(center - tmp, center + tmp)
+    else:
+        raise NotImplementedError
