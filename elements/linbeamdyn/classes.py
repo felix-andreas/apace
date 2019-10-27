@@ -21,10 +21,8 @@ class LinBeamDyn:
         self.flag_transfer_matrices_all = CachedPropertyFlag(depends_on=[self.flag_allocate_transfer_matrices])
         self.flag_transfer_matrices_partial = CachedPropertyFlag(depends_on=[self.main_cell.changed_elements_flag],
                                                                  initial_state=False)
-        self.flag_twiss_data = CachedPropertyFlag(depends_on=[self.flag_transfer_matrices_all,
-                                                              self.flag_transfer_matrices_partial])
-        self.flag_tracking_data = CachedPropertyFlag(depends_on=[self.flag_transfer_matrices_all,
-                                                              self.flag_transfer_matrices_partial])
+        self.flag_transfer_matrices = CachedPropertyFlag(depends_on=[self.flag_transfer_matrices_all,
+                                                                     self.flag_transfer_matrices_partial])
         self._twiss_data = Structure()
         self._twiss_data.lin = self
         self._tracking_data = Structure()
@@ -60,7 +58,7 @@ class LinBeamDyn:
 
     @property
     def twiss(self):
-        if self.flag_twiss_data.has_changed:
+        if self.flag_transfer_matrices.has_changed:
             self.get_twiss(**self.twiss_options)
         return self._twiss_data
 
@@ -68,11 +66,5 @@ class LinBeamDyn:
         self.twiss_options = options
         self._twiss_data.s = self.main_cell.s
         twiss_data(self._twiss_data, self.transfer_matrices, **options)
-        self.flag_twiss_data.has_changed = False
+        self.flag_transfer_matrices.has_changed = False
         return self.twiss
-
-    @property #TODO ordentlich machen!
-    def tracking(self):
-        if self.flag_twiss_data.has_changed:
-            self.get_twiss(**self.twiss_options)
-        return self._twiss_data
