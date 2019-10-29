@@ -16,7 +16,7 @@ def twiss_product(matrix_array, b0_vec, twiss_array, parallel=False):
 
 # from python_utils.profile import profile_by_line
 # @profile_by_line(exit=1)
-def accumulate_array(transfer_matrices, acc_array):
+def accumulated_array(transfer_matrices, acc_array):
     n = transfer_matrices.shape[0]
     args = (
         n,

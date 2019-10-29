@@ -1,18 +1,19 @@
 #include <stdio.h>
 
-void accumulate_array(int n, int size, double (*ina)[size][size], double (*outa)[size][size]) {
-  int pos, i, j, k;
-  for (i = 0; i < size; i++) {
-    for (j = 0; j < size; j++) {
-      outa[0][i][j] = ina[0][i][j];
+void accumulate_array(int n, int size, double (*input_array)[size][size], double (*accumulated_array)[size][size]) {
+  for (int i = 0; i < size; i++) {
+    for (int j = 0; j < size; j++) {
+      accumulated_array[0][i][j] = input_array[0][i][j];
     }
   }
-  for (pos = 1; pos < n; pos++) {
-    for (i = 0; i < size; i++) {
-      for (j = 0; j < size; j++) {
-        outa[pos][i][j] = 0.0;
-        for (k = 0; k < size; k++) {
-          outa[pos][i][j] += ina[pos][i][k] * outa[pos - 1][k][j];
+  
+  for (int pos = 1; pos < n; pos++) {
+    int pos_1 = pos - 1;
+    for (int i = 0; i < size; i++) {
+      for (int j = 0; j < size; j++) {
+        accumulated_array[pos][i][j] = 0.0;
+        for (int k = 0; k < size; k++) {
+          accumulated_array[pos][i][j] += input_array[pos][i][k] * accumulated_array[pos_1][k][j];
         }
       }
     }

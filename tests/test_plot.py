@@ -1,15 +1,16 @@
 import elements as el
-from elements.plotting import plot_lattice
+from elements.plot import plot_lattice
+
+import os
+
+dir_name = os.path.dirname(__file__)
+file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
+
 
 def test_plot():
-    file_path = 'tests/data/lattices/FODO-lattice.json'
-    line = el.read_lattice_file_json(file_path)
-    fodo = line.cells['fodo']
-    print(fodo.length)
-    Q1 = line.elements['Q1']
-    B1 = line.elements['B1']
-    lin = el.LinBeamDyn(line)
+    line = el.read_lattice_file(file_path)
+    twiss = el.Twiss(line)
 
-    plot_lattice(lin.get_twiss(), line, eta_x_scale=1, path='out.pdf')
+    plot_lattice(twiss, line, eta_x_scale=1, path=os.path.join(dir_name, '/tmp/out.pdf'))
 
 

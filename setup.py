@@ -5,7 +5,7 @@ with open('elements/__about__.py') as file:
     exec(file.read(), about)
 
 with open('README.md') as file:
-    readme=file.read()
+    readme = file.read()
 
 setup(
     name=about['__title__'],
@@ -17,7 +17,7 @@ setup(
     author=about['__author__'],
     license=about['__license__'],
     packages=find_packages(),
-    package_data = {
+    package_data={
         'data': ['data'],
     },
     install_requires=['numpy', 'scipy', 'matplotlib', 'cffi>=1.0.0'],
