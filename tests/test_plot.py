@@ -1,5 +1,5 @@
-import elements as el
-from elements.plot import plot_lattice
+import apace as el
+from apace.plot import plot_lattice
 
 import os
 

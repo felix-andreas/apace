@@ -15,7 +15,7 @@ from .plot import plot_lattice
 
 
 def main():
-    parser = argparse.ArgumentParser(description='This is the elements CLI.')
+    parser = argparse.ArgumentParser(description='This is the apace CLI.')
     parser.add_argument('--version', action='version', version=str(__version__))
     subparsers = parser.add_subparsers(dest='subparser')
 

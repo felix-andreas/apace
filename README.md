@@ -6,13 +6,13 @@ Depends on Python 3.7
 ## Usage
 import elements
 ```python
-import elements as el
+import apace as el
 ```
 
 ### Linear Beam Dynamics
 Import the linear beam dynamics module:
 ```python
-from elements.linbeamdyn import LinBeamDyn
+from apace.linbeamdyn import LinBeamDyn
 ```
 
 Create a ring consting out of FODO cells:  

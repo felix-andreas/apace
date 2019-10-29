@@ -1,6 +1,6 @@
 import os
 
-import elements as el
+import apace as el
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')

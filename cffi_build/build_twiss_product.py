@@ -7,7 +7,7 @@ SIZE = 6
 
 ffi_builder = FFI()
 ffi_builder.set_source(
-    'elements.clib.twiss_product._twiss_product',
+    'apace.clib.twiss_product._twiss_product',
     ''.join(f'#include "{source}"\n' for source in SOURCES),
     include_dirs=[SRC_ROOT],
     extra_compile_args=['-fopenmp', '-D use_openmp', '-Ofast', '-march=native', '-ffast-math'],

@@ -196,7 +196,7 @@ class Cell(_Base):
             List that defines the physical order of elements in the magnetic lattice.
             Corresponds to flattened tree attribute.
         elements : set
-            Set of all elements.
+            Set of all apace.
         cells : set
             Set of all cells.
     """

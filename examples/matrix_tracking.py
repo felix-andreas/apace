@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os
 from math import sqrt
 
-import elements as el
+import apace as el
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'lattices', 'FODO-lattice.json')
