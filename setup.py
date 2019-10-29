@@ -27,4 +27,13 @@ setup(
         "cffi_build/build_twiss_product.py:ffi_builder",
     ],
     entry_points={"console_scripts": ["apace = apace.cli:main"]},
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Topic :: Scientific/Engineering'
+    ]
 )
