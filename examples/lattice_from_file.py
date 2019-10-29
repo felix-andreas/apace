@@ -1,13 +1,15 @@
-from elements.linbeamdyn import LinBeamDyn
-from elements.io import read_lattice_file_json
+import os
+import elements as el
 
 import matplotlib.pyplot as plt
 
-lattice = read_lattice_file_json("../../lattices/BII_2016-06-10_user_Sym_noID_DesignLattice1996.json")
-lin = LinBeamDyn(lattice)
-plt.plot(lin.twiss.s, lin.twiss.betax)
-plt.savefig('out.pdf')
+dir_name = os.path.dirname(__file__)
+file_path = os.path.join(dir_name, 'lattices', 'FODO-lattice.json')
+fodo = el.read_lattice_file(file_path)
+twiss = el.Twiss(fodo)
+plt.plot(twiss.s, twiss.beta_x)
+plt.show()
+# plt.savefig('out.pdf')
 # lattice.print_tree()
-from elements import as_json
-
-print(as_json(lattice, indent=2))
+# from elements import as_json
+# print(as_json(lattice, indent=2))

@@ -10,8 +10,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from .__about__ import __version__
 from .io import read_lattice_file_json
-from .linbeamdyn import LinBeamDyn
-from .plotting import plot_lattice
+from .twiss import Twiss
+from .plot import plot_lattice
 
 
 def main():
@@ -50,7 +50,7 @@ def main():
         parser.print_help()
         return
 
-    if args.sections: # TODO: only check if func == plot
+    if args.sections:  # TODO: only check if func == plot
         args.sections = ast.literal_eval(args.sections)
         if is_section(args.sections):  # check if sections is list/tuple of sections
             args.sections = [args.sections]
@@ -58,7 +58,7 @@ def main():
             raise Exception('Section argument is not valid! '
                             'Must be string (section_name), tuple (x_min, x_max) or list of these.')
 
-    if args.positions: # TODO: only check if func == plot
+    if args.positions:  # TODO: only check if func == plot
         args.positions = ast.literal_eval(args.positions)
         if isinstance(args.positions, (int, float)):
             args.positions = [args.positions]
@@ -68,12 +68,6 @@ def main():
                             'Must be string (section_name), tuple (x_min, x_max), a number or list of these.')
 
     args.func(args)
-
-
-def read_lattice(path):
-    main_cell = read_lattice_file_json(path)
-    lin = LinBeamDyn(main_cell)
-    return main_cell, lin
 
 
 def plot(args):
@@ -93,7 +87,7 @@ def print_twiss_array(s, twiss_array):
     width = 10
     np.savetxt(io_string, np.column_stack((s, twiss_array.T)), fmt=f'%{width}.3f', delimiter=',',
                header=',  '.join(f'{x:>{width - 2}}' for x in (
-                's', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'gamma_x', 'gamma_y', 'eta_x', 'dds_eta_x')))
+                   's', 'beta_x', 'beta_y', 'alpha_x', 'alpha_y', 'gamma_x', 'gamma_y', 'eta_x', 'dds_eta_x')))
 
     output = io_string.getvalue()
     print(output)
@@ -119,8 +113,8 @@ def plot_multiple(args):
 
     figs = []
     for file_path in lattice_files:
-        main_cell, lin = read_lattice(file_path)
-        twiss = lin.get_twiss(betatron_phase=True)
+        main_cell = read_lattice_file_json(file_path)
+        twiss = Twiss(main_cell)
 
         if args.verbose:
             print(
@@ -129,8 +123,8 @@ def plot_multiple(args):
                 f'Length: {main_cell.length}\n'
                 f'Number of elements: {len(main_cell.lattice)}\n'
                 f'Number of independent elements: {len(main_cell.elements)}\n'
-                f'Horizontal Tune: {twiss.tune_x:.0f}\n'
-                f'Vertical Tune: {twiss.tune_y:.0f}\n',
+                f'Horizontal Tune: {twiss.tune_x:.3f}\n'
+                f'Vertical Tune: {twiss.tune_y:.3f}\n',
             )
 
         if args.positions:
@@ -141,7 +135,7 @@ def plot_multiple(args):
 
         if args.output_path or args.show_plot:
             ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
-            ref_twiss = LinBeamDyn(ref_main_cell).get_twiss() if ref_main_cell else None
+            ref_twiss = Twiss(ref_main_cell) if ref_main_cell else None
             fig = plot_lattice(twiss, main_cell, ref_twiss=ref_twiss,
                                sections=args.sections, y_min=args.y_min, y_max=args.y_max)
             figs.append(fig)
@@ -159,7 +153,6 @@ def plot_multi_knob_quads(args):
     lattice1 = read_lattice_file_json(args.path[0])
     lattice2 = read_lattice_file_json(args.multi_knob)
     lattice_out = read_lattice_file_json(args.path[0])
-    lin_out = LinBeamDyn(lattice_out)
     ref_path = os.path.abspath(args.ref_lattice_path) if args.ref_lattice_path else None
 
     if lattice1.elements.keys() != lattice2.elements.keys():
@@ -175,10 +168,11 @@ def plot_multi_knob_quads(args):
             lattice_out.name = f'{lattice1.name} vs {lattice2.name} | {i:.2f}'
             for element, values in diff_magnets.items():
                 lattice_out.elements[element].k1 = values[0] * i + (1 - i) * values[1]
-            lin_out.get_twiss()
+
             ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
-            ref_twiss = LinBeamDyn(ref_main_cell).get_twiss() if ref_main_cell else None
-            plot_lattice(lin_out, ref_twiss=ref_twiss, sections=args.sections, y_min=args.y_min, y_max=args.y_max)
+            ref_twiss = Twiss(ref_main_cell) if ref_main_cell else None
+            plot_lattice(Twiss(lattice_out), ref_twiss=ref_twiss, sections=args.sections, y_min=args.y_min,
+                         y_max=args.y_max)
             pdf.savefig()
 
 

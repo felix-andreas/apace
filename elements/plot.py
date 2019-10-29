@@ -1,16 +1,16 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+import matplotlib.gridspec as grid_spec
 from collections.abc import Iterable
 
 colors = {"Bend": "#ffc425", "Quad": '#d11141', "Sext": "#00b159", "Drift": "#FFFFFF"}
 fs = 10
-cmap = mpl.cm.Set1
+c_map = mpl.cm.Set1
 
 
 def paint_lattice(ax, main_cell, x_min, x_max, y_min, y_max, annotate_elements, annotate_cells):
-    # TODO: height should depented on plot_height, not on y_max!!!
+    # TODO: height should depend on plot_height, not on y_max!!!
     y_span = y_max - y_min
     rec_height = y_span / 16
 
@@ -45,17 +45,18 @@ def paint_lattice(ax, main_cell, x_min, x_max, y_min, y_max, annotate_elements, 
 
 
 def plot_twiss(ax, twiss, line_style='solid', line_width=1.3, alpha=1.0, eta_x_scale=10):
-    ax.plot(twiss.s, twiss.eta_x * eta_x_scale, color=cmap(2 / 9), linewidth=line_width, linestyle=line_style, alpha=alpha)
-    ax.plot(twiss.s, twiss.beta_y, color=cmap(1 / 9), linewidth=line_width, linestyle=line_style, alpha=alpha)
-    ax.plot(twiss.s, twiss.beta_x, color=cmap(0 / 9), linewidth=line_width, linestyle=line_style, alpha=alpha)
+    ax.plot(twiss.s, twiss.eta_x * eta_x_scale, color=c_map(2 / 9), linewidth=line_width, linestyle=line_style,
+            alpha=alpha)
+    ax.plot(twiss.s, twiss.beta_y, color=c_map(1 / 9), linewidth=line_width, linestyle=line_style, alpha=alpha)
+    ax.plot(twiss.s, twiss.beta_x, color=c_map(0 / 9), linewidth=line_width, linestyle=line_style, alpha=alpha)
 
 
 def set_limits(ax, main_cell, x_min=None, x_max=None, y_min=None, y_max=None):
     x_min = x_min if x_min else 0
     x_max = x_max if x_max else main_cell.length
-    ylim = ax.get_ylim()
+    y_lim = ax.get_ylim()
     y_min = y_min if y_min else -0.5
-    y_max = y_max if y_max else 1.1 * ylim[1]
+    y_max = y_max if y_max else 1.1 * y_lim[1]
     ax.set_xlim([x_min, x_max])
     ax.set_ylim([y_min, y_max])
     return x_min, x_max, y_min, y_max
@@ -130,8 +131,6 @@ def plot_full(ax,
         paint_lattice(ax, main_cell, x_min, x_max, y_min, y_max, annotate_elements, annotate_cells)
 
 
-
-
 def plot_lattice(twiss,
                  main_cell=None,
                  main=True,
@@ -143,7 +142,7 @@ def plot_lattice(twiss,
                  path=None):
     fig = plt.figure(figsize=fig_size)  # , constrained_layout=True)
     height_ratios = [2, 7] if (main and sections) else [1]
-    main_grid = gridspec.GridSpec(len(height_ratios), 1, figure=fig, height_ratios=height_ratios)
+    main_grid = grid_spec.GridSpec(len(height_ratios), 1, figure=fig, height_ratios=height_ratios)
 
     if main:
         ax = fig.add_subplot(main_grid[0])
@@ -155,7 +154,7 @@ def plot_lattice(twiss,
 
         N_sections = len(sections)
         rows, cols = find_optimal_grid(N_sections)
-        sub_grid = gridspec.GridSpecFromSubplotSpec(rows, cols, subplot_spec=main_grid[-1])
+        sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, subplot_spec=main_grid[-1])
         for i, section in enumerate(sections):
             ax = fig.add_subplot(sub_grid[i])
 

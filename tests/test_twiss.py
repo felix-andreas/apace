@@ -8,8 +8,7 @@ Q2 = el.Quad('Q2', length=0.4, k1=-1.2)
 fodo = el.Cell('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = el.MainCell('fodo-ring', [fodo] * 8)
 
-lin = el.LinBeamDyn(ring)
-twiss = lin.get_twiss(betatron_phase=True)
+twiss = el.Twiss(ring)
 
 
 def test_beta():
@@ -17,6 +16,7 @@ def test_beta():
     beta_x_end = twiss.beta_x[-1]
     beta_y_start = twiss.beta_y[0]
     beta_y_end = twiss.beta_y[-1]
+    assert twiss.stable
     assert 9.8176 == round(beta_x_start, 4)
     assert 9.8176 == round(beta_x_end, 4)
     assert 1.2376 == round(beta_y_start, 4)

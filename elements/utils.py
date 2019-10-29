@@ -1,9 +1,55 @@
+import collections
+
+
+class Signal:
+    def __init__(self, *args):
+        self.callbacks = set()
+        for signal in args:
+            signal.register(self)
+
+    def __call__(self, *args, **kwargs):
+        for callback in self.callbacks:
+            callback(*args, **kwargs)
+
+    def register(self, callback):
+        self.callbacks.add(callback)
+
+
+class Flag:
+    def __init__(self, initial_value, signals=None):
+        self.value = initial_value
+        for signal in signals:
+            signal.register(self.set_value(True))
+
+    def __bool__(self):
+        return self.value
+
+    def set_value(self, value):
+        self.value = value
+
+
+def flatten(iterable):
+    for element in iterable:
+        if isinstance(element, collections.Iterable) and not isinstance(element, (str, bytes)):
+            yield from flatten(element)
+        else:
+            yield element
+
+
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+class Structure:
+    pass
+
+
 # based on https://github.com/apieum/weakreflist/blob/master/weakreflist/weakreflist.py
 # modified
 from weakref import ref, ReferenceType
 import sys
-
-__all__ = ["WeakList"]
 
 
 def is_slice(index):
