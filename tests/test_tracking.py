@@ -1,9 +1,9 @@
-import apace as el
+import apace as ap
 import os
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
-fodo = el.read_lattice_file(file_path)
+fodo = ap.read_lattice_file(file_path)
 
 
 def test_tune():
@@ -13,8 +13,8 @@ def test_tune():
     n_particles = 10
     n_turns = 10000
 
-    initial_distribution = el.create_particle_distribution(n_particles, x_dist='uniform', x_width=0.02, x_center=0.01)
-    matrix_tracking = el.MatrixTracking(fodo, initial_distribution, turns=n_turns, position=0)
+    initial_distribution = ap.create_particle_distribution(n_particles, x_dist='uniform', x_width=0.02, x_center=0.01)
+    matrix_tracking = ap.MatrixTracking(fodo, initial_distribution, turns=n_turns, position=0)
     period_time = fodo.length / 299_792_458
     freq = np.linspace(0.0, 1.0 / (2.0 * period_time), n_turns // 2)
     fft_tracking = 2.0 / n_turns * np.abs(fft(matrix_tracking.particle_trajectories[:, 0, -1])[:n_turns // 2])
@@ -32,9 +32,9 @@ def test_matrix_tracking():
     n_particles = 1
     n_turns = 1
 
-    initial_distribution = el.create_particle_distribution(n_particles, x_dist='uniform', x_center=0.01)
-    matrix_tracking = el.MatrixTracking(fodo, initial_distribution, turns=n_turns, position=None)
-    twiss = el.Twiss(fodo)
+    initial_distribution = ap.create_particle_distribution(n_particles, x_dist='uniform', x_center=0.01)
+    matrix_tracking = ap.MatrixTracking(fodo, initial_distribution, turns=n_turns, position=None)
+    twiss = ap.Twiss(fodo)
     x = matrix_tracking.x_trajectory
     beta_x = twiss.beta_x
     psi_x = twiss.psi_x

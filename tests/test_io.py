@@ -1,16 +1,16 @@
 import os
 
-import apace as el
+import apace as ap
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
-fodo = el.read_lattice_file(file_path)
+fodo = ap.read_lattice_file(file_path)
 
 
 def test_save_lattice():
     path = '/tmp/tmp_lattice.json'
-    el.save_lattice_file(fodo, path)
-    lattice = el.read_lattice_file(path)
+    ap.save_lattice_file(fodo, path)
+    lattice = ap.read_lattice_file(path)
     assert fodo.length == lattice.length
     assert len(fodo.elements) == len(lattice.elements)
     assert len(fodo.cells) == len(lattice.cells)

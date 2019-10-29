@@ -1,12 +1,12 @@
 import os
-import apace as el
+import apace as ap
 
 import matplotlib.pyplot as plt
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'lattices', 'FODO-lattice.json')
-fodo = el.read_lattice_file(file_path)
-twiss = el.Twiss(fodo)
+fodo = ap.read_lattice_file(file_path)
+twiss = ap.Twiss(fodo)
 plt.plot(twiss.s, twiss.beta_x)
 plt.show()
 # plt.savefig('out.pdf')

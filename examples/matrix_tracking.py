@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 import os
 from math import sqrt
 
-import apace as el
+import apace as ap
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'lattices', 'FODO-lattice.json')
-fodo = el.read_lattice_file(file_path)
+fodo = ap.read_lattice_file(file_path)
 
 # Example 1: Get tune by Fourier-Transform of particle offset at fixed position
 n_particles = 20
 n_turns = 30
-particles = el.create_particle_distribution(n_particles, x_dist='uniform', x_width=0.02, x_center=0.01)
-matrix_tracking = el.MatrixTracking(fodo, particles, turns=n_turns)
+particles = ap.create_particle_distribution(n_particles, x_dist='uniform', x_width=0.02, x_center=0.01)
+matrix_tracking = ap.MatrixTracking(fodo, particles, turns=n_turns)
 tracking_data = matrix_tracking.particle_trajectories
 
 freq = np.linspace(0.0, 1.0 / (2.0 * fodo.length / 299_792_458), n_turns // 2)
@@ -39,7 +39,7 @@ plt.plot(matrix_tracking.orbit_position, tracking_data[:, 0, -1])
 plt.xlabel('horizontal offset / x')
 plt.ylabel('orbit position / s')
 
-matrix_tracking = el.MatrixTracking(fodo, particles, turns=n_turns, position=None)
+matrix_tracking = ap.MatrixTracking(fodo, particles, turns=n_turns, position=None)
 tracking_data = matrix_tracking.particle_trajectories
 
 plt.subplot(2, 2, 4)
@@ -53,9 +53,9 @@ plt.savefig('/tmp/tracking.pdf')
 # Example 2: Plot particle trajectory`
 x_width = 0.02
 n_turns = 15
-dist = el.create_particle_distribution(20, x_dist='uniform', x_width=x_width)
-matrix_tracking = el.MatrixTracking(fodo, dist, turns=n_turns, position=None)
-twiss = el.Twiss(fodo)
+dist = ap.create_particle_distribution(20, x_dist='uniform', x_width=x_width)
+matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, position=None)
+twiss = ap.Twiss(fodo)
 
 fig, ax = plt.subplots()
 x = matrix_tracking.x_trajectory
