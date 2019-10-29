@@ -2,7 +2,7 @@ import os
 from cffi import FFI
 
 SOURCES = ('twiss_product_serial.c', 'twiss_product_parallel.c', 'accumulate_array.c')
-SRC_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../src')
+SRC_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../lib')
 SIZE = 6
 
 ffi_builder = FFI()
