@@ -1,4 +1,4 @@
-from ._twiss_product import ffi, lib
+from ._clib._twiss_product import ffi, lib
 
 
 # from python_utils.profile import profile_by_line

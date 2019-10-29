@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import integrate
-from .clib.twiss_product import twiss_product, accumulated_array
+from .clib import twiss_product, accumulated_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
 
