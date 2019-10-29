@@ -1,5 +1,3 @@
-<img src="images/icons/svg/logo.svg" width="64" height="64" align="left"/>
-
 # apace
 Depends on Python 3.7 
 
