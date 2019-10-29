@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 about = {}
-with open('elements/__about__.py') as file:
+with open('apace/__about__.py') as file:
     exec(file.read(), about)
 
 with open('README.md') as file:
@@ -26,5 +26,5 @@ setup(
     cffi_modules=[
         "cffi_build/build_twiss_product.py:ffi_builder",
     ],
-    entry_points={"console_scripts": ["elements = elements.cli:main"]},
+    entry_points={"console_scripts": ["apace = apace.cli:main"]},
 )

@@ -1,37 +1,37 @@
 <img src="images/icons/svg/logo.svg" width="64" height="64" align="left"/>
 
-# elements
+# apace
 Depends on Python 3.7 
 
 ## Usage
-import elements
+import apace
 ```python
-import elements as el
+import apace as ap
 ```
 
 ### Linear Beam Dynamics
 Import the linear beam dynamics module:
 ```python
-from elements.linbeamdyn import LinBeamDyn
+from apace.linbeamdyn import LinBeamDyn
 ```
 
 Create a ring consting out of FODO cells:  
 ```python
-D1 = el.Drift('D1', length=0.55)
-Q1 = el.Quad('Q1', length=0.2, k1=1.2)
-B1 = el.Bend('B1', length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
-Q2 = el.Quad('Q2', length=0.4, k1=-1.2)
-fodo = el.Line('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
-ring = el.Mainline('fodo-ring', [fodo] * 8)
+D1 = ap.Drift('D1', length=0.55)
+Q1 = ap.Quad('Q1', length=0.2, k1=1.2)
+B1 = ap.Bend('B1', length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
+Q2 = ap.Quad('Q2', length=0.4, k1=-1.2)
+fodo = ap.Line('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
+ring = ap.Mainline('fodo-ring', [fodo] * 8)
 ```
 
 Get twiss parameters:
 ```python
-twiss = LinBeamDyn(ring).twiss
+twiss = ap.Twiss(ring)
 ```
 
 
 Plot twissfunctions:
 ```python
-plot(twiss.s, twiss.betax, twiss.betay, twiss.etax)
+plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
 ```

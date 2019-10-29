@@ -1,5 +1,5 @@
 import os
-import elements as el
+import apace as el
 
 import matplotlib.pyplot as plt
 
@@ -11,5 +11,5 @@ plt.plot(twiss.s, twiss.beta_x)
 plt.show()
 # plt.savefig('out.pdf')
 # lattice.print_tree()
-# from elements import as_json
+# from apace import as_json
 # print(as_json(lattice, indent=2))

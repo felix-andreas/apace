@@ -7,10 +7,10 @@ __pycache__/
 *$py.class
 
 # C extensions
-# TODO: .o/.c files should be delted automatically
-elements/**/*.so
-elements/**/*.o
-elements/**/*.c
+# TODO: .o/.c files should be deleted automatically
+apace/**/*.so
+apace/**/*.o
+apace/**/*.c
 
 
 # Distribution / packaging
