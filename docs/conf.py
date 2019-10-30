@@ -13,7 +13,7 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
 from apace import __name__, __version__, __author__, __copyright__
 
 # -- Project information -----------------------------------------------------
