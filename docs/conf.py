@@ -13,12 +13,12 @@
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath('..'))
-from apace.__about__ import __name__, __version__, __author__, __copyright__
+sys.path.insert(0, os.path.abspath('../apace'))
+from __about__ import __title__, __version__, __author__, __copyright__
 
 # -- Project information -----------------------------------------------------
 
-project = __name__
+project = __title__
 copyright = __copyright__
 author = __author__
 
