@@ -16,7 +16,7 @@ class Twiss:
         self._twiss_array = None
         self._twiss_array_needs_update = True
         self.twiss_array_changed = Signal(self.matrix_method.matrix_array_changed)
-        self.twiss_array_changed.register(self.on_twiss_array_changed)
+        self.twiss_array_changed.register(self._on_twiss_array_changed)
         self._full_matrix = None
         self._accumulated_array = None
 
@@ -27,7 +27,7 @@ class Twiss:
         self._tune_fractional_needs_update = True
         # TODO: only depends on full-matrix not on beta functions - change signals!
         self.tune_fractional_changed = Signal(self.twiss_array_changed)
-        self.tune_fractional_changed.register(self.on_tune_fractional_changed)
+        self.tune_fractional_changed.register(self._on_tune_fractional_changed)
         self._tune_x_fractional = None
         self._tune_y_fractional = None
         self._tune_x_fractional_hz = None
@@ -35,7 +35,7 @@ class Twiss:
 
         self._betatron_phase_needs_update = True
         self.betatron_phase_changed = Signal(self.twiss_array_changed)
-        self.betatron_phase_changed.register(self.on_betatron_phase_changed)
+        self.betatron_phase_changed.register(self._on_betatron_phase_changed)
         self._psi_x = None
         self._psi_y = None
         self._tune_x = None
@@ -97,7 +97,7 @@ class Twiss:
 
         self._twiss_array_needs_update = False
 
-    def on_twiss_array_changed(self):
+    def _on_twiss_array_changed(self):
         self._twiss_array_needs_update = True
 
     @property
@@ -172,7 +172,7 @@ class Twiss:
         self._tune_y = self._psi_y[-1] / TWO_PI
         self._betatron_phase_needs_update = False
 
-    def on_betatron_phase_changed(self):
+    def _on_betatron_phase_changed(self):
         self._betatron_phase_needs_update = True
 
     @property
@@ -212,7 +212,7 @@ class Twiss:
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False
 
-    def on_tune_fractional_changed(self):
+    def _on_tune_fractional_changed(self):
         self._tune_fractional_needs_update = True
 
     # TODO: save results

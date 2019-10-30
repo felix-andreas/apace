@@ -62,9 +62,9 @@ class _Element(_Base):
         super().__init__(name, type_, comment)
         self._length = length
         self.length_changed = Signal()
-        self.length_changed.register(self.on_length_changed)
+        self.length_changed.register(self._on_length_changed)
         self.value_changed = Signal()
-        self.value_changed.register(self.on_value_changed)
+        self.value_changed.register(self._on_value_changed)
         self.main_cell = None
 
     @property
@@ -76,11 +76,11 @@ class _Element(_Base):
         self._length = value
         self.length_changed()
 
-    def on_length_changed(self):
+    def _on_length_changed(self):
         for cell in self.parent_cells:
             cell.length_changed(self)
 
-    def on_value_changed(self):
+    def _on_value_changed(self):
         self.main_cell.element_changed(self)
 
 
@@ -214,12 +214,12 @@ class Cell(_Base):
         self._cells = dict()
         self._tree_properties_needs_update = True
         self.tree_properties_changed = Signal()
-        self.tree_changed.register(self.on_tree_changed)
+        self.tree_changed.register(self._on_tree_changed)
 
         self._length = 0
         self._length_needs_update = True
         self.length_changed = Signal()
-        self.length_changed.register(self.on_length_changed)
+        self.length_changed.register(self._on_length_changed)
 
         if tree:
             self.tree_add_objects(tree, pos=len(self.tree))
@@ -271,7 +271,7 @@ class Cell(_Base):
             self.update_tree_properties()
         return self._cells
 
-    def on_tree_changed(self):
+    def _on_tree_changed(self):
         self._tree_properties_needs_update = True
         for cell in self.parent_cells:
             cell.tree_properties_changed()
@@ -306,7 +306,7 @@ class Cell(_Base):
         self._length = sum([x.length for x in self.tree])
         self._length_needs_update = False
 
-    def on_length_changed(self, element):
+    def _on_length_changed(self, element):
         self._length_needs_update = True
         for cell in self.parent_cells:
             cell.length_changed(element)
