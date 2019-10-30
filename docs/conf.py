@@ -10,11 +10,11 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-from apace import __name__, __version__, __author__, __copyright__
 import os
 import sys
 
 sys.path.insert(0, os.path.abspath('.'))
+from apace import __name__, __version__, __author__, __copyright__
 
 # -- Project information -----------------------------------------------------
 
