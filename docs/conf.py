@@ -17,6 +17,8 @@ sys.path.insert(0, os.path.abspath('../apace'))
 from __about__ import __title__, __version__, __author__, __copyright__
 
 # -- Project information -----------------------------------------------------
+# https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
+master_doc = 'index'
 
 project = __title__
 copyright = __copyright__
