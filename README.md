@@ -1,5 +1,5 @@
 # apace
-**apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python package and aims to provide a convenient and straightforward API to make use Python's numeros scientific libaries.
+**apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python package and aims to provide a convenient and straightforward API to make use Python's numerous scientific libraries.
 
 
 
@@ -11,7 +11,7 @@ pip install -U apace
 ```
 
 ## Dependencies
-- Python 3.7 or higher
+- Python 3.7 or higher (CPython or PyPy)
 - CFFI 1.0.0 or higher
 - NumPy/SciPy
 - Matplotlib
