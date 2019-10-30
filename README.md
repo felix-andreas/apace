@@ -1,5 +1,5 @@
 # apace
-**apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python packages and aims to provide a convenient and straightforward API to make use Python's numeros scientific libaries.
+**apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python package and aims to provide a convenient and straightforward API to make use Python's numeros scientific libaries.
 
 
 
@@ -18,7 +18,7 @@ pip install -U apace
 
 
 ### A Simple Example
-import apace
+Import apace:
 ```python
 import apace as ap
 ```
