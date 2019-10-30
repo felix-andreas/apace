@@ -21,4 +21,5 @@ jobs:
         pip install pytest
         pytest
     - name: Create source distributions 
+      run: |
         python setup.py bdist
