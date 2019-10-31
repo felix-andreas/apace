@@ -6,9 +6,6 @@ API Reference
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
 .. toctree::
 
    apace.classes
