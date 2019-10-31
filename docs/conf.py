@@ -14,6 +14,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('../apace'))
+sys.path.insert(0, os.path.abspath('..'))
 from __about__ import __title__, __version__, __author__, __copyright__
 
 # -- Project information -----------------------------------------------------
