@@ -21,13 +21,6 @@ ibraries.
    cli
    reference/apace
 
-..  :glob:
-..  api_reference/*
-
-
-
-
-API Reference
 
 Indices and tables
 ==================
