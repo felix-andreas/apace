@@ -19,7 +19,7 @@ Create a ring consisting of 8 FODO cells::
     ring = ap.MainCell('FODO-RING', [fodo] * 8)
     Calculate the twiss parameters:
 
-      twiss = ap.Twiss(ring)
+    twiss = ap.Twiss(ring)
 
 Plot horizontal and vertical beta functions using matplotlib::
 

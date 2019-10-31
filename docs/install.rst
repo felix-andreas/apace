@@ -2,19 +2,20 @@
 Installation guide
 ==================
 
-**apace** runs Python 3.6 or above under CPython and PyPy.
+**apace** runs on Python 3.6 or above under CPython and PyPy.
 
 Install from PyPI
 ======================
 
-You can install **apace** and its dependencies from PyPI using pip or pipenv::
+You can install/update **apace** and its dependencies from PyPI using
+pip or pipenv::
 
     $ pip install -U apace
 
 Build from Source
 =================
 
-**apace**\ 's source code is avialable on `Github <https://github.com/andreas/felix/apace>`_.
+**apace**\ 's source code is avialable on `Github <https://github.com/andreasfelix/apace>`_.
 
 You can either clone the public repository::
 
