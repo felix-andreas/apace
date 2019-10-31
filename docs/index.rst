@@ -16,9 +16,10 @@ ibraries.
 
    install
    quickstart
-   essential_concepts
+   concepts
    tutorials
    cli
+   reference/apace
 
 ..  :glob:
 ..  api_reference/*
@@ -28,9 +29,9 @@ ibraries.
 
 API Reference
 
-.. Indices and tables
-.. ==================
+Indices and tables
+==================
 
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
