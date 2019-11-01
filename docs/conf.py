@@ -12,17 +12,18 @@
 #
 import os
 import sys
+from datetime import datetime
 
 sys.path.insert(0, os.path.abspath('../apace'))
 sys.path.insert(0, os.path.abspath('..'))
-from __about__ import __title__, __version__, __author__, __copyright__
+from __about__ import __title__, __version__, __author__
 
 # -- Project information -----------------------------------------------------
 # https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
 master_doc = 'index'
 
 project = __title__
-copyright = __copyright__
+copyright = '%d %s' % (datetime.now().year, __author__)
 author = __author__
 
 # The short X.Y version
@@ -33,9 +34,10 @@ release = __version__
 # -- General configuration ---------------------------------------------------
 
 # AutoAPI
-autoapi_dirs = ['../' + __title__]
-# autoapi_add_toctree_entry = False
-# autoapi_root = 'technical/api'
+autoapi_dirs = [os.path.join('..', __title__)]
+autoapi_add_toctree_entry = False
+autoapi_template_dir = '_templates/autoapi'
+autoapi_options = ['members', 'undoc-members']
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
