@@ -9,7 +9,7 @@ apace |version| documentation
 **c**\ od\ **e** designed for the optimization of beam optics. It
 is available as Python package and aims to provide a convenient
 and straightforward API to make use of Python's numerous scientific
-ibraries.
+libraries.
 
 .. toctree::
    :maxdepth: 2
@@ -19,6 +19,7 @@ ibraries.
    concepts
    tutorials
    cli
+   autoapi/apace/index
 
 
 Indices and tables

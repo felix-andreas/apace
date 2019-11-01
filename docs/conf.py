@@ -31,7 +31,11 @@ version = __version__
 release = __version__
 
 # -- General configuration ---------------------------------------------------
+
+# AutoAPI
 autoapi_dirs = ['../' + __title__]
+# autoapi_add_toctree_entry = False
+# autoapi_root = 'technical/api'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -51,8 +55,8 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-# html_theme = 'sphinx_rtd_theme'
-html_theme = 'press'
+html_theme = 'sphinx_rtd_theme'
+# html_theme = 'press'
 # html_theme = 'sphinx_typlog_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
