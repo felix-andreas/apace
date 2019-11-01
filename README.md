@@ -10,14 +10,14 @@ Install and update using pip:
 pip install -U apace
 ```
 
-## Dependencies
+## Requirements
 - Python 3.7 or higher (CPython or PyPy)
 - CFFI 1.0.0 or higher
 - NumPy/SciPy
 - Matplotlib
 
 
-### A Simple Example
+## A Simple Example
 Import apace:
 ```python
 import apace as ap
@@ -32,8 +32,8 @@ Q2 = ap.Quad('Q2', length=0.4, k1=-1.2)
 fodo = ap.Cell('FODO-CELL', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.MainCell('FODO-RING', [fodo] * 8)
 ```
-
-Calculate the twiss parameters:
+ 
+Calculate the Twiss parameters:
 ```python
 twiss = ap.Twiss(ring)
 ```
