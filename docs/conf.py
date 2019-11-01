@@ -31,13 +31,12 @@ version = __version__
 release = __version__
 
 # -- General configuration ---------------------------------------------------
+autoapi_dirs = ['../' + __title__]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = [
-    'sphinx.ext.autodoc',
-]
+extensions = ['autoapi.extension']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

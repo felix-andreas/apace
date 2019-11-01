@@ -8,7 +8,7 @@ apace |version| documentation
 **apace** is yet **a**\ nother **p**\ article **a**\ ccelerator
 **c**\ od\ **e** designed for the optimization of beam optics. It
 is available as Python package and aims to provide a convenient
-and straightforward API to make use Python's numerous scientific
+and straightforward API to make use of Python's numerous scientific
 ibraries.
 
 .. toctree::
@@ -19,7 +19,6 @@ ibraries.
    concepts
    tutorials
    cli
-   reference/apace
 
 
 Indices and tables
