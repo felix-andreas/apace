@@ -15,7 +15,6 @@ Linear Beam Dynamics
 ====================
 
 
-
 Create Necktie plot
 ===================
 
