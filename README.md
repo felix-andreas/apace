@@ -10,7 +10,7 @@
 
 
 ## Installing
-Install and update using pip:
+Install and update using pip or pipenv:
 
 ```sh
 pip install -U apace
