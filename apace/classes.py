@@ -4,7 +4,7 @@ from .utils import Signal, Flag
 
 
 class _Base:
-    def __init__(self, name, type, description):
+    def __init__(self, name, description):
         """
         A base class for elements and cells.
         Args:
@@ -14,7 +14,6 @@ class _Base:
         """
         self.name = name
         self.description = description
-        self.type = type
         self.parent_cells = set()  # weakref.WeakSet()
 
     def __repr__(self):
@@ -58,8 +57,8 @@ class _Element(_Base):
             A brief comment on the element.
     """
 
-    def __init__(self, name, type_, length, description):
-        super().__init__(name, type_, description)
+    def __init__(self, name, length, description):
+        super().__init__(name, description)
         self._length = length
         self.length_changed = Signal()
         self.length_changed.register(self._on_length_changed)
@@ -85,20 +84,21 @@ class _Element(_Base):
 
 
 class Drift(_Element):
+    """
+    The Drift element.
+    Args:
+        name: name of the element
+        length: length of the element
+        description: comment on the element.
+    """
+
     def __init__(self, name, length, description=''):
-        """
-        The Drift element.
-        Args:
-            name: name of the element
-            length: length of the element
-            description: comment on the element.
-        """
-        super().__init__(name, 'Drift', length, description)
+        super().__init__(name, length, description)
 
 
 class Bend(_Element):
     def __init__(self, name, length, angle, e1=0, e2=0, description=''):
-        super().__init__(name, 'Bend', length, description)
+        super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
         self._e2 = e2
@@ -141,7 +141,7 @@ class Bend(_Element):
 
 class Quad(_Element):
     def __init__(self, name, length, k1, description=''):
-        super().__init__(name, 'Quad', length, description)
+        super().__init__(name, length, description)
         self._k1 = k1
 
     @property
@@ -156,7 +156,7 @@ class Quad(_Element):
 
 class Sext(_Element):
     def __init__(self, name, length, k2, description=''):
-        super().__init__(name, 'Sext', length, description)
+        super().__init__(name, length, description)
         self._k2 = k2
 
     @property
@@ -202,7 +202,7 @@ class Cell(_Base):
     """
 
     def __init__(self, name, tree=None, description=''):
-        super().__init__(name, 'Cell', description)
+        super().__init__(name, description)
         self._tree = list()  # has strong links to objects
         self.tree_changed = Signal()
         self.child_cells = set()
@@ -284,11 +284,11 @@ class Cell(_Base):
         self._tree_properties_needs_update = False
 
     def _update_tree_properties(self, tree):
-        '''A recursive helper function for update_tree_properties.'''
+        """A recursive helper function for update_tree_properties."""
         elements = self._elements
         cells = self._cells
         for x in tree:
-            # x = weakref.proxy(x) # all references should be weak!
+            # TODO: x = weakref.proxy(x) # all references should be weak!
             if isinstance(x, Cell):
                 value = cells.get(x.name)
                 if value is None:

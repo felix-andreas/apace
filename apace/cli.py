@@ -12,6 +12,7 @@ from .__about__ import __version__
 from .io import read_lattice_file_json
 from .twiss import Twiss
 from .plot import plot_lattice
+from .classes import Quad
 
 
 def main():
@@ -160,7 +161,7 @@ def plot_multi_knob_quads(args):
     diff_magnets = {}
     for name in lattice1.elements.keys():
         e1, e2 = lattice1.elements[name], lattice2.elements[name]
-        if e1.type == 'Quad' and e1.k1 != e2.k1:
+        if isinstance(e1, Quad) and e1.k1 != e2.k1:
             diff_magnets[name] = (e1.k1, e2.k1)
 
     with PdfPages(args.output_path) as pdf:
@@ -180,5 +181,5 @@ def convert_lattice(args):
     return NotImplemented
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
