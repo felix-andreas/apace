@@ -80,7 +80,7 @@ def from_json(json_data):
 
     for cell_name, elements_name_list in json_data['cells'].items():
         tree = [objects[name] for name in elements_name_list]
-        objects[cell_name].tree_add_objects(tree)
+        objects[cell_name].add(tree)
 
     main_tree = [objects[name] for name in json_data['main_cell']]
     return classes.Cell(name=json_data['name'], tree=main_tree, description=json_data.get('description', ''))

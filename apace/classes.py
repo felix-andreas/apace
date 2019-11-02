@@ -1,6 +1,6 @@
 import weakref  # only tree should contain strong ref
 
-from .utils import Signal
+from .utils import Signal, AmbiguousNameError
 
 
 class _Base:
@@ -182,8 +182,6 @@ class Cell(_Base):
         ----------
         tree : list, tuple
             (Nested) list of the cells/elements.
-        child_cells : set
-            Set of all children cells.
         parent_cells : set
             Set of all parent cells.
 
@@ -202,16 +200,16 @@ class Cell(_Base):
         super().__init__(name, description)
         self._tree = list()  # has strong links to objects
         self.tree_changed = Signal()
-        self.child_cells = set()
-        self.main_cell = None
+        self.tree_changed.register(self._on_tree_changed)
+        if tree:
+            self.add(tree, pos=len(self.tree))
 
         # tree properties: # TODO: tree properties should be weak reference
-        self._lattice = list()
-        self._elements = dict()
-        self._cells = dict()
+        self._lattice = []
+        self._elements = {}
+        self._cells = {}
         self._tree_properties_needs_update = True
         self.tree_properties_changed = Signal()
-        self.tree_changed.register(self._on_tree_changed)
 
         self._length = 0
         self._length_needs_update = True
@@ -220,9 +218,6 @@ class Cell(_Base):
 
         self.element_changed = Signal()
         self.element_changed.register(self._on_element_changed)
-
-        if tree:
-            self.tree_add_objects(tree, pos=len(self.tree))
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -235,14 +230,14 @@ class Cell(_Base):
             return self.lattice[key]
 
     def __del__(self):
-        for cell in self.child_cells:
+        for cell in self.tree:
             cell.parent_cells.discard(self)
 
     @property
-    def tree(self):  # do not allow to set tree manually
+    def tree(self):  # do not set tree manually
         return self._tree
 
-    def tree_add_objects(self, new_objects_list, pos=None):
+    def add(self, new_objects_list, pos=None):
         if pos:
             self._tree[pos:pos] = new_objects_list
         else:
@@ -250,19 +245,14 @@ class Cell(_Base):
 
         for obj in set(new_objects_list):
             obj.parent_cells.add(self)
-            if isinstance(obj, Cell):
-                self.child_cells.add(obj)
 
         self.tree_changed()
 
-    def tree_remove_objects(self, pos, num=1):
+    def remove(self, pos, num=1):
         removed_objects = self.tree[pos:pos + num]
         self._tree[pos:pos + num] = []
         for obj in set(removed_objects):
             if obj not in self._tree:
-                if isinstance(obj, Cell):
-                    self.child_cells.remove(obj)
-                print(obj.name, obj.parent_cells, self.tree)
                 obj.parent_cells.remove(self)
 
         self.tree_changed()
@@ -271,18 +261,21 @@ class Cell(_Base):
     def lattice(self):
         if self._tree_properties_needs_update:
             self.update_tree_properties()
+
         return self._lattice
 
     @property
     def elements(self):
         if self._tree_properties_needs_update:
             self.update_tree_properties()
+
         return self._elements
 
     @property
     def cells(self):
         if self._tree_properties_needs_update:
             self.update_tree_properties()
+
         return self._cells
 
     def _on_tree_changed(self):
@@ -301,23 +294,23 @@ class Cell(_Base):
         """A recursive helper function for update_tree_properties."""
         elements = self._elements
         cells = self._cells
-        for x in tree:
-            # TODO: x = weakref.proxy(x) # all references should be weak!
-            if isinstance(x, Cell):
-                value = cells.get(x.name)
+        for obj in tree:
+            # TODO: obj = weakref.proxy(x) # all references should be weak!
+            if isinstance(obj, Cell):
+                value = cells.get(obj.name)
                 if value is None:
-                    cells[x.name] = x
-                elif x is not value:
-                    raise Exception('Cells must have unique names!')
+                    cells[obj.name] = obj
+                elif obj is not value:
+                    raise AmbiguousNameError(obj.name)
 
-                self._update_tree_properties(x.tree)
+                self._update_tree_properties(obj.tree)
             else:
-                self._lattice.append(x)
-                value = elements.get(x.name)
+                self._lattice.append(obj)
+                value = elements.get(obj.name)
                 if value is None:
-                    elements[x.name] = x
-                elif x is not value:
-                    raise Exception('Elements must have unique names!')
+                    elements[obj.name] = obj
+                elif obj is not value:
+                    raise AmbiguousNameError(obj.name)
 
     @property
     def length(self):
