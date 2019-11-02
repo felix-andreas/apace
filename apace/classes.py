@@ -2,20 +2,20 @@ from __future__ import annotations
 import weakref  # only tree should contain strong ref
 
 from .utils import Signal, AmbiguousNameError
-from typing import List, Set, Dict, Union, Optional
+from typing import List, Set, Dict, Union
 
 
 class _Base:
-    def __init__(self, name: str, description: str):
+    def __init__(self, name, description):
         """
         A base class for elements and cells.
         Args:
             name: name of object
             description: description of the object
         """
-        self.name = name
-        self.description = description
-        self.parent_cells = set()  # weakref.WeakSet()
+        self.name: str = name
+        self.description: str = description
+        self.parent_cells: Set[Cell] = set()  # weakref.WeakSet()
 
     def __repr__(self):
         return self.name
@@ -56,7 +56,7 @@ class Element(_Base):
             A brief comment on the element.
     """
 
-    def __init__(self, name: str, length: float, description: str):
+    def __init__(self, name, length, description=''):
         super().__init__(name, description)
         self._length = length
         self.length_changed = Signal()
@@ -91,13 +91,11 @@ class Drift(Element):
         length: length of the element
         description: comment on the element.
     """
-
-    def __init__(self, name: str, length: float, description: str = ''):
-        super().__init__(name, length, description)
+    pass
 
 
 class Bend(Element):
-    def __init__(self, name: str, length: float, angle: float, e1: float = 0, e2: float = 0, description: str = ''):
+    def __init__(self, name, length, angle, e1=0, e2=0, description=None):
         super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
@@ -140,7 +138,7 @@ class Bend(Element):
 
 
 class Quad(Element):
-    def __init__(self, name: str, length: float, k1: float, description: str = ''):
+    def __init__(self, name, length, k1, description=''):
         super().__init__(name, length, description)
         self._k1 = k1
 
@@ -155,7 +153,7 @@ class Quad(Element):
 
 
 class Sext(Element):
-    def __init__(self, name: str, length: float, k2: float, description: str = ''):
+    def __init__(self, name, length, k2, description=''):
         super().__init__(name, length, description)
         self._k2 = k2
 
@@ -199,7 +197,7 @@ class Cell(_Base):
             Set of all cells.
     """
 
-    def __init__(self, name: str, tree: Object = None, description=''):
+    def __init__(self, name, tree=None, description=None):
         super().__init__(name, description)
         self._tree = list()  # has strong links to objects
         self.tree_changed = Signal()
@@ -238,6 +236,8 @@ class Cell(_Base):
 
     @property
     def tree(self) -> List[Union[Element, Cell]]:  # do not set tree manually
+        """Defines the physical order of elements. Corresponds to nested lattice."""
+
         return self._tree
 
     def add(self, new_objects, pos=None):
@@ -262,20 +262,23 @@ class Cell(_Base):
 
     @property
     def lattice(self) -> List[Union[Element, Cell]]:
+        """Defines the physical order of elements. Corresponds to flattened tree."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
         return self._lattice
 
     @property
-    def elements(self) -> Dict[str, Union[Element, Cell]]:
+    def elements(self) -> Dict[str, Element]:
+        """Contains all all elements within this cell."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
         return self._elements
 
     @property
-    def cells(self) -> Dict[str, Union[Element, Cell]]:
+    def cells(self) -> Dict[str, Cell]:
+        """Contains all cells within this cell."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
@@ -317,7 +320,8 @@ class Cell(_Base):
             cell.tree_properties_changed()
 
     @property
-    def length(self):
+    def length(self) -> float:
+        """Length of the cell."""
         if self._length_needs_update:
             self.update_length()
         return self._length
@@ -359,6 +363,3 @@ class Cell(_Base):
                 self._print_tree(x)
                 self.depth -= 1
                 self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')
-
-
-Object = Union[Element, Cell]
