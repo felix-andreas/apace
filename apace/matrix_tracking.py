@@ -43,31 +43,31 @@ class MatrixTracking:
         return self._orbit_position
 
     @property
-    def x_trajectory(self) -> np.ndarray:
+    def x(self) -> np.ndarray:
         return self.particle_trajectories[:, 0, :]
 
     @property
-    def x_dds_trajectory(self) -> np.ndarray:
+    def x_dds(self) -> np.ndarray:
         return self.particle_trajectories[:, 1, :]
 
     @property
-    def y_trajectory(self) -> np.ndarray:
+    def y(self) -> np.ndarray:
         return self.particle_trajectories[:, 2, :]
 
     @property
-    def y_dds_trajectory(self) -> np.ndarray:
+    def y_dds(self) -> np.ndarray:
         return self.particle_trajectories[:, 3, :]
 
     @property
-    def l_trajectory(self) -> np.ndarray:
+    def long(self) -> np.ndarray:
         return self.particle_trajectories[:, 4, :]
 
     @property
-    def delta_trajectory(self) -> np.ndarray:
+    def delta(self) -> np.ndarray:
         return self.particle_trajectories[:, 5, :]
 
     def update_particle_trajectories(self):
-        n_kicks = self.matrix_method.n_kicks
+        n_kicks = self.matrix_method.n_kicks_total
         turns = self.turns
         position = self.position
         initial_distribution = self.initial_distribution

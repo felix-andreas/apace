@@ -73,7 +73,8 @@ class _Element(_Base):
 
     def _on_length_changed(self):
         for cell in self.parent_cells:
-            cell.length_changed(self)
+            cell.length_changed()
+            cell.element_changed(self)
 
     def _on_value_changed(self):
         for cell in self.parent_cells:
@@ -200,7 +201,6 @@ class Cell(_Base):
         super().__init__(name, description)
         self._tree = list()  # has strong links to objects
         self.tree_changed = Signal()
-        self.tree_changed.register(self._on_tree_changed)
         if tree:
             self.add(tree, pos=len(self.tree))
 
@@ -209,7 +209,8 @@ class Cell(_Base):
         self._elements = {}
         self._cells = {}
         self._tree_properties_needs_update = True
-        self.tree_properties_changed = Signal()
+        self.tree_properties_changed = Signal(self.tree_changed)
+        self.tree_properties_changed.register(self._on_tree_properties_changed)
 
         self._length = 0
         self._length_needs_update = True
@@ -237,13 +238,13 @@ class Cell(_Base):
     def tree(self):  # do not set tree manually
         return self._tree
 
-    def add(self, new_objects_list, pos=None):
+    def add(self, new_objects, pos=None):
         if pos:
-            self._tree[pos:pos] = new_objects_list
+            self._tree[pos:pos] = new_objects
         else:
-            self._tree.extend(new_objects_list)
+            self._tree.extend(new_objects)
 
-        for obj in set(new_objects_list):
+        for obj in set(new_objects):
             obj.parent_cells.add(self)
 
         self.tree_changed()
@@ -278,11 +279,6 @@ class Cell(_Base):
 
         return self._cells
 
-    def _on_tree_changed(self):
-        self._tree_properties_needs_update = True
-        for cell in self.parent_cells:
-            cell.tree_properties_changed()
-
     def update_tree_properties(self):
         self._lattice.clear()
         self._elements.clear()
@@ -292,6 +288,7 @@ class Cell(_Base):
 
     def _update_tree_properties(self, tree):
         """A recursive helper function for update_tree_properties."""
+        lattice = self._lattice
         elements = self._elements
         cells = self._cells
         for obj in tree:
@@ -305,12 +302,17 @@ class Cell(_Base):
 
                 self._update_tree_properties(obj.tree)
             else:
-                self._lattice.append(obj)
+                lattice.append(obj)
                 value = elements.get(obj.name)
                 if value is None:
                     elements[obj.name] = obj
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
+
+    def _on_tree_properties_changed(self):
+        self._tree_properties_needs_update = True
+        for cell in self.parent_cells:
+            cell.tree_properties_changed()
 
     @property
     def length(self):
@@ -322,10 +324,10 @@ class Cell(_Base):
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
-    def _on_length_changed(self, element):
+    def _on_length_changed(self):
         self._length_needs_update = True
         for cell in self.parent_cells:
-            cell.length_changed(element)
+            cell.length_changed()
 
     def _on_element_changed(self, element):
         for cell in self.parent_cells:
