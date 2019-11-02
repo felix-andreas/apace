@@ -1,6 +1,8 @@
+from __future__ import annotations
 import weakref  # only tree should contain strong ref
 
 from .utils import Signal, AmbiguousNameError
+from typing import List, Union, Optional
 
 
 class _Base:
@@ -41,7 +43,7 @@ class _Base:
         return '\n'.join(attributes + properties)
 
 
-class _Element(_Base):
+class Element(_Base):
     """
     Basic element class from which every other element-class inherits.
         Parameters / Attributes
@@ -81,7 +83,7 @@ class _Element(_Base):
             cell.element_changed(self)
 
 
-class Drift(_Element):
+class Drift(Element):
     """
     The Drift element.
     Args:
@@ -90,32 +92,19 @@ class Drift(_Element):
         description: comment on the element.
     """
 
-    def __init__(
-            self,
-            name: str,
-            length: float,
-            description: str = ''
-    ):
+    def __init__(self, name: str, length: float, description: str = ''):
         super().__init__(name, length, description)
 
 
-class Bend(_Element):
-    def __init__(
-            self,
-            name: str,
-            length: float,
-            angle: float,
-            e1: float = 0,
-            e2: float = 0,
-            description: str = ''
-    ):
+class Bend(Element):
+    def __init__(self, name: str, length: float, angle: float, e1: float = 0, e2: float = 0, description: str = ''):
         super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
         self._e2 = e2
 
     @property
-    def angle(self):
+    def angle(self) -> float:
         return self._angle
 
     @angle.setter
@@ -124,7 +113,7 @@ class Bend(_Element):
         self.value_changed()
 
     @property
-    def e1(self):
+    def e1(self) -> float:
         return self._e1
 
     @e1.setter
@@ -133,7 +122,7 @@ class Bend(_Element):
         self.value_changed()
 
     @property
-    def e2(self):
+    def e2(self) -> float:
         return self._e2
 
     @e2.setter
@@ -142,7 +131,7 @@ class Bend(_Element):
         self.value_changed()
 
     @property
-    def radius(self):
+    def radius(self) -> float:
         return self.length / self.angle
 
     @radius.setter
@@ -150,13 +139,13 @@ class Bend(_Element):
         self.angle = value
 
 
-class Quad(_Element):
-    def __init__(self, name, length, k1, description=''):
+class Quad(Element):
+    def __init__(self, name: str, length: float, k1: float, description: str = ''):
         super().__init__(name, length, description)
         self._k1 = k1
 
     @property
-    def k1(self):
+    def k1(self) -> float:
         return self._k1
 
     @k1.setter
@@ -165,13 +154,13 @@ class Quad(_Element):
         self.value_changed()
 
 
-class Sext(_Element):
-    def __init__(self, name, length, k2, description=''):
+class Sext(Element):
+    def __init__(self, name: str, length: float, k2: float, description: str = ''):
         super().__init__(name, length, description)
         self._k2 = k2
 
     @property
-    def k2(self):
+    def k2(self) -> float:
         return self._k2
 
     @k2.setter
@@ -248,10 +237,10 @@ class Cell(_Base):
             cell.parent_cells.discard(self)
 
     @property
-    def tree(self):  # do not set tree manually
+    def tree(self) -> List[Union[Element, Cell]]:  # do not set tree manually
         return self._tree
 
-    def add(self, new_objects, pos=None):
+    def add(self, new_objects: List[Union[Element, Cell]], pos: Optional[int] = None):
         if pos:
             self._tree[pos:pos] = new_objects
         else:
