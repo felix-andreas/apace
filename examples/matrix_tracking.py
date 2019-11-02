@@ -58,8 +58,7 @@ matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, position=None)
 twiss = ap.Twiss(fodo)
 
 fig, ax = plt.subplots()
-x = matrix_tracking.x_trajectory
-ax.plot(matrix_tracking.orbit_position, matrix_tracking.x_trajectory, linewidth=0.5)
+ax.plot(matrix_tracking.orbit_position, matrix_tracking.x, linewidth=0.5)
 beam_size = np.sqrt(twiss.beta_x) * (x_width / 2 / sqrt(twiss.beta_x[0]))
 
 ax.axvline(x=0, color='k', linestyle='--', linewidth=0.5)
