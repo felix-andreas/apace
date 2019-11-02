@@ -1,4 +1,5 @@
 # apace
+[![Python Version](https://img.shields.io/pypi/pyversions/apace)](https://pypi.org/project/apace/)
 [![PyPI](https://img.shields.io/pypi/v/apace.svg)](https://pypi.org/project/apace/)
 [![CI](https://github.com/andreasfelix/apace/workflows/CI/badge.svg)](https://github.com/andreasfelix/apace/actions?query=workflow%3ACI)
 [![Docs](https://readthedocs.org/projects/apace/badge/?version=docs)](https://apace.readthedocs.io/en/docs/)
