@@ -1,4 +1,12 @@
+include *.in
 recursive-include cffi_build *.py
+recursive-include docs *.bat
+recursive-include docs *.gitkeep
+recursive-include docs *.py
+recursive-include docs *.rst
+recursive-include docs *.txt
+recursive-include docs Makefile
+prune docs/_build
 recursive-include examples *.json
 recursive-include examples *.py
 recursive-include lib *.c
