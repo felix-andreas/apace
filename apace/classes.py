@@ -2,7 +2,7 @@ from __future__ import annotations
 import weakref  # only tree should contain strong ref
 
 from .utils import Signal, AmbiguousNameError
-from typing import List, Union, Optional
+from typing import List, Set, Dict, Union, Optional
 
 
 class _Base:
@@ -199,7 +199,7 @@ class Cell(_Base):
             Set of all cells.
     """
 
-    def __init__(self, name, tree=None, description=''):
+    def __init__(self, name: str, tree: Object = None, description=''):
         super().__init__(name, description)
         self._tree = list()  # has strong links to objects
         self.tree_changed = Signal()
@@ -240,7 +240,7 @@ class Cell(_Base):
     def tree(self) -> List[Union[Element, Cell]]:  # do not set tree manually
         return self._tree
 
-    def add(self, new_objects: List[Union[Element, Cell]], pos: Optional[int] = None):
+    def add(self, new_objects, pos=None):
         if pos:
             self._tree[pos:pos] = new_objects
         else:
@@ -261,21 +261,21 @@ class Cell(_Base):
         self.tree_changed()
 
     @property
-    def lattice(self):
+    def lattice(self) -> List[Union[Element, Cell]]:
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
         return self._lattice
 
     @property
-    def elements(self):
+    def elements(self) -> Dict[str, Union[Element, Cell]]:
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
         return self._elements
 
     @property
-    def cells(self):
+    def cells(self) -> Dict[str, Union[Element, Cell]]:
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
@@ -359,3 +359,6 @@ class Cell(_Base):
                 self._print_tree(x)
                 self.depth -= 1
                 self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')
+
+
+Object = Union[Element, Cell]
