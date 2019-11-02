@@ -291,7 +291,7 @@ class Cell(_Base):
                 value = self._cells.get(x.name)
                 if value is None:
                     self._cells[x.name] = x
-                elif x is value:
+                elif x is not value:
                     raise Exception('The name of cells must be unique!')
 
                 self._update_tree_properties(x.tree)
@@ -300,7 +300,7 @@ class Cell(_Base):
                 value = self._elements.get(x.name)
                 if value is None:
                     self._elements[x.name] = x
-                elif x is value:
+                elif x is not value:
                     raise Exception('The name of elements must be unique!')
 
     @property
