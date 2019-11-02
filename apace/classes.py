@@ -4,7 +4,7 @@ from .utils import Signal, AmbiguousNameError
 
 
 class _Base:
-    def __init__(self, name, description):
+    def __init__(self, name: str, description: str):
         """
         A base class for elements and cells.
         Args:
@@ -54,7 +54,7 @@ class _Element(_Base):
             A brief comment on the element.
     """
 
-    def __init__(self, name, length, description):
+    def __init__(self, name: str, length: float, description: str):
         super().__init__(name, description)
         self._length = length
         self.length_changed = Signal()
@@ -63,7 +63,7 @@ class _Element(_Base):
         self.value_changed.register(self._on_value_changed)
 
     @property
-    def length(self):
+    def length(self) -> float:
         return self._length
 
     @length.setter
@@ -90,12 +90,25 @@ class Drift(_Element):
         description: comment on the element.
     """
 
-    def __init__(self, name, length, description=''):
+    def __init__(
+            self,
+            name: str,
+            length: float,
+            description: str = ''
+    ):
         super().__init__(name, length, description)
 
 
 class Bend(_Element):
-    def __init__(self, name, length, angle, e1=0, e2=0, description=''):
+    def __init__(
+            self,
+            name: str,
+            length: float,
+            angle: float,
+            e1: float = 0,
+            e2: float = 0,
+            description: str = ''
+    ):
         super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
