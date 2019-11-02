@@ -1,6 +1,6 @@
 import weakref  # only tree should contain strong ref
 
-from .utils import Signal, Flag
+from .utils import Signal
 
 
 class _Base:
@@ -9,7 +9,6 @@ class _Base:
         A base class for elements and cells.
         Args:
             name: name of object
-            type: type of object
             description: description of the object
         """
         self.name = name
@@ -22,12 +21,12 @@ class _Base:
     def __str__(self):
         attributes = []
         for key, value in self.__dict__.items():
-            if key[0] != '_' and key != "main_cell" and not "flag" in key:
+            if key[0] != '_':
                 if isinstance(value, weakref.WeakSet):
-                    string = f"{', '.join(e.name for e in value):}"
+                    string = f'{", ".join(e.name for e in value):}'
                 else:
                     string = str(value)
-                attributes.append(f"{key:12}: {string:}")
+                attributes.append(f'{key:12}: {string:}')
 
         properties = []
         for x in dir(self.__class__):
@@ -38,8 +37,8 @@ class _Base:
                     string = ', '.join(e.name for e in x_attr)
                 else:
                     string = str(x_attr)
-                properties.append(f"{x:12}: {string}")
-        return "\n".join(attributes + properties)
+                properties.append(f'{x:12}: {string}')
+        return '\n'.join(attributes + properties)
 
 
 class _Element(_Base):
@@ -49,8 +48,6 @@ class _Element(_Base):
         ----------
         name : str
             Name of the element.
-        type : str
-            Type of the element.
         length : float
             Length of the element.
         comment : str, optional
@@ -64,7 +61,6 @@ class _Element(_Base):
         self.length_changed.register(self._on_length_changed)
         self.value_changed = Signal()
         self.value_changed.register(self._on_value_changed)
-        self.main_cell = None
 
     @property
     def length(self):
@@ -80,7 +76,8 @@ class _Element(_Base):
             cell.length_changed(self)
 
     def _on_value_changed(self):
-        self.main_cell.element_changed(self)
+        for cell in self.parent_cells:
+            cell.element_changed(self)
 
 
 class Drift(_Element):
@@ -221,8 +218,25 @@ class Cell(_Base):
         self.length_changed = Signal()
         self.length_changed.register(self._on_length_changed)
 
+        self.element_changed = Signal()
+        self.element_changed.register(self._on_element_changed)
+
         if tree:
             self.tree_add_objects(tree, pos=len(self.tree))
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            try:
+                return self.elements[key]
+            except KeyError:
+                return self.cells[key]
+
+        else:
+            return self.lattice[key]
+
+    def __del__(self):
+        for cell in self.child_cells:
+            cell.parent_cells.discard(self)
 
     @property
     def tree(self):  # do not allow to set tree manually
@@ -311,8 +325,8 @@ class Cell(_Base):
             self.update_length()
         return self._length
 
-    def update_length(self):  # is overwritten in main cell class
-        self._length = sum([x.length for x in self.tree])
+    def update_length(self):
+        self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
     def _on_length_changed(self, element):
@@ -320,11 +334,15 @@ class Cell(_Base):
         for cell in self.parent_cells:
             cell.length_changed(element)
 
+    def _on_element_changed(self, element):
+        for cell in self.parent_cells:
+            cell.element_changed(element)
+
     def print_tree(self):
         self.depth = 0
-        self.filler = ""
-        self.start = "│   "
-        print(f"{self.name}")
+        self.filler = ''
+        self.start = '│   '
+        print(f'{self.name}')
         self._print_tree(self)
         del self.depth
         del self.filler
@@ -334,41 +352,13 @@ class Cell(_Base):
         length = len(cell.tree)
         for i, x in enumerate(cell.tree):
             is_last = i == length - 1
-            fill = "└───" if is_last else "├───"
-            print(f"{self.filler}{fill} {x.name}")
+            fill = '└───' if is_last else '├───'
+            print(f'{self.filler}{fill} {x.name}')
             if is_last and self.depth == 0:
-                self.start = "    "
+                self.start = '    '
             if isinstance(x, Cell):
                 self.depth += 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ("    " if is_last else "│   ")
+                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')
                 self._print_tree(x)
                 self.depth -= 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ("    " if is_last else "│   ")
-
-    def __getitem__(self, key):
-        if isinstance(key, str):
-            try:
-                return self.elements[key]
-            except KeyError:
-                return self.cells[key]
-
-        else:
-            return self.lattice[key]
-
-    def __del__(self):
-        for x in self.child_cells:
-            x.parent_cells.discard(self)
-
-
-class MainCell(Cell):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # set main_cell link to all elements and cells
-        for x in self.elements.values():
-            x.main_cell = self
-
-        for x in self.cells.values():
-            x.main_cell = self
-
-        self.element_changed = Signal()
+                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')

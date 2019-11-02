@@ -3,7 +3,7 @@ import os, re, inspect, json
 from . import classes
 
 
-def read_lattice_file_fle(file_path):
+def read_lattice_file_fle(file_path): # TODO: check and update
     lattice_name = os.path.basename(file_path)
     with open(file_path) as file:
         lines = re.sub('[ \t]', '', file.read()).splitlines()
@@ -83,7 +83,7 @@ def from_json(json_data):
         objects[cell_name].tree_add_objects(tree)
 
     main_tree = [objects[name] for name in json_data['main_cell']]
-    return classes.MainCell(name=json_data['name'], tree=main_tree, description=json_data.get('description', ''))
+    return classes.Cell(name=json_data['name'], tree=main_tree, description=json_data.get('description', ''))
 
 
 def save_lattice_file(main_cell, file_path, file_format='json'):
@@ -106,9 +106,9 @@ def as_dict(main_cell):
     elements_dict = {}
     for element in main_cell.elements.values():
         tmp = {key: getattr(element, key) for (key, value) in inspect.signature(element.__class__).parameters.items()}
-        tmp.pop("name")
+        tmp.pop('name')
         elements_dict[element.name] = tmp
-        elements_dict[element.name]["type"] = element.__class__.__name__
+        elements_dict[element.name]['type'] = element.__class__.__name__
 
     cells_dict = {cell.name: [obj.name for obj in cell.tree] for cell in main_cell.cells.values()}
     main_dict = dict(name=main_cell.name, description=main_cell.description, elements=elements_dict, cells=cells_dict,
