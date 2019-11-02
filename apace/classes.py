@@ -285,23 +285,25 @@ class Cell(_Base):
 
     def _update_tree_properties(self, tree):
         '''A recursive helper function for update_tree_properties.'''
+        elements = self._elements
+        cells = self._cells
         for x in tree:
             # x = weakref.proxy(x) # all references should be weak!
             if isinstance(x, Cell):
-                value = self._cells.get(x.name)
+                value = cells.get(x.name)
                 if value is None:
-                    self._cells[x.name] = x
+                    cells[x.name] = x
                 elif x is not value:
-                    raise Exception('The name of cells must be unique!')
+                    raise Exception('Cells must have unique names!')
 
                 self._update_tree_properties(x.tree)
             else:
                 self._lattice.append(x)
-                value = self._elements.get(x.name)
+                value = elements.get(x.name)
                 if value is None:
-                    self._elements[x.name] = x
+                    elements[x.name] = x
                 elif x is not value:
-                    raise Exception('The name of elements must be unique!')
+                    raise Exception('Elements must have unique names!')
 
     @property
     def length(self):
@@ -360,8 +362,8 @@ class Cell(_Base):
 
 class MainCell(Cell):
     def __init__(self, *args, description="", **kwargs):
-        self.description = description
         super().__init__(*args, **kwargs)
+        self.description = description
 
         # set main_cell link to all elements and cells
         for x in self.elements.values():
