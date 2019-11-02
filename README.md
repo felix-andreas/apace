@@ -47,6 +47,7 @@ twiss = ap.Twiss(ring)
 
 Plot horizontal and vertical beta functions using matplotlib:
 ```python
+import matplotlib.pyplot as plt
 plt.plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
 ```
 
