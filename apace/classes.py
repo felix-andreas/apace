@@ -288,13 +288,20 @@ class Cell(_Base):
         for x in tree:
             # x = weakref.proxy(x) # all references should be weak!
             if isinstance(x, Cell):
-                if x.name not in self._cells:
+                value = self._cells.get(x.name)
+                if value is None:
                     self._cells[x.name] = x
+                elif x is value:
+                    raise Exception('The name of cells must be unique!')
+
                 self._update_tree_properties(x.tree)
             else:
                 self._lattice.append(x)
-                if x.name not in self._elements:
+                value = self._elements.get(x.name)
+                if value is None:
                     self._elements[x.name] = x
+                elif x is value:
+                    raise Exception('The name of elements must be unique!')
 
     @property
     def length(self):
