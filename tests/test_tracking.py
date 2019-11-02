@@ -24,9 +24,11 @@ def test_tune():
     assert 0.8970 == round(1 - tune_fractional, 4)
 
 
-# compare matrix tracking with particle trajectory from beta functions:
-# x(s) = sqrt(beta_x * e) * cos(psi_x + psi_0)
-def test_matrix_tracking():
+def test_particle_trajectory():
+    """
+    compare particle trajectory from matrix tracking with particle trajectory from beta functions
+    x(s) = sqrt(beta_x * e) * cos(psi_x + psi_x0)
+    """
     from math import sqrt, cos
     import numpy as np
     n_particles = 1
@@ -35,13 +37,13 @@ def test_matrix_tracking():
     initial_distribution = ap.create_particle_distribution(n_particles, x_dist='uniform', x_center=0.01)
     matrix_tracking = ap.MatrixTracking(fodo, initial_distribution, turns=n_turns, position=None)
     twiss = ap.Twiss(fodo)
-    x = matrix_tracking.x_trajectory
+    x = matrix_tracking.x
     beta_x = twiss.beta_x
     psi_x = twiss.psi_x
 
     low, high = 0, x.shape[0]
     for pos_1 in np.random.randint(low, high, 10):
         for pos_2 in np.random.randint(low, high, 10):
-            term_1= x[pos_1, 0] * sqrt(beta_x[pos_2]) * cos(psi_x[pos_2])
+            term_1 = x[pos_1, 0] * sqrt(beta_x[pos_2]) * cos(psi_x[pos_2])
             term_2 = x[pos_2, 0] * sqrt(beta_x[pos_1]) * cos(psi_x[pos_1])
             assert abs(term_1 - term_2) < 0.01
