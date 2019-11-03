@@ -42,7 +42,6 @@ Calculate the Twiss parameters:
 twiss = ap.Twiss(ring)
 ```
 
-
 Plot horizontal and vertical beta functions using matplotlib:
 ```python
 import matplotlib.pyplot as plt
