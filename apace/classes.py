@@ -88,21 +88,21 @@ class Bend(Element):
 
     @property
     def angle(self) -> float:
+        """Deflection angle."""
         return self._angle
 
     @angle.setter
     def angle(self, value):
-        """Deflection angle."""
         self._angle = value
         self.value_changed()
 
     @property
     def e1(self) -> float:
+        """Entrance angle."""
         return self._e1
 
     @e1.setter
     def e1(self, value):
-        """Entrance angle."""
         self._e1 = value
         self.value_changed()
 
