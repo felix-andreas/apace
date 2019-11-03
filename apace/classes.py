@@ -7,8 +7,6 @@ from typing import List, Set, Dict, Union
 
 class BaseObject:
     """ Base class for all elements and cells.
-    Parameters
-    ----------
     name : str
         Name of the object.
     description : str, optional
