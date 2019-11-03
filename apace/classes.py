@@ -5,13 +5,15 @@ from .utils import Signal, AmbiguousNameError
 from typing import List, Set, Dict, Union
 
 
-class _Base:
-    def __init__(self, name, description):
-        """
-        A base class for elements and cells.
-        Args:
-            name: name of object
-            description: description of the object
+class BaseObject:
+    def __init__(self, name, description=''):
+        """ Base class for all elements and cells.
+        Parameters
+        ----------
+        name : str
+            Name of the object.
+        description : str, optional
+            A brief description of the object.
         """
         self.name: str = name
         self.description: str = description
@@ -43,17 +45,17 @@ class _Base:
         return '\n'.join(attributes + properties)
 
 
-class Element(_Base):
+class Element(BaseObject):
     """
     Basic element class from which every other element-class inherits.
-        Parameters / Attributes
+        Parameters
         ----------
         name : str
             Name of the element.
         length : float
             Length of the element.
-        comment : str, optional
-            A brief comment on the element.
+        description : str, optional
+            A brief description of the element.
     """
 
     def __init__(self, name, length, description=''):
@@ -66,6 +68,7 @@ class Element(_Base):
 
     @property
     def length(self) -> float:
+        """Length of the element."""
         return self._length
 
     @length.setter
@@ -88,7 +91,7 @@ class Drift(Element):
 
 
 class Bend(Element):
-    def __init__(self, name, length, angle, e1=0, e2=0, description=None):
+    def __init__(self, name, length, angle, e1=0, e2=0, description=''):
         super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
@@ -160,7 +163,7 @@ class Sext(Element):
         self.value_changed()
 
 
-class Cell(_Base):
+class Cell(BaseObject):
     """
     Class that defines the order of elements in accelerator. Accepts also cells as input.
         Parameters
