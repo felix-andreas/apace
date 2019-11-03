@@ -10,15 +10,15 @@ TWO_PI = 2 * np.pi
 
 class Twiss:
     def __init__(self, main_cell):
-        self.main_cell = main_cell
+        self.cell = main_cell
         self.matrix_method = MatrixMethod(main_cell)
 
-        self._twiss_array = None
+        self._twiss_array = np.empty(0)
         self._twiss_array_needs_update = True
         self.twiss_array_changed = Signal(self.matrix_method.matrix_array_changed)
         self.twiss_array_changed.register(self._on_twiss_array_changed)
-        self._full_matrix = None
-        self._accumulated_array = None
+        self._full_matrix = np.empty(0)
+        self._accumulated_array = np.empty(0)
 
         self.stable = None
         self.stable_x = None
@@ -63,12 +63,12 @@ class Twiss:
         return self._accumulated_array
 
     def update_twiss_array(self):
-        transfer_matrices = self.matrix_method.matrix_array
-        size = transfer_matrices.shape[0]
-        if self._twiss_array is None or self._twiss_array.shape[0] != size:
+        matrix_array = self.matrix_method.matrix_array
+        size = self.matrix_method.n_kicks + 1
+        if self._twiss_array.shape[0] != size:
             self._twiss_array = np.empty((8, size))
-            self._accumulated_array = np.empty(transfer_matrices.shape)
-        accumulated_array(transfer_matrices, self._accumulated_array)
+            self._accumulated_array = np.empty(matrix_array.shape)
+        accumulated_array(matrix_array, self._accumulated_array)
         self._full_matrix = full_matrix = self._accumulated_array[-1]
 
         term_x = 2 - full_matrix[0, 0] ** 2 - 2 * full_matrix[0, 1] * full_matrix[1, 0] - full_matrix[1, 1] ** 2
@@ -207,7 +207,7 @@ class Twiss:
         full_matrix = self.full_matrix
         self._tune_x_fractional = np.arccos((full_matrix[0, 0] + full_matrix[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((full_matrix[2, 2] + full_matrix[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.main_cell.length  # Hz
+        tmp = self.matrix_method.velocity / self.cell.length  # Hz
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False

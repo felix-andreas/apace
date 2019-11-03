@@ -1,6 +1,7 @@
 import numpy as np
-from .classes import Drift, Bend, Quad
+from .classes import Element, Drift, Bend, Quad
 from .utils import Signal
+from typing import List, Dict
 
 MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
@@ -10,90 +11,88 @@ N_KICKS_DEFAULT = 1
 
 
 class MatrixMethod:
-    def __init__(self, main_cell, n_kicks_per_type=None, velocity=C):
+    def __init__(self, cell, velocity=C):
+        self.cell = cell
         self.velocity = velocity
-        self.main_cell = main_cell
+
         self.changed_elements = set()
-        self.main_cell.element_changed.register(self._on_element_changed)
+        self.cell.tree_changed.register(self._on_tree_change)
+        self.cell.element_changed.register(self._on_element_changed)
 
-        self.n_kicks_changed = Signal()
+        self.element_n_kicks = {Drift: 3, Bend: 10, Quad: 5}
+        self.element_n_kicks_changed = Signal()
 
-        self._element_indices = None
+        self._element_indices = {}
         self._element_indices_needs_update = True
-        self.element_indices_changed = Signal(self.main_cell.tree_changed)
+        self.element_indices_changed = Signal(self.cell.tree_changed)
         self.element_indices_changed.register(self._on_element_indices_changed)
 
-        self._n_kicks_total = None
-        self._n_kicks_total_needs_update = True
-        self.n_kicks_total_changed = Signal(self.main_cell.tree_changed, self.n_kicks_changed)
-        self.n_kicks_total_changed.register(self._on_n_kicks_changed)
+        self._n_kicks = 0
+        self._n_kicks_needs_update = True
+        self.n_kicks_changed = Signal(self.cell.tree_changed, self.element_n_kicks_changed)
+        self.n_kicks_changed.register(self._on_n_kicks_changed)
 
-        self._step_size = None
+        self._step_size = np.empty(0)
         self._step_size_needs_update = True
-        self.step_size_changed = Signal(self.n_kicks_total_changed, self.main_cell.length_changed)
+        self.step_size_changed = Signal(self.n_kicks_changed, self.cell.length_changed)
         self.step_size_changed.register(self._on_step_size_changed)
 
-        self._s = None
+        self._s = np.empty(0)
         self._s_needs_update = True
         self.s_changed = Signal(self.step_size_changed)
         self.s_changed.register(self._on_s_changed)
 
-        self._matrix_array = None
+        self._matrix_array = np.empty(0)
         self._matrix_array_needs_full_update = True
-        self._matrix_array_needs_partial_update = False
-        self.matrix_array_changed_full = Signal(self.n_kicks_total_changed)
-        self.matrix_array_changed_full.register(self._on_matrix_array_changed_full)
-        self.matrix_array_changed_partial = Signal()
-        self.matrix_array_changed_partial.register(self._on_matrix_array_changed_partial)
-        self.matrix_array_changed = Signal(self.matrix_array_changed_partial, self.matrix_array_changed_full)
+        self.matrix_array_changed = Signal()
 
-        if n_kicks_per_type is None:
-            self.n_kicks_per_type = {
-                Drift: 3,
-                Bend: 10,
-                Quad: 5,
-            }
-        else:
-            self.n_kicks_per_type = n_kicks_per_type
+    def _on_tree_change(self):
+        self._matrix_array_needs_full_update = True
+        self.matrix_array_changed()
 
     def _on_element_changed(self, element):
         self.changed_elements.add(element)
-        self.matrix_array_changed_partial()
+        self.matrix_array_changed()
 
     # TODO: Better API to set n_kicks
     def set_n_kicks(self):
-        self.n_kicks_changed()
+        self.element_n_kicks_changed()
         raise NotImplementedError
 
-    def get_n_kicks(self, element):
-        return self.n_kicks_per_type.get(element.__class__, N_KICKS_DEFAULT)
+    def get_element_n_kicks(self, element) -> int:
+        """Returns the number of kicks for a given element"""
+        return self.element_n_kicks.get(element.__class__, N_KICKS_DEFAULT)
 
     @property
-    def n_kicks_total(self) -> int:
-        if self._n_kicks_total_needs_update:
+    def n_kicks(self) -> int:
+        """Returns the total number of kicks."""
+        if self._n_kicks_needs_update:
             self.update_n_kicks()
 
-        return self._n_kicks_total
+        return self._n_kicks
 
     def update_n_kicks(self):
-        self._n_kicks_total = sum([self.get_n_kicks(element) for element in self.main_cell.lattice])
-        self._n_kicks_total_needs_update = False
+        """Manually update the total number of kicks."""
+        self._n_kicks = sum(self.get_element_n_kicks(element) for element in self.cell.lattice)
+        self._n_kicks_needs_update = False
 
     def _on_n_kicks_changed(self):
-        self._n_kicks_total_needs_update = True
+        self._n_kicks_needs_update = True
 
     @property
-    def element_indices(self) -> dict:
+    def element_indices(self) -> Dict[Element, List[int]]:
+        """Contains the indices of each element within the matrix_array."""
         if self._element_indices_needs_update:
             self.update_element_indices()
 
         return self._element_indices
 
     def update_element_indices(self):
-        self._element_indices = {}
-        start = 1  # starts with 1 because 0th entry is identity matrix
-        for element in self.main_cell.lattice:
-            end = start + self.get_n_kicks(element)
+        """Manually update the indices of each element."""
+        self._element_indices.clear()
+        start = 0
+        for element in self.cell.lattice:
+            end = start + self.get_element_n_kicks(element)
             tmp = list(range(start, end))
             try:
                 self._element_indices[element].extend(tmp)
@@ -108,16 +107,20 @@ class MatrixMethod:
 
     @property
     def step_size(self) -> np.ndarray:
+        """Same dimension as matrix_array. Contains the step_size for each point."""
         if self._step_size_needs_update:
             self.update_step_size()
 
         return self._step_size
 
     def update_step_size(self):
-        self._step_size = np.empty(self.n_kicks_total + 1)
-        self._step_size[0] = 0
-        for element in self.main_cell.elements.values():
-            self._step_size[self.element_indices[element]] = element.length / self.get_n_kicks(element)
+        """Manually update the step_size array."""
+        if self._step_size.size != self.n_kicks:
+            self._step_size = np.empty(self.n_kicks)
+            self._step_size[0] = 0
+
+        for element in self.cell.elements.values():
+            self._step_size[self.element_indices[element]] = element.length / self.get_element_n_kicks(element)
 
         self._step_size_needs_update = False
 
@@ -126,41 +129,46 @@ class MatrixMethod:
 
     @property
     def s(self):
+        """Same dimension as matrix_array. Contains the orbit position s for each point."""
         if self._s_needs_update:
             self.update_s()
 
         return self._s
 
     def update_s(self):
-        self._s = np.add.accumulate(self.step_size)  # s corresponds to the orbit position
+        """Manually update the orbit position array s."""
+        points = self.n_kicks + 1
+        if self._s.size != points:
+            self._s = np.empty(points)
+            self._s[0] = 0
+
+        np.add.accumulate(self.step_size, out=self._s[1:])  # s corresponds to the orbit position
 
     def _on_s_changed(self):
         self._s_needs_update = True
 
     @property
-    def matrix_array(self):
-        if self._matrix_array_needs_full_update:  # update all
-            self.allocate_matrix_array()
-            self.update_matrix_array(self.main_cell.elements.values())
-            self.changed_elements.clear()
-            self._matrix_array_needs_full_update = False
-
-        elif self._matrix_array_needs_partial_update:  # update partial
-            self.update_matrix_array(self.changed_elements)
-            self.changed_elements.clear()
-            self._matrix_array_needs_partial_update = False
+    def matrix_array(self) -> np.ndarray:
+        """Array of transfer matrices. (6, 6, n_kicks)"""
+        if self.changed_elements or self._matrix_array_needs_full_update:
+            self.update_matrix_array()
 
         return self._matrix_array
 
-    def allocate_matrix_array(self):
-        self._matrix_array = np.empty((self.step_size.size, MATRIX_SIZE, MATRIX_SIZE))
-        self._matrix_array[0] = np.identity(MATRIX_SIZE)
+    def update_matrix_array(self):
+        """Manually update the matrix_array."""
+        if self._matrix_array.shape[0] != self.n_kicks:
+            self._matrix_array = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
 
-    def update_matrix_array(self, elements):
+        if self._matrix_array_needs_full_update:
+            elements = self.cell.elements.values()
+        else:
+            elements = self.changed_elements
+
         matrix_array = self._matrix_array
         for element in elements:
             pos = self.element_indices[element]  # indices in matrix matrix_array
-            n_kicks = self.get_n_kicks(element)
+            n_kicks = self.get_element_n_kicks(element)
             step_size = element.length / n_kicks
 
             # TODO: change element 4,5 for velocity smaller than light
@@ -196,7 +204,6 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1]
                     ]
-
             elif isinstance(element, Bend) and element.angle:  # Bend with angle != 0
                 phi = step_size / element.radius
                 sin = np.sin(phi)
@@ -223,14 +230,10 @@ class MatrixMethod:
                     matrix_edge_2 = IDENTITY.copy()
                     matrix_edge_2[1, 0], matrix_edge_2[3, 2] = tan_r2, -tan_r2
                     matrix_array[pos[n_kicks - 1::n_kicks]] = np.dot(matrix_edge_2, matrix_array[pos[-1]])
-
             else:  # Drifts and remaining elements
                 matrix = IDENTITY.copy()
                 matrix[0, 1] = matrix[2, 3] = step_size
                 matrix_array[pos] = matrix
 
-    def _on_matrix_array_changed_partial(self):
-        self._matrix_array_needs_partial_update = True
-
-    def _on_matrix_array_changed_full(self):
-        self._matrix_array_needs_full_update = True
+        self.changed_elements.clear()
+        self._matrix_array_needs_full_update = False

@@ -84,13 +84,6 @@ class Element(_Base):
 
 
 class Drift(Element):
-    """
-    The Drift element.
-    Args:
-        name: name of the element
-        length: length of the element
-        description: comment on the element.
-    """
     pass
 
 
@@ -241,6 +234,7 @@ class Cell(_Base):
         return self._tree
 
     def add(self, new_objects, pos=None):
+        """Add objects to the cell."""
         if pos:
             self._tree[pos:pos] = new_objects
         else:
@@ -252,6 +246,7 @@ class Cell(_Base):
         self.tree_changed()
 
     def remove(self, pos, num=1):
+        """Remove objects from the cell."""
         removed_objects = self.tree[pos:pos + num]
         self._tree[pos:pos + num] = []
         for obj in set(removed_objects):
@@ -261,7 +256,7 @@ class Cell(_Base):
         self.tree_changed()
 
     @property
-    def lattice(self) -> List[Union[Element, Cell]]:
+    def lattice(self) -> List[Element]:
         """Defines the physical order of elements. Corresponds to flattened tree."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
@@ -285,6 +280,7 @@ class Cell(_Base):
         return self._cells
 
     def update_tree_properties(self):
+        """Manually update the lattice, elements and cell properties."""
         self._lattice.clear()
         self._elements.clear()
         self._cells.clear()
@@ -327,6 +323,7 @@ class Cell(_Base):
         return self._length
 
     def update_length(self):
+        """Manually update the length of the cell."""
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
@@ -340,6 +337,7 @@ class Cell(_Base):
             cell.element_changed(element)
 
     def print_tree(self):
+        """Print the tree of objects."""
         self.depth = 0
         self.filler = ''
         self.start = '│   '
