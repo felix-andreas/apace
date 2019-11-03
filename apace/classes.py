@@ -6,15 +6,15 @@ from typing import List, Set, Dict, Union
 
 
 class BaseObject:
+    """ Base class for all elements and cells.
+    Parameters
+    ----------
+    name : str
+        Name of the object.
+    description : str, optional
+        A brief description of the object.
+    """
     def __init__(self, name, description=''):
-        """ Base class for all elements and cells.
-        Parameters
-        ----------
-        name : str
-            Name of the object.
-        description : str, optional
-            A brief description of the object.
-        """
         self.name: str = name
         self.description: str = description
         self.parent_cells: Set[Cell] = set()  # weakref.WeakSet()
@@ -46,17 +46,7 @@ class BaseObject:
 
 
 class Element(BaseObject):
-    """
-    Basic element class from which every other element-class inherits.
-        Parameters
-        ----------
-        name : str
-            Name of the element.
-        length : float
-            Length of the element.
-        description : str, optional
-            A brief description of the element.
-    """
+    """Base class for all elements."""
 
     def __init__(self, name, length, description=''):
         super().__init__(name, description)
@@ -87,6 +77,7 @@ class Element(BaseObject):
 
 
 class Drift(Element):
+    """"""
     pass
 
 
@@ -103,6 +94,7 @@ class Bend(Element):
 
     @angle.setter
     def angle(self, value):
+        """Deflection angle."""
         self._angle = value
         self.value_changed()
 
@@ -112,11 +104,13 @@ class Bend(Element):
 
     @e1.setter
     def e1(self, value):
+        """Entrance angle."""
         self._e1 = value
         self.value_changed()
 
     @property
     def e2(self) -> float:
+        """Exit angle."""
         return self._e2
 
     @e2.setter
@@ -126,6 +120,7 @@ class Bend(Element):
 
     @property
     def radius(self) -> float:
+        """Radius of curvature."""
         return self.length / self.angle
 
     @radius.setter
@@ -140,6 +135,7 @@ class Quad(Element):
 
     @property
     def k1(self) -> float:
+        """Geometric quadrupole strength."""
         return self._k1
 
     @k1.setter
@@ -155,6 +151,7 @@ class Sext(Element):
 
     @property
     def k2(self) -> float:
+        """Geometric sextupole strength."""
         return self._k2
 
     @k2.setter
@@ -164,34 +161,7 @@ class Sext(Element):
 
 
 class Cell(BaseObject):
-    """
-    Class that defines the order of elements in accelerator. Accepts also cells as input.
-        Parameters
-        ----------
-        name : str
-            Name of the cell.
-        tree : list
-            (Nested) list of elements/cells.
-        description : str, optional
-            A brief comment on the cell.
-
-        Attributes
-        ----------
-        tree : list, tuple
-            (Nested) list of the cells/elements.
-        parent_cells : set
-            Set of all parent cells.
-
-        Properties
-        ----------
-        lattice : list
-            List that defines the physical order of elements in the magnetic lattice.
-            Corresponds to flattened tree attribute.
-        elements : set
-            Set of all apace.
-        cells : set
-            Set of all cells.
-    """
+    """Class that defines the order of elements in accelerator. Accepts also cells as input."""
 
     def __init__(self, name, tree=None, description=None):
         super().__init__(name, description)
