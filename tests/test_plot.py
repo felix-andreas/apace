@@ -12,5 +12,3 @@ def test_plot():
     twiss = ap.Twiss(line)
 
     plot_lattice(twiss, line, eta_x_scale=1, path=os.path.join(dir_name, '/tmp/out.pdf'))
-
-
