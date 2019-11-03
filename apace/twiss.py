@@ -63,6 +63,7 @@ class Twiss:
         return self._accumulated_array
 
     def update_twiss_array(self):
+        """Manually update twiss_array."""
         matrix_array = self.matrix_method.matrix_array
         size = self.matrix_method.n_kicks + 1
         if self._twiss_array.shape[0] != size:
@@ -161,6 +162,7 @@ class Twiss:
         return self._tune_y
 
     def update_betatron_phase(self):
+        """Manually update betatron phase psi and tune."""
         size = self.accumulated_array.shape[0]
         self._psi_x = np.empty(size)  # TODO: do not always allocate new!
         self._psi_y = np.empty(size)
@@ -204,6 +206,7 @@ class Twiss:
         return self._tune_y_fractional_hz
 
     def update_fractional_tune(self):
+        """Manually update fractional tune."""
         full_matrix = self.full_matrix
         self._tune_x_fractional = np.arccos((full_matrix[0, 0] + full_matrix[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((full_matrix[2, 2] + full_matrix[3, 3]) / 2) / TWO_PI
@@ -216,10 +219,12 @@ class Twiss:
         self._tune_fractional_needs_update = True
 
     # TODO: save results
-    def beta_x_int(self, steps):
+    def beta_x_int(self, steps) -> np.ndarray:
+        """Linear interpolated beta_x for n steps."""
         s_int = np.linspace(0, self.s[-1], steps)
         return np.interp(s_int, self.s, self.beta_x)
 
-    def beta_y_int(self, steps):
+    def beta_y_int(self, steps) -> np.ndarray:
+        """Linear interpolated beta_y for n steps."""
         s_int = np.linspace(0, self.s[-1], steps)
         return np.interp(s_int, self.s, self.beta_x)

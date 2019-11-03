@@ -1,9 +1,10 @@
 import os, re, inspect, json
 
 from . import classes
+from .classes import Cell
 
 
-def read_lattice_file_fle(file_path): # TODO: check and update
+def read_lattice_file_fle(file_path):  # TODO: check and update
     lattice_name = os.path.basename(file_path)
     with open(file_path) as file:
         lines = re.sub('[ \t]', '', file.read()).splitlines()
@@ -59,7 +60,8 @@ def read_lattice_file_json(file_path):
     return from_json(json_data)
 
 
-def read_lattice_file(file_path, file_format='json'):
+def read_lattice_file(file_path, file_format='json') -> Cell:
+    """Read lattice file into cell object."""
     if file_format == 'json':
         return read_lattice_file_json(file_path)
     elif file_format == 'fle':
@@ -87,19 +89,20 @@ def from_json(json_data):
 
 
 def save_lattice_file(main_cell, file_path, file_format='json'):
+    """Save cell object as lattice file."""
     if file_format == 'json':
         save_lattice_file_json(main_cell, file_path)
     else:
         raise NotImplementedError
 
 
-def save_lattice_file_json(main_cell, file_path):
-    file_path = file_path if file_path else f'{main_cell.name}.json'
+def save_lattice_file_json(cell, file_path):
+    file_path = file_path if file_path else f'{cell.name}.json'
     # dirname = os.path.dirname(file_path)
     # if not os.path.exists(dirname):
     #     os.makedirs(dirname)
     with open(file_path, 'w') as outfile:
-        json.dump(as_dict(main_cell), outfile, indent=2)
+        json.dump(as_dict(cell), outfile, indent=2)
 
 
 def as_dict(main_cell):
