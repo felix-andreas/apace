@@ -15,7 +15,7 @@ pip or pipenv::
 Build from Source
 =================
 
-**apace**\ 's source code is avialable on `Github <https://github.com/andreasfelix/apace>`_.
+**apace**\ 's source code is available on `GitHub <https://github.com/andreasfelix/apace>`_.
 
 You can either clone the public repository::
 
@@ -31,3 +31,4 @@ package, or install it into your site-packages easily::
 
     $ cd apace
     $ pip install .
+

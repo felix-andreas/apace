@@ -29,7 +29,7 @@ class Flag:
 
 
 class AmbiguousNameError(Exception):
-    """Raised if multiple elements or cells have the same name"""
+    """Raised if multiple elements or cells have the same name."""
 
     def __init__(self, name):
         super().__init__(f'The name "{name}" is ambiguous. Names must be unique!')

@@ -9,7 +9,7 @@ def create_particle_distribution(
         y_dds_dist=None, y_dds_center=0, y_dds_width=0,
         l_dist=None, l_center=0, l_width=0,
         delta_dist=None, delta_center=0, delta_width=None,
-):
+) -> np.ndarray:
     n_particles = n_particles
     particle_distribution = np.zeros((6, n_particles))
     for i, (dist_type, center, width) in enumerate(
@@ -29,7 +29,7 @@ def create_particle_distribution(
 
 
 def _create_distribution(n_particles, dist_type, center, width):
-    if dist_type == None:
+    if dist_type is None:
         return
     elif dist_type == 'uniform':
         tmp = width / 2
