@@ -15,8 +15,6 @@ API Reference
 
 {% endif %}
 
-.. Contents
-
 {% block content %}
 {% if obj.all is not none %}
 {% set visible_children = obj.children|selectattr("short_name", "in", obj.all)|list %}

@@ -128,7 +128,7 @@ class MatrixMethod:
         self._step_size_needs_update = True
 
     @property
-    def s(self):
+    def s(self) -> np.ndarray:
         """Same dimension as matrix_array. Contains the orbit position s for each point."""
         if self._s_needs_update:
             self.update_s()
