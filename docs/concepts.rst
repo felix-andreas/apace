@@ -15,7 +15,7 @@ Cells
 The MainCell
 ------------
 
-Apace Lattice File
+apace Lattice File
 ==================
 The layout and order of elements within an accelerator is usually stored in a so-called "lattice file". There are a variety of different lattice files and different attempts to unify them:
 
@@ -23,7 +23,9 @@ The layout and order of elements within an accelerator is usually stored in a so
 
 - The Accelerator Markup Language (AML) is based on XML, which is partical to describe the hierarchical data structure of cells and elements within an accelerator and can be parsed by different languages. XML's main drawback is that it is fairly verbose, hence less human readable and has become less common recently.
 
-Apace tries to get the best out of both worlds and uses a JSON based lattice file. JSON is able to describe complex data structures, has a simple syntax and is avialable in all common programming language.
+apace tries to get the best out of both worlds and uses a JSON based lattice file. JSON is able to describe complex data structures, has a simple syntax and is available in all common programming language.
+
+apace lattice file for a simple fodo ring:
 
 .. literalinclude:: ../examples/lattices/fodo_ring.json
   :language: JSON
