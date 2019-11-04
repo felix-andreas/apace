@@ -7,10 +7,12 @@ from typing import List, Set, Dict, Union, Type
 
 class Object:
     """Abstract base for all element and cell classes.
-    name : str
-        Name of the object.
-    description : str, optional
-        A brief description of the object. """
+
+    :param name: The name of the object
+    :type name: str
+    :param description : A brief description of the object.
+    :type description : str, optional
+    """
 
     def __init__(self, name, description=''):
         self.name: str = name

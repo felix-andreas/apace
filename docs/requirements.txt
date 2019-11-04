@@ -1,2 +1,2 @@
-sphinx-autoapi==1.2.1
+sphinx-autoapi
 sphinx_press_theme

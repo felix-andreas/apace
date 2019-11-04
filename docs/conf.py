@@ -33,17 +33,21 @@ release = __version__
 
 # -- General configuration ---------------------------------------------------
 
-# AutoAPI
-autoapi_dirs = [os.path.join('..', __title__)]
-autoapi_add_toctree_entry = False
-autoapi_template_dir = '_templates/autoapi'
-autoapi_options = ['members', 'undoc-members']
-# autoapi_python_class_content = 'both'
-
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['autoapi.extension']
+extensions = []
+
+# AutoAPI
+extensions.append('autoapi.extension')
+autoapi_dirs = [os.path.join('..', __title__)]
+autoapi_add_toctree_entry = False
+autoapi_template_dir = '_templates/autoapi'
+# noinspection SpellCheckingInspection
+autoapi_options = ['members', 'undoc-members']
+autoapi_python_class_content = 'both'
+
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
