@@ -1,23 +1,21 @@
 from __future__ import annotations
-import weakref  # only tree should contain strong ref
-
-from .utils import Signal, AmbiguousNameError
 from typing import List, Set, Dict, Union, Type
+
+import weakref  # only tree should contain strong ref
+from .utils import Signal, AmbiguousNameError
 
 
 class Object:
-    """Abstract base for all element and cell classes.
+    """Abstract base for all element and cells.
 
-    :param name: The name of the object
-    :type name: str
-    :param description : A brief description of the object.
-    :type description : str, optional
+    :param str name: The name of the object.
+    :param str description: A brief description of the object.
     """
 
     def __init__(self, name, description=''):
         self.name: str = name
         self.description: str = description
-        self.parent_cells: Set[Cell] = set()  # weakref.WeakSet()
+        self.parent_cells: Set[Cell] = set()  # TODO: should be weak references weakref.WeakSet()
 
     def __repr__(self):
         return self.name
@@ -46,7 +44,12 @@ class Object:
 
 
 class Element(Object):
-    """Base class for all elements."""
+    """Base class for all elements.
+
+    :param name: The name of the element.
+    :param length: The length of the element.
+    :param description: A brief description of the element.
+    """
 
     def __init__(self, name, length, description=''):
         super().__init__(name, description)
