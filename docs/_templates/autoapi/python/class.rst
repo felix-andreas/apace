@@ -18,7 +18,7 @@
    {% set visible_methods = [] %}
    {% for method in obj.methods|selectattr("display")|list %}
    {% if "property" in method.properties %}
-   {% set _ = visible_attributes.append( method ) %}
+   {% set _ = visible_attributes.append(method) %}
    {% else %}
    {% set _ = visible_methods.append(method) %}
    {% endif %}
