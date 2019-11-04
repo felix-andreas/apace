@@ -14,8 +14,11 @@ class Object:
 
     def __init__(self, name, description=''):
         self.name: str = name
+        """The name of the object."""
         self.description: str = description
+        """A brief description of the object"""
         self.parent_cells: Set[Cell] = set()  # TODO: should be weak references weakref.WeakSet()
+        """All cells which contain the object."""
 
     def __repr__(self):
         return self.name
