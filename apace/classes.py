@@ -6,12 +6,12 @@ from typing import List, Set, Dict, Union, Type
 
 
 class Object:
-    """Abstract base for all element and cells classes.
+    """Abstract base for all element and cell classes.
     name : str
         Name of the object.
     description : str, optional
-        A brief description of the object.
-    """
+        A brief description of the object. """
+
     def __init__(self, name, description=''):
         self.name: str = name
         self.description: str = description
@@ -43,7 +43,7 @@ class Object:
         return '\n'.join(attributes + properties)
 
 
-class Element(BaseObject):
+class Element(Object):
     """Base class for all elements."""
 
     def __init__(self, name, length, description=''):
@@ -158,8 +158,8 @@ class Sext(Element):
         self.value_changed()
 
 
-class Cell(BaseObject):
-    """Class that defines the order of elements in accelerator. Accepts also cells as input."""
+class Cell(Object):
+    """Class that defines the order of elements in the accelerator. Accepts also cells as input."""
 
     def __init__(self, name, tree=None, description=None):
         super().__init__(name, description)
