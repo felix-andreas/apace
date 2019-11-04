@@ -2,11 +2,11 @@ from __future__ import annotations
 import weakref  # only tree should contain strong ref
 
 from .utils import Signal, AmbiguousNameError
-from typing import List, Set, Dict, Union
+from typing import List, Set, Dict, Union, Type
 
 
-class BaseObject:
-    """ Base class for all elements and cells.
+class Object:
+    """Abstract base for all element and cells classes.
     name : str
         Name of the object.
     description : str, optional
@@ -199,7 +199,7 @@ class Cell(BaseObject):
             cell.parent_cells.discard(self)
 
     @property
-    def tree(self) -> List[Union[Element, Cell]]:  # do not set tree manually
+    def tree(self) -> List[Union[Type[Element], Cell]]:  # do not set tree manually
         """Defines the physical order of elements. Corresponds to nested lattice."""
 
         return self._tree
@@ -227,7 +227,7 @@ class Cell(BaseObject):
         self.tree_changed()
 
     @property
-    def lattice(self) -> List[Element]:
+    def lattice(self) -> List[Type[Element]]:
         """Defines the physical order of elements. Corresponds to flattened tree."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
@@ -235,7 +235,7 @@ class Cell(BaseObject):
         return self._lattice
 
     @property
-    def elements(self) -> Dict[str, Element]:
+    def elements(self) -> Dict[str, Type[Element]]:
         """Contains all all elements within this cell."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()

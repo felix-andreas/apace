@@ -7,7 +7,7 @@ from math import sqrt
 import apace as ap
 
 dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, 'lattices', 'FODO-lattice.json')
+file_path = os.path.join(dir_name, 'lattices', 'fodo_ring.json')
 fodo = ap.read_lattice_file(file_path)
 
 # Example 1: Get tune by Fourier-Transform of particle offset at fixed position

@@ -4,7 +4,7 @@ from apace.plot import plot_lattice
 import os
 
 dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
+file_path = os.path.join(dir_name, 'data', 'lattices', 'fodo_ring.json')
 
 
 def test_plot():

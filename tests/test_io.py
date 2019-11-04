@@ -3,7 +3,7 @@ import os
 import apace as ap
 
 dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
+file_path = os.path.join(dir_name, 'data', 'lattices', 'fodo_ring.json')
 fodo = ap.read_lattice_file(file_path)
 
 
