@@ -244,7 +244,7 @@ class Cell(Object):
 
     @property
     def elements(self) -> Dict[str, Type[Element]]:
-        """Contains all all elements within this cell."""
+        """Contains all elements within this cell."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
 
