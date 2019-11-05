@@ -1,3 +1,3 @@
 sphinx-autoapi
-sphinx_search
+-e git://github.com/readthedocs/readthedocs-sphinx-search
 sphinx_press_theme
