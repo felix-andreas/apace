@@ -1,2 +1,0 @@
-{{ fullname | escape | underline}}
-

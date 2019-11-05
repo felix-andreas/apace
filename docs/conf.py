@@ -48,13 +48,13 @@ autoapi_template_dir = '_templates/autoapi'
 autoapi_options = ['members', 'undoc-members']
 autoapi_python_class_content = 'both'
 autoapi_include_summaries = True
-autoapi_generate_api_docs = False
+autoapi_generate_api_docs = True
 
 # Auto summary
-extensions.append('sphinx.ext.autosummary')
-autosummary_generate = True
-autosummary_generate_overwrite = True
-autosummary_imported_members=True
+# extensions.append('sphinx.ext.autosummary')
+# autosummary_generate = True
+# autosummary_generate_overwrite = True
+# autosummary_imported_members=True
 
 # Markdown support
 # extensions.append('m2r')
