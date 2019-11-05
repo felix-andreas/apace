@@ -11,7 +11,7 @@ TWO_PI = 2 * np.pi
 class Twiss:
     """Calculate the Twiss parameter for a given cell.
 
-    :param Cell cell: Cell to calculate the Twiss parameter for
+    :param Cell cell: Cell to calculate the Twiss parameter for.
     """
 
     def __init__(self, cell):

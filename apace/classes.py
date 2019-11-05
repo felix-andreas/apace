@@ -49,9 +49,10 @@ class Object:
 class Element(Object):
     """Base class for all elements.
 
-    :param name: The name of the element.
-    :param length: The length of the element.
-    :param description: A brief description of the element.
+    :param str name: The name of the element.
+    :param float length: The length of the element.
+    :param str description: A brief description of the element.
+    :type description: str, optional
     """
 
     def __init__(self, name, length, description=''):
@@ -83,11 +84,28 @@ class Element(Object):
 
 
 class Drift(Element):
-    """"""
+    """A drift space element.
+
+    :param str name: The name of the element.
+    :param float length: The length of the element.
+    :param str description: A brief description of the element.
+    :type description: str, optional
+    """
     pass
 
 
 class Bend(Element):
+    """A dipole element.
+
+    :param str name: Name of the element.
+    :param float length: Length of the element.
+    :param float angle: Deflection angle in rad.
+    :param float e1: Entrance angle in rad.
+    :param float e2: Exit angle in rad.
+    :param description: A brief description of the element.
+    :type description: str, optional
+    """
+
     def __init__(self, name, length, angle, e1=0, e2=0, description=''):
         super().__init__(name, length, description)
         self._angle = angle
@@ -96,7 +114,7 @@ class Bend(Element):
 
     @property
     def angle(self) -> float:
-        """Deflection angle."""
+        """Deflection angle (rad)."""
         return self._angle
 
     @angle.setter
@@ -106,7 +124,7 @@ class Bend(Element):
 
     @property
     def e1(self) -> float:
-        """Entrance angle."""
+        """Entrance angle (rad)."""
         return self._e1
 
     @e1.setter
@@ -116,7 +134,7 @@ class Bend(Element):
 
     @property
     def e2(self) -> float:
-        """Exit angle."""
+        """Exit angle (rad)."""
         return self._e2
 
     @e2.setter
@@ -126,7 +144,7 @@ class Bend(Element):
 
     @property
     def radius(self) -> float:
-        """Radius of curvature."""
+        """Radius of curvature (m)."""
         return self.length / self.angle
 
     @radius.setter
@@ -135,13 +153,22 @@ class Bend(Element):
 
 
 class Quad(Element):
+    """A quadrupole element.
+
+    :param str name: Name of the element.
+    :param float length: Length of the element.
+    :param float k1: Geometric quadrupole strength in m^-2.
+    :param description: A brief description of the element.
+    :type description: str, optional
+    """
+
     def __init__(self, name, length, k1, description=''):
         super().__init__(name, length, description)
         self._k1 = k1
 
     @property
     def k1(self) -> float:
-        """Geometric quadrupole strength."""
+        """Geometric quadrupole strength (m^-2)."""
         return self._k1
 
     @k1.setter
@@ -151,13 +178,47 @@ class Quad(Element):
 
 
 class Sext(Element):
+    """A sextupole element.
+
+    :param str name: Name of the element.
+    :param float length: Length of the element.
+    :param float k1: Geometric quadrupole strength in m^-3.
+    :param description: A brief description of the element.
+    :type description: str, optional
+    """
+
     def __init__(self, name, length, k2, description=''):
         super().__init__(name, length, description)
         self._k2 = k2
 
     @property
     def k2(self) -> float:
-        """Geometric sextupole strength."""
+        """Geometric sextupole strength (m^-1)."""
+        return self._k2
+
+    @k2.setter
+    def k2(self, value):
+        self._k2 = value
+        self.value_changed()
+
+
+class Octu(Element):
+    """A octupole element.
+
+    :param str name: Name of the element.
+    :param float length: Length of the element.
+    :param float k1: Geometric quadrupole strength in m^-4.
+    :param description: A brief description of the element.
+    :type description: str, optional
+    """
+
+    def __init__(self, name, length, k2, description=''):
+        super().__init__(name, length, description)
+        self._k2 = k2
+
+    @property
+    def k2(self) -> float:
+        """Geometric sextupole strength (m^-1)."""
         return self._k2
 
     @k2.setter

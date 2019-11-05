@@ -1,5 +1,5 @@
 from .__about__ import __version__, __license__, __author__
-from .classes import Object, Element, Drift, Bend, Quad, Sext, Cell
+from .classes import Object, Element, Drift, Bend, Quad, Sext, Octu, Cell
 from .io import load_lattice_file, save_lattice_file
 from .twiss import Twiss
 from .matrix_tracking import MatrixTracking

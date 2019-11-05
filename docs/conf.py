@@ -42,15 +42,28 @@ extensions = ['sphinx.ext.autodoc']
 extensions.append('autoapi.extension')
 autoapi_dirs = [os.path.join('..', __title__)]
 autoapi_add_toctree_entry = False
+autoapi_root = 'reference'
 autoapi_template_dir = '_templates/autoapi'
 # noinspection SpellCheckingInspection
 autoapi_options = ['members', 'undoc-members']
 autoapi_python_class_content = 'both'
+autoapi_include_summaries = True
+autoapi_generate_api_docs = True
 
+# Intersphinx
+extensions.append('sphinx.ext.intersphinx')
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/3', None),
+    # 'numpy': ('http://docs.scipy.org/doc/numpy', None),
+    # 'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
+    # 'matplotlib': ('http://matplotlib.sourceforge.net', None)
+}
 
 # Support for NumPy and Google style docstrings
 extensions.append('sphinx.ext.napoleon')
 
+# Enable search-as-you-type feature for docs hosted by RTD
+extensions.append('sphinx_search.extension')
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -67,7 +80,6 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 #
 html_theme = 'sphinx_rtd_theme'
 # html_theme = 'press'
-# html_theme = 'sphinx_typlog_theme'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

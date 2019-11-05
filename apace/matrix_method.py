@@ -11,6 +11,12 @@ N_KICKS_DEFAULT = 1
 
 
 class MatrixMethod:
+    """The transfer matrix method.
+
+    :param cell: Cell which transfer matrices gets calculated for.
+    :param velocity: Velocity of the particles.
+    """
+
     def __init__(self, cell, velocity=C):
         self.cell = cell
         self.velocity = velocity

@@ -1,3 +1,4 @@
+from .classes import Cell
 import numpy as np
 
 from .clib import accumulated_array
@@ -6,6 +7,14 @@ from .utils import Signal
 
 
 class MatrixTracking:
+    """Particle tracking using the transfer matrix method.
+
+    :param Cell cell: Cell which particles will be tracked through.
+    :param np.ndarray initial_distribution: Initial partical distribution.
+    :param int turns: Number of turns.
+    :param int position:
+    """
+
     def __init__(self, cell, initial_distribution, turns=1, position=0):
         self.cell = cell
         self.matrix_method = MatrixMethod(cell)

@@ -1,5 +1,8 @@
+# OS and IDE
 .DS_Store
-.env
+.idea
+.vscode
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -7,7 +10,6 @@ __pycache__/
 *$py.class
 
 # C extensions
-# TODO: .o/.c files should be deleted automatically
 apace/**/*.so
 apace/**/*.o
 apace/**/*.c
@@ -18,12 +20,18 @@ apace/**/*.c
 build/
 dist/
 sdist/
+wheels/
 *.egg
 *.egg-info/
 
-# IDE
-.idea
-.vscode
+# Unit test / coverage reports
+.pytest_cache/
+
+# Sphinx documentation
+docs/_build/
+
+# Enviroments
+.env
 
 # output
 output/

@@ -10,6 +10,29 @@ def create_particle_distribution(
         l_dist=None, l_center=0, l_width=0,
         delta_dist=None, delta_center=0, delta_width=None,
 ) -> np.ndarray:
+    """Create a particle distribution.
+
+    :param int n_particles: Number of particles.
+    :param str x_dist: Type of distribution in horizontal phase space.
+    :param float x_center: Center of distribution.
+    :param x_width: Width of distribution.
+    :param y_dist: Type of distribution in vertical phase space.
+    :param y_center: Center of distribution.
+    :param y_width: Width of distribution.
+    :param x_dds_dist: Type of distribution in horizontal slope phase space.
+    :param x_dds_center: Center of distribution.
+    :param x_dds_width: Width of distribution.
+    :param y_dds_dist: Type of distribution in vertical slope phase space.
+    :param y_dds_center: Center of distribution.
+    :param y_dds_width: Width of distribution.
+    :param l_dist: Type of distribution in longitudinal phase space.
+    :param l_center: Center of distribution.
+    :param l_width: Width of distribution.
+    :param delta_dist: Type of distribution in momentum phase space.
+    :param delta_center:  Center of distribution.
+    :param delta_width:Width of distribution.
+    :return:
+    """
     n_particles = n_particles
     particle_distribution = np.zeros((6, n_particles))
     for i, (dist_type, center, width) in enumerate(
