@@ -1,2 +1,3 @@
 sphinx-autoapi
+sphinx_search
 sphinx_press_theme
