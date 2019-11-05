@@ -15,7 +15,8 @@
    {{ klass.rendered|indent(3) }}
    {% endfor %}
 
-   {% set visible_attributes = obj.attributes|selectattr("display")|list %}
+   {% set visible_attributes = obj.attributes|selectattr("display")|rejectattr("annotation", "equalto", "Signal")|list %}
+   {% set visible_signals = obj.attributes|selectattr("display")|selectattr("annotation", "equalto", "Signal")|list %}
    {% set visible_methods = [] %}
    {% for method in obj.methods|selectattr("display")|list %}
    {% if "property" in method.properties %}
@@ -40,4 +41,13 @@
    {% for method in visible_methods %}
    {{ method.rendered|indent(3) }}
    {% endfor %}
+
+   {% if visible_signals %}
+   **Signals**
+   {% endif %}
+
+   {% for signal in visible_signals %}
+   {{ signal.rendered|indent(3) }}
+   {% endfor %}
+
 {% endif %}

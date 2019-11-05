@@ -50,6 +50,13 @@ autoapi_python_class_content = 'both'
 autoapi_include_summaries = True
 autoapi_generate_api_docs = True
 
+# Markdown support
+# extensions.append('m2r')
+extensions.append('recommonmark')
+# source_suffix = ['.rst', '.md']
+
+# mdinclude directive
+
 # Intersphinx
 extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {

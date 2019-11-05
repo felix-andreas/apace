@@ -15,7 +15,7 @@ pip install -U apace
 ```
 
 ## Requirements
-- Python 3.7 or higher (CPython or PyPy)
+- Python 3.6 or higher (CPython or PyPy)
 - CFFI 1.0.0 or higher
 - NumPy/SciPy
 - Matplotlib

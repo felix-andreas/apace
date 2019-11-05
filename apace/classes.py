@@ -1,4 +1,3 @@
-from __future__ import annotations
 from typing import List, Set, Dict, Union, Type
 
 import weakref  # only tree should contain strong ref
@@ -9,7 +8,8 @@ class Object:
     """Abstract base for all element and cell classes.
 
     :param str name: The name of the object.
-    :param str description: A brief description of the object.
+    :param description: A brief description of the object.
+    :param description: str, optional
     """
 
     def __init__(self, name, description=''):
@@ -17,13 +17,13 @@ class Object:
         """The name of the object."""
         self.description: str = description
         """A brief description of the object"""
-        self.parent_cells: Set[Cell] = set()  # TODO: should be weak references weakref.WeakSet()
+        self.parent_cells: Set['Cell'] = set()  # TODO: should be weak references weakref.WeakSet()
         """All cells which contain the object."""
 
     def __repr__(self):
         return self.name
 
-    def __str__(self):
+    def __str__(self):  # TODO: update function
         attributes = []
         for key, value in self.__dict__.items():
             if key[0] != '_':
@@ -50,7 +50,7 @@ class Element(Object):
     """Abstract base for all element classes.
 
     :param str name: The name of the element.
-    :param float length: The length of the element.
+    :param float length: The length of the element (m).
     :param str description: A brief description of the element.
     :type description: str, optional
     """
@@ -58,14 +58,16 @@ class Element(Object):
     def __init__(self, name, length, description=''):
         super().__init__(name, description)
         self._length = length
-        self.length_changed = Signal()
+        self.length_changed: Signal = Signal()
+        """Gets emitted when the length changes."""
         self.length_changed.register(self._on_length_changed)
-        self.value_changed = Signal()
+        self.value_changed: Signal = Signal()
+        """Gets emitted when one of the attributes changes."""
         self.value_changed.register(self._on_value_changed)
 
     @property
     def length(self) -> float:
-        """Length of the element."""
+        """Length of the element (m)."""
         return self._length
 
     @length.setter
@@ -87,7 +89,7 @@ class Drift(Element):
     """A drift space element.
 
     :param str name: The name of the element.
-    :param float length: The length of the element.
+    :param float length: The length of the element (m).
     :param str description: A brief description of the element.
     :type description: str, optional
     """
@@ -98,10 +100,12 @@ class Bend(Element):
     """A dipole element.
 
     :param str name: Name of the element.
-    :param float length: Length of the element.
+    :param float length: Length of the element (m).
     :param float angle: Deflection angle in rad.
-    :param float e1: Entrance angle in rad.
-    :param float e2: Exit angle in rad.
+    :param e1: Entrance angle in rad.
+    :type e1: float, optional
+    :param e2: Exit angle in rad.
+    :type e2: float, optional
     :param description: A brief description of the element.
     :type description: str, optional
     """
@@ -156,8 +160,8 @@ class Quad(Element):
     """A quadrupole element.
 
     :param str name: Name of the element.
-    :param float length: Length of the element.
-    :param float k1: Geometric quadrupole strength in m^-2.
+    :param float length: Length of the element (m).
+    :param float k1: Geometric quadrupole strength (m^-2).
     :param description: A brief description of the element.
     :type description: str, optional
     """
@@ -181,8 +185,8 @@ class Sext(Element):
     """A sextupole element.
 
     :param str name: Name of the element.
-    :param float length: Length of the element.
-    :param float k1: Geometric quadrupole strength in m^-3.
+    :param float length: Length of the element (m).
+    :param float k1: Geometric quadrupole strength (m^-3).
     :param description: A brief description of the element.
     :type description: str, optional
     """
@@ -206,8 +210,8 @@ class Octu(Element):
     """An octupole element.
 
     :param str name: Name of the element.
-    :param float length: Length of the element.
-    :param float k1: Geometric quadrupole strength in m^-4.
+    :param float length: Length of the element (m).
+    :param float k1: Geometric quadrupole strength (m^-4).
     :param description: A brief description of the element.
     :type description: str, optional
     """
@@ -238,7 +242,8 @@ class Cell(Object):
     def __init__(self, name, tree=None, description=None):
         super().__init__(name, description)
         self._tree = list()  # has strong links to objects
-        self.tree_changed = Signal()
+        self.tree_changed: Signal = Signal()
+        """Gets emitted when the tree of element and cells changes."""
         if tree:
             self.add(tree, pos=len(self.tree))
 
@@ -247,15 +252,18 @@ class Cell(Object):
         self._elements = {}
         self._cells = {}
         self._tree_properties_needs_update = True
-        self.tree_properties_changed = Signal(self.tree_changed)
+        self.tree_properties_changed: Signal = Signal(self.tree_changed)
+        """Gets emitted when one of the attributes :meth:lattice, element or cells changes."""
         self.tree_properties_changed.register(self._on_tree_properties_changed)
 
         self._length = 0
         self._length_needs_update = True
-        self.length_changed = Signal()
+        self.length_changed: Signal = Signal()
+        """Get emitted when the length of an element within this cell changes."""
         self.length_changed.register(self._on_length_changed)
 
-        self.element_changed = Signal()
+        self.element_changed: Signal = Signal()
+        """Get emitted when an attribute of an element within this cell changes."""
         self.element_changed.register(self._on_element_changed)
 
     def __getitem__(self, key):
@@ -273,7 +281,7 @@ class Cell(Object):
             cell.parent_cells.discard(self)
 
     @property
-    def tree(self) -> List[Union[Type[Element], Cell]]:  # do not set tree manually
+    def tree(self) -> List[Union[Type[Element], 'Cell']]:  # do not set tree manually
         """Defines the physical order of elements. Corresponds to nested lattice."""
 
         return self._tree
@@ -317,7 +325,7 @@ class Cell(Object):
         return self._elements
 
     @property
-    def cells(self) -> Dict[str, Cell]:
+    def cells(self) -> Dict[str, 'Cell']:
         """Contains all cells within this cell."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
@@ -368,7 +376,7 @@ class Cell(Object):
         return self._length
 
     def update_length(self):
-        """Manually update the length of the cell."""
+        """Manually update the Length of the cell (m)."""
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 

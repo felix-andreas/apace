@@ -31,7 +31,7 @@ apace lattice file for a simple fodo ring:
 
 
 The Twiss object
-================
+----------------
 
 Signals
 -------
