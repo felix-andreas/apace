@@ -12,7 +12,8 @@ and straightforward API to make use of Python's numerous scientific
 libraries.
 
 .. toctree::
-   :maxdepth: 7
+   :maxdepth: 3
+   :hidden:
    :glob:
 
    install
@@ -20,7 +21,16 @@ libraries.
    concepts
    tutorials
    cli
+
+.. autosummary::
+   :toctree: generated
+
+   apace
+
+..
+   modules
    reference/apace/index
+
 
 
 Indices and tables

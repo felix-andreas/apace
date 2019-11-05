@@ -29,8 +29,8 @@ def create_particle_distribution(
     :param l_center: Center of distribution.
     :param l_width: Width of distribution.
     :param delta_dist: Type of distribution in momentum phase space.
-    :param delta_center:  Center of distribution.
-    :param delta_width:Width of distribution.
+    :param delta_center: Center of distribution.
+    :param delta_width: Width of distribution.
     :return:
     """
     n_particles = n_particles

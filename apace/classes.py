@@ -253,7 +253,7 @@ class Cell(Object):
         self._cells = {}
         self._tree_properties_needs_update = True
         self.tree_properties_changed: Signal = Signal(self.tree_changed)
-        """Gets emitted when one of the attributes :meth:lattice, element or cells changes."""
+        """Gets emitted when one of the attributes lattice, element or cells changes."""
         self.tree_properties_changed.register(self._on_tree_properties_changed)
 
         self._length = 0

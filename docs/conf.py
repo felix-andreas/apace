@@ -48,22 +48,25 @@ autoapi_template_dir = '_templates/autoapi'
 autoapi_options = ['members', 'undoc-members']
 autoapi_python_class_content = 'both'
 autoapi_include_summaries = True
-autoapi_generate_api_docs = True
+autoapi_generate_api_docs = False
+
+# Auto summary
+extensions.append('sphinx.ext.autosummary')
+autosummary_generate = True
+autosummary_generate_overwrite = True
+autosummary_imported_members=True
 
 # Markdown support
 # extensions.append('m2r')
 extensions.append('recommonmark')
 # source_suffix = ['.rst', '.md']
 
-# mdinclude directive
-
 # Intersphinx
 extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/3', None),
-    # 'numpy': ('http://docs.scipy.org/doc/numpy', None),
-    # 'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
-    # 'matplotlib': ('http://matplotlib.sourceforge.net', None)
+    'python': ("https://docs.python.org/3/", None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None), # TODO: check how sparse did it
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
 # Support for NumPy and Google style docstrings
