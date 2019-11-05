@@ -6,7 +6,7 @@ from .utils import Signal, AmbiguousNameError
 
 
 class Object:
-    """Abstract base for all element and cells.
+    """Abstract base for all element and cell classes.
 
     :param str name: The name of the object.
     :param str description: A brief description of the object.
@@ -47,7 +47,7 @@ class Object:
 
 
 class Element(Object):
-    """Base class for all elements.
+    """Abstract base for all element classes.
 
     :param str name: The name of the element.
     :param float length: The length of the element.
@@ -203,7 +203,7 @@ class Sext(Element):
 
 
 class Octu(Element):
-    """A octupole element.
+    """An octupole element.
 
     :param str name: Name of the element.
     :param float length: Length of the element.
@@ -228,7 +228,12 @@ class Octu(Element):
 
 
 class Cell(Object):
-    """Class that defines the order of elements in the accelerator. Accepts also cells as input."""
+    """Defines the order of elements in the accelerator.
+
+    :param str name: Name of the cell.
+    :param List[Union[Type[Element], Cell]] tree: Nested tree of elements and cells.
+    :param str description: A brief description of the element.
+    """
 
     def __init__(self, name, tree=None, description=None):
         super().__init__(name, description)
