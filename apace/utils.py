@@ -7,7 +7,7 @@ class Signal:
     When ever the signal is emitted all registered functions are called.
 
     :param signals: Signals which this signal gets registered to.
-    :type Signal, optional
+    :type signals Signal, optional
     """
 
     def __init__(self, *signals):
