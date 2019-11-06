@@ -153,17 +153,17 @@ As a nested structure is not always convenient to work with, there are three oth
 
 #. The :attr:`Cell.lattice` attribute
 
-   To loop over the exact arrangement of objects there is :attr:`Cell.lattice` attribute. It can be thought of a flattened version of the tree. The :attr:`~Cell.lattice` attribute can be used in regular Python :code:`for ... in` loops::
+   To loop over the exact arrangement of objects there is :attr:`Cell.lattice` attribute, which is a list of :class:`~Element` objects. It can be thought of a flattened version of the tree. The :attr:`~Cell.lattice` attribute can be used in regular Python :code:`for ... in` loops::
 
       >>> sum(element.length for element in dba_ring.lattice)
       192
 
-   As the :code:`dba_cell` does not contain any other cells, :attr:`~Cell.lattice` and :attr:`~Cell.tree` attribute should be equal::
+   As the :code:`dba_cell` does not contain any other cells, the :attr:`~Cell.lattice` and :attr:`~Cell.tree` attributes should be equal::
 
       >>> dba_cell.tree == dba_cell.lattice
       True
 
-   On the other hand :attr:`~Cell.lattice` attribute of the :code:`dba_ring` should look different::
+   On the other hand, the :attr:`~Cell.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Cell.tree`::
 
       >>> dba_ring.tree
       [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift]
