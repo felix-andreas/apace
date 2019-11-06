@@ -1,3 +1,4 @@
+# noinspection PyUnresolvedReferences,PyProtectedMember
 from ._clib._twiss_product import ffi, lib
 
 

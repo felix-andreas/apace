@@ -12,12 +12,10 @@ and straightforward API to make use of Python's numerous scientific
 libraries.
 
 .. toctree::
-   :maxdepth: 3
-   :glob:
 
    install
    quickstart
-   concepts
+   guide
    tutorials
    cli
    reference/apace/index

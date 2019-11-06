@@ -1,18 +1,24 @@
-Concepts
-========
+User Guide
+==========
+This part is indented as an informal introduction into basic concepts and features of apace. For a detailed overview of its functions and classes, see
 
 
-The Magnetic Lattice
---------------------
+The Data Model
+--------------
+Apaces provides an highly object API.
+
 
 Elements
 ********
+
+This is a link to :class:`Bend`
 
 Cells
 *****
 
 The MainCell
 ************
+
 
 Lattice File Format
 -------------------
@@ -32,6 +38,9 @@ apace lattice file for a simple fodo ring:
 
 The Twiss object
 ----------------
+
+
+
 
 Signals
 -------

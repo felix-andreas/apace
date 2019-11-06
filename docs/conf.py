@@ -16,6 +16,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath('../apace'))
 sys.path.insert(0, os.path.abspath('..'))
+# noinspection PyUnresolvedReferences
 from __about__ import __title__, __version__, __author__
 
 # -- Project information -----------------------------------------------------
@@ -36,7 +37,10 @@ release = __version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc']
+extensions = []
+
+# AutoDoc
+# extensions = ['sphinx.ext.autodoc']
 
 # AutoAPI
 extensions.append('autoapi.extension')
