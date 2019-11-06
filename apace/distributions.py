@@ -15,23 +15,24 @@ def create_particle_distribution(
     :param int n_particles: Number of particles.
     :param str x_dist: Type of distribution in horizontal phase space.
     :param float x_center: Center of distribution.
-    :param x_width: Width of distribution.
-    :param y_dist: Type of distribution in vertical phase space.
-    :param y_center: Center of distribution.
-    :param y_width: Width of distribution.
-    :param x_dds_dist: Type of distribution in horizontal slope phase space.
-    :param x_dds_center: Center of distribution.
-    :param x_dds_width: Width of distribution.
-    :param y_dds_dist: Type of distribution in vertical slope phase space.
-    :param y_dds_center: Center of distribution.
-    :param y_dds_width: Width of distribution.
-    :param l_dist: Type of distribution in longitudinal phase space.
-    :param l_center: Center of distribution.
-    :param l_width: Width of distribution.
-    :param delta_dist: Type of distribution in momentum phase space.
-    :param delta_center: Center of distribution.
-    :param delta_width: Width of distribution.
-    :return:
+    :param int x_width: Width of distribution.
+    :param str y_dist: Type of distribution in vertical phase space.
+    :param float y_center: Center of distribution.
+    :param float y_width: Width of distribution.
+    :param str x_dds_dist: Type of distribution in horizontal slope phase space.
+    :param float x_dds_center: Center of distribution.
+    :param float x_dds_width: Width of distribution.
+    :param str y_dds_dist: Type of distribution in vertical slope phase space.
+    :param float y_dds_center: Center of distribution.
+    :param float y_dds_width: Width of distribution.
+    :param str l_dist: Type of distribution in longitudinal phase space.
+    :param float l_center: Center of distribution.
+    :param float l_width: Width of distribution.
+    :param str delta_dist: Type of distribution in momentum phase space.
+    :param float delta_center: Center of distribution.
+    :param float delta_width: Width of distribution.
+    :return: Array of shape (6, n_particles)
+    :rtype: numpy.ndarray
     """
     n_particles = n_particles
     particle_distribution = np.zeros((6, n_particles))

@@ -9,7 +9,7 @@ class Object:
 
     :param str name: The name of the object.
     :param description: A brief description of the object.
-    :param description: str, optional
+    :type description: str, optional
     """
 
     def __init__(self, name, description=''):

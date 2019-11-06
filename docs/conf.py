@@ -64,7 +64,7 @@ extensions.append('recommonmark')
 # Intersphinx
 extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {
-    'python': ("https://docs.python.org/3/", None),
+    'python': ('https://docs.python.org/3/', None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None), # TODO: check how sparse did it
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
