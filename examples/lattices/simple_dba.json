@@ -1,0 +1,10 @@
+{
+  "name": "Simple Double Bend Achromat",
+  "description": "The most simple implementation of a Double Bend Achromat",
+  "elements": {
+    "D": {"type": "Drift", "length": 0.196349540849362},
+    "QF": {"type": "Quad", "length": 1, "k1": 0.8},
+    "B": {"type": "Bend", "length": 1, "angle": 0.2}
+  },
+  "main_cell": ["D", "B", "D", "QF", "D", "B", "D"]
+}

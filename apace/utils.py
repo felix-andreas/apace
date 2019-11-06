@@ -21,6 +21,11 @@ class Signal:
         for callback in self.callbacks:
             callback(*args, **kwargs)
 
+    def __str__(self):
+        return 'Signal'
+
+    __repr__ = __str__
+
     def register(self, callback):
         """Register a callback to this signal.
 

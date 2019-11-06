@@ -47,7 +47,7 @@ extensions.append('autoapi.extension')
 autoapi_dirs = [os.path.join('..', __title__)]
 autoapi_root = 'reference'
 autoapi_options = ['members', 'undoc-members']
-autoapi_add_toctree_entry = True
+autoapi_add_toctree_entry = False
 autoapi_template_dir = '_templates/autoapi'
 # # noinspection SpellCheckingInspection
 # autoapi_python_class_content = 'both'
@@ -64,6 +64,9 @@ autoapi_generate_api_docs = True
 # extensions.append('m2r')
 extensions.append('recommonmark')
 # source_suffix = ['.rst', '.md']
+
+# Auto section label
+# extensions.append('sphinx.ext.autosectionlabel')
 
 # Intersphinx
 extensions.append('sphinx.ext.intersphinx')

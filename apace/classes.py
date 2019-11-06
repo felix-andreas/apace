@@ -25,25 +25,33 @@ class Object:
 
     def __str__(self):  # TODO: update function
         attributes = []
-        for key, value in self.__dict__.items():
-            if key[0] != '_':
-                if isinstance(value, weakref.WeakSet):
-                    string = f'{", ".join(e.name for e in value):}'
+        signals = []
+        for name, attr in self.__dict__.items():
+            if name[0] == '_':
+                continue
+
+            if isinstance(attr, Signal):
+                signals.append((name, str(attr)))
+            else:
+                if isinstance(attr, weakref.WeakSet):
+                    string = f'{", ".join(e.name for e in attr):}'
                 else:
-                    string = str(value)
-                attributes.append(f'{key:12}: {string:}')
+                    string = str(attr)
+
+                attributes.append((name, string))
 
         properties = []
-        for x in dir(self.__class__):
-            x_attr = getattr(self.__class__, x)
-            if isinstance(x_attr, property):
-                x_attr = x_attr.fget(self)
-                if isinstance(x_attr, weakref.WeakSet):
-                    string = ', '.join(e.name for e in x_attr)
+        for name in dir(self.__class__):
+            attr = getattr(self.__class__, name)
+            if isinstance(attr, property):
+                attr = attr.fget(self)
+                if isinstance(attr, weakref.WeakSet):
+                    string = ', '.join(e.name for e in attr)
                 else:
-                    string = str(x_attr)
-                properties.append(f'{x:12}: {string}')
-        return '\n'.join(attributes + properties)
+                    string = str(attr)
+                properties.append((name, string))
+
+        return '\n'.join(f'{name:14}: {string}' for name, string in attributes + properties + signals)
 
 
 class Element(Object):

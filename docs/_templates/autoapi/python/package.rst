@@ -2,8 +2,14 @@
 :orphan:
 
 {% endif %}
+
+.. _api-reference:
+
 API Reference
 =============
+
+This is the API reference. To learn how to use and work with apace, see :ref:`user-guide`.
+
 {% if obj.docstring %}
 .. autoapi-nested-parse::
 
