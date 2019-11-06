@@ -45,13 +45,13 @@ extensions = []
 # AutoAPI
 extensions.append('autoapi.extension')
 autoapi_dirs = [os.path.join('..', __title__)]
-autoapi_add_toctree_entry = False
 autoapi_root = 'reference'
-autoapi_template_dir = '_templates/autoapi'
-# noinspection SpellCheckingInspection
 autoapi_options = ['members', 'undoc-members']
-autoapi_python_class_content = 'both'
-autoapi_include_summaries = True
+autoapi_add_toctree_entry = True
+autoapi_template_dir = '_templates/autoapi'
+# # noinspection SpellCheckingInspection
+# autoapi_python_class_content = 'both'
+# autoapi_include_summaries = True
 autoapi_generate_api_docs = True
 
 # Auto summary
