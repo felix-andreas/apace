@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Union, Type
+from typing import List, Set, Dict, Union, Type, Iterable
 
 import weakref  # only tree should contain strong ref
 from .utils import Signal, AmbiguousNameError
@@ -12,13 +12,19 @@ class Object:
     :type description: str, optional
     """
 
-    def __init__(self, name, description=''):
+    def __init__(self, name, length, description=''):
         self.name: str = name
         """The name of the object."""
         self.description: str = description
         """A brief description of the object"""
-        self.parent_cells: Set['Cell'] = set()  # TODO: should be weak references weakref.WeakSet()
+        self.parent_cells: Set['Cell'] = set()
         """All cells which contain the object."""
+        self._length = length
+
+    @property
+    def length(self) -> float:
+        """Length of the object (m)."""
+        return self._length
 
     def __repr__(self):
         return self.name
@@ -64,7 +70,7 @@ class Element(Object):
     """
 
     def __init__(self, name, length, description=''):
-        super().__init__(name, description)
+        super().__init__(name, length, description)
         self._length = length
         self.length_changed: Signal = Signal()
         """Gets emitted when the length changes."""
@@ -266,8 +272,8 @@ class Cell(Object):
 
         self._length = 0
         self._length_needs_update = True
-        self.length_changed: Signal = Signal()
-        """Get emitted when the length of an element within this cell changes."""
+        self.length_changed: Signal = Signal(self.tree_changed)
+        """Get emitted when the length of cell changes."""
         self.length_changed.register(self._on_length_changed)
 
         self.element_changed: Signal = Signal()
@@ -285,18 +291,49 @@ class Cell(Object):
             return self.lattice[key]
 
     def __del__(self):
-        for cell in self.tree:
-            cell.parent_cells.discard(self)
+        for obj in self.tree:
+            obj.parent_cells.discard(self)
 
     @property
-    def tree(self) -> List[Union[Type[Element], 'Cell']]:  # do not set tree manually
-        """Defines the physical order of elements. Corresponds to nested lattice."""
+    def length(self) -> float:
+        """Length of the cell."""
+        if self._length_needs_update:
+            self.update_length()
+        return self._length
+
+    def update_length(self):
+        """Manually update the Length of the cell (m)."""
+        self._length = sum(obj.length for obj in self.tree)
+        self._length_needs_update = False
+
+    def _on_length_changed(self):
+        self._length_needs_update = True
+        for cell in self.parent_cells:
+            cell.length_changed()
+
+    def _on_element_changed(self, element):
+        for cell in self.parent_cells:
+            cell.element_changed(element)
+
+    @property
+    def tree(self) -> List[Type[Object]]:  # do not set tree manually
+        """The tree of objeccts defines the physical order of elements withing this cell."""
 
         return self._tree
 
     def add(self, new_objects, pos=None):
-        """Add objects to the cell."""
-        if pos:
+        """Add objects to the object tree of the cell.
+
+        :param new_objects: Objects which get added to the :attr:`tree`.
+        :type new_objects: Object or Iterable[Object]
+        :param pos: The position within the :attr:`tree` at which the new objects are inserted.
+                    If pos is None, objects are appended to the end of the cell.
+        :type pos: int, optional
+        """
+        if isinstance(new_objects, Object):
+            new_objects = [new_objects]
+
+        if pos is not None:
             self._tree[pos:pos] = new_objects
         else:
             self._tree.extend(new_objects)
@@ -307,9 +344,19 @@ class Cell(Object):
         self.tree_changed()
 
     def remove(self, pos, num=1):
-        """Remove objects from the cell."""
-        removed_objects = self.tree[pos:pos + num]
-        self._tree[pos:pos + num] = []
+        """Remove objects from the objects tree of the cell.
+
+        :param int pos: Position from which the objects are removed.
+        :param num: Number of objects to remove.
+        :type num: int, optional
+        """
+        if pos < 0:
+            end = len(self._tree) + pos + num
+        else:
+            end = pos + num
+
+        removed_objects = self.tree[pos:end]
+        self._tree[pos:end] = []
         for obj in set(removed_objects):
             if obj not in self._tree:
                 obj.parent_cells.remove(self)
@@ -375,27 +422,6 @@ class Cell(Object):
         self._tree_properties_needs_update = True
         for cell in self.parent_cells:
             cell.tree_properties_changed()
-
-    @property
-    def length(self) -> float:
-        """Length of the cell."""
-        if self._length_needs_update:
-            self.update_length()
-        return self._length
-
-    def update_length(self):
-        """Manually update the Length of the cell (m)."""
-        self._length = sum(obj.length for obj in self.tree)
-        self._length_needs_update = False
-
-    def _on_length_changed(self):
-        self._length_needs_update = True
-        for cell in self.parent_cells:
-            cell.length_changed()
-
-    def _on_element_changed(self, element):
-        for cell in self.parent_cells:
-            cell.element_changed(element)
 
     def print_tree(self):
         """Print the tree of objects."""

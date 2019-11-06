@@ -1,19 +1,22 @@
 .. _user-guide:
 
+**********
 User Guide
-==========
+**********
+
 This guide is indented as an informal introduction into basic concepts and features of apace. For a detailed
 reference of its classes and functions, see :ref:`api-reference`.
 
 The Data Model
---------------
+==============
 All data describing the structure and properties of the accelerator is
 represented by different objects. This sections gives an brief overview of the most important classes.
 
 .. _elements:
 
 Element Classes
-***************
+---------------
+
 All basic components of the magnetic lattice like drift spaces, bending magnets and quadrupole are a subclass of an abstract
 base class called :class:`Element`. All elements have a name (which should be unique), a length and an optional description.
 
@@ -39,7 +42,7 @@ The attributes of elements can also be changed after they a created::
    0.8
 
 .. note::
-   You can also create an event listener to whenever an element gets changed, for more information see :ref:`signals`.
+   You can also set up an event listener to whenever an element gets changed, for more information see :ref:`signals`.
 
 When using Python interactively you can get further information on a specific element with the builtin :func:`print` function::
 
@@ -55,12 +58,14 @@ When using Python interactively you can get further information on a specific el
 As you can see, the :class:`Quad` object has by default the :attr:`~Object.parent_cells` attribute, which we will
 dicuss in the next subsection.
 
-The Cell class
-**************
+Cell class
+--------------
 The magnetic lattice of modern Particle accelerators is typically more complex than a single quadrupole. Therefore multiple elements can be arranged into a more complex structure using the :class:`Cell` class.
 
-As we already created a FODO structure
-in :ref:`quickstart`, let's create a
+Creating a Double Bend Achromat
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As we already created a FODO structure in :ref:`quickstart`, let's create a
 `Double Bend Achromat Lattice <https://en.wikipedia.org/wiki/Chasman%E2%80%93Green_lattice>`_ this time. In addition to
 our :code:`drift` and :code:`quad` elements, we need a new :class:`Bend` object::
 
@@ -70,7 +75,7 @@ Now we can create a DBA cell::
 
    dba_cell = ap.Cell('DBA Cell', [drift, bend, drift, quad, drift, bend, drift])
 
-As you can it is possible for elements to occur multiple times within the same cell. Elements can even be in different cells at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
+As you can see, it is possible for elements to occur multiple times within the same cell. Elements can even be in different cells at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
 
 You can easily check this by changing the length of the :code:`drift` and displaying the length of the :code:`dba_cell` before and afterwards::
 
@@ -80,23 +85,28 @@ You can easily check this by changing the length of the :code:`drift` and displa
    >>> dba_cell.length
    12
 
-As the :code:`drift` space appears four times within the :code:`dba_cell` its length increased four-fold. You may have also noticed that length :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent cells through the :attr:`~Object.parent_cells` attribute and informs all parents whenever the length of an element changes.
+As the :code:`drift` space appears four times within the :code:`dba_cell` its length increased four-fold.
+
+Parent Cells
+^^^^^^^^^^^^
+
+You may have also noticed that length of the :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent cells through the :attr:`~Object.parent_cells` attribute and informs all parents whenever the length of an element changes.
 
 .. note::
-    Apace only notifies the cell that it has to update its length value. The calculation of new length only happens when the attribute is accessed. This may be not that advantageous for a simple length calculation, but (apace uses this system for all its data) makes a difference for  more computational expensive attributes. For more see :ref:`lazy_eval`.
+    Apace only notifies the cell that it has to update its length value. The calculation of new length only happens when the attribute is accessed. This may be not that advantageous for a simple length calculation, but (apace uses this system for all its data) makes a difference for  more computational expensive properties. For more see :ref:`lazy_eval`.
 
 Try to print the contents of :attr:`~Object.parent_cells` for the :code:`quad` object::
 
    >>> quad.parent_cells
    {Cell}
 
-In contrast to the end of :ref:`elements` where it was empty, :code:`quad.parent_cells` now has one entry. Note that this is a Python :class:`set`, so it cannot to contain duplicates in case an element appears in a cell mulitple times. This set gets updated whenever an element gets added or removed from a cell.
+In contrast to the end of :ref:`elements` section, where it was empty, :code:`quad.parent_cells` now has one entry. Note that this is a Python :class:`set`, so it cannot to contain duplicates in case that an element appears multiple times within the same cell. The set gets updated whenever an element gets added or removed from a cell.
 
-It is also possible to create a cell out of cells. For example you could create a DBA ring::
+It is also possible to create a cell out of cells. For example you could create a DBA ring using the already existing :code:`dba_cell`::
 
    dba_ring = ap.Cell('DBA Ring', [dba_cell] * 16)
 
-The :code:`dba_ring` should now be listed as parent of the :code:`dba_cell`::
+The :code:`dba_ring` should now be listed as a parent of the :code:`dba_cell`::
 
    >>> dba_cell.parent_cells
    {DBA Ring}
@@ -105,6 +115,9 @@ Its length should be 16 times the length of the :code:`dba_cell`::
 
    >>> dba_ring.length
    192.0
+
+The Object Tree
+^^^^^^^^^^^^^^^
 
 The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://en.wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the arrangement of objects within a cell is therefore called :attr:`~Cell.tree`. Try to output the tree for the :code:`dba_ring` and :code:`dba_cell` objects::
 
@@ -136,14 +149,25 @@ This can be also visualized by calling the :meth:`Cell.print_tree` method::
        ├─── Bend
        └─── Drift
 
-As this nested structure is not always convenient to work with, there are three other representations of the same data (internally called :code:`tree_properties`):
+As a nested structure is not always convenient to work with, there are three other representations of :attr:`~Cell.tree` (internally called :code:`tree_properties`):
 
 #. The :attr:`Cell.lattice` attribute
 
-   To loop loop over the exact arrangement of objects there is :attr:`Cell.lattice` attribute. It can be thought of a flattened version of the tree. The :attr:`~Cell.lattice` attribute can be used in regular Python :code:`for ... in` loops::
+   To loop over the exact arrangement of objects there is :attr:`Cell.lattice` attribute. It can be thought of a flattened version of the tree. The :attr:`~Cell.lattice` attribute can be used in regular Python :code:`for ... in` loops::
 
       >>> sum(element.length for element in dba_ring.lattice)
       192
+
+   As the :code:`dba_cell` does not contain any other cells, :attr:`~Cell.lattice` and :attr:`~Cell.tree` attribute should be equal::
+
+      >>> dba_cell.tree == dba_cell.lattice
+      True
+
+   On the other hand :attr:`~Cell.lattice` attribute of the :code:`dba_ring` should look different::
+
+      >>> dba_ring.tree
+      [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift]
+
 
 #. The :attr:`Cell.elements` attribute
 
@@ -153,7 +177,7 @@ As this nested structure is not always convenient to work with, there are three 
       >>> drift.length
       2.25
 
-   To loop over all elements in no specific order use :func:`Cell.elements.values` (can be thought of as :class:`set` of :attr:`~Cell.lattice`)::
+   To loop over all elements in no specific order use :func:`Cell.elements.values` ::
 
       >>> for element in dba_ring.elements.values():
       >>>   print(element.name, element.length)
@@ -161,6 +185,9 @@ As this nested structure is not always convenient to work with, there are three 
       Bend 1
       Quad 1
 
+   .. note::
+
+      In contray to :attr:`Cell.lattice` elements to not appear multiple times in :attr:`Cell.elements.values()`. It can be thought of as a :class:`set` of :attr:`~Cell.lattice`.
 
 
 #. The :attr:`Cell.cells` attribute
@@ -170,19 +197,34 @@ As this nested structure is not always convenient to work with, there are three 
       >>> dba_cell.cells
       {}
 
+Adding and Removing Objects
+---------------------------
+
+The :attr:`~Cell.tree` of objects can also be altered after the cell was created. Use :meth:`Cell.add` to add objects to the tree::
+
+   >>> dba_cell.add(drift)
+   >>> dba_cell.tree
+   [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift]
+
+Remove objects from the :attr:`~Cell.tree` with :meth:`Cell.remove`::
+
+   >>> dba_cell.remove(-1)
+   >>> dba_cell.tree
+   [Drift, Bend, Drift, Quad, Drift, Bend, Drift]
 
 The Twiss object
-****************
+----------------
+
 
 Container object of the Twiss parameter
 
 The Tracking object
-*******************
+-------------------
 
 .. _signals:
 
 Signals and Events
-------------------
+==================
 
 Here comes text
 
@@ -193,7 +235,7 @@ Lazy Evaluation
 ---------------
 
 Lattice File Format
--------------------
+===================
 The layout and order of elements within an accelerator is usually stored in a so-called "lattice file". There are a variety of different lattice files and different attempts to unify them:
 
 * MAD and elegant have relatively human readable lattice files but are difficult to parse and also not commonly used in other areas.
