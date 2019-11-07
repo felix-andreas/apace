@@ -253,7 +253,7 @@ The tunes and betatron phase are available via :attr:`~Twiss.tune_x` and :attr:`
 The Tracking class
 ==================
 
-Similar to the :class:`Twiss` class the :class:`Tracking` class acts as container for the tracking data. Before creating a new :class:`Tracking` object we need an initial particle distribution::
+Similar to the :class:`Twiss` class the :class:`Tracking` class acts as container for the tracking data. Before creating a new :class:`Tracking` object we need to create an initial particle distribution::
 
     n_particles = 100
     dist = create_particle_dist(n_particles, x_dist='uniform', x_width=0.001)
