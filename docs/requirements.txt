@@ -1,0 +1,5 @@
+recommonmark
+m2r
+sphinx-autoapi
+sphinx_press_theme
+-e git+https://github.com/readthedocs/readthedocs-sphinx-search.git@master#egg=sphinx_search
