@@ -14,7 +14,7 @@ class Signal:
         self.callbacks = set()
         """Functions called when the signal is emitted."""
         for signal in signals:
-            signal.register(self)
+            signal.connect(self)
 
     def __call__(self, *args, **kwargs):
         """Emit signal and call registered functions."""
@@ -26,8 +26,8 @@ class Signal:
 
     __repr__ = __str__
 
-    def register(self, callback):
-        """Register a callback to this signal.
+    def connect(self, callback):
+        """Connect a callback to this signal.
 
         :param function callback: Function which gets called when the signal is emitted.
         """
@@ -38,7 +38,7 @@ class Flag:
     def __init__(self, initial_value, signals=None):
         self.value = initial_value
         for signal in signals:
-            signal.register(self.set_value(True))
+            signal.connect(self.set_value(True))
 
     def __bool__(self):
         return self.value

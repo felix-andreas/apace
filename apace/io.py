@@ -4,7 +4,7 @@ from . import classes
 from .classes import Cell
 
 
-def load_lattice_file(file_path, file_format='json') -> Cell:
+def load_lattice(file_path, file_format='json') -> Cell:
     """Read lattice file into cell object.
 
     :param str file_path: Path to lattice file.
@@ -19,7 +19,7 @@ def load_lattice_file(file_path, file_format='json') -> Cell:
         raise NotImplementedError
 
 
-def save_lattice_file(cell, file_path, file_format='json'):
+def save_lattice(cell, file_path, file_format='json'):
     """Save cell object to lattice file.
 
     :param Cell cell: Cell object to be saved.

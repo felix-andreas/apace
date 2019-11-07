@@ -22,8 +22,8 @@ class MatrixMethod:
         self.velocity = velocity
 
         self.changed_elements = set()
-        self.cell.tree_changed.register(self._on_tree_change)
-        self.cell.element_changed.register(self._on_element_changed)
+        self.cell.tree_changed.connect(self._on_tree_change)
+        self.cell.element_changed.connect(self._on_element_changed)
 
         self.element_n_kicks = {Drift: 3, Bend: 10, Quad: 5}
         self.element_n_kicks_changed = Signal()
@@ -31,22 +31,22 @@ class MatrixMethod:
         self._element_indices = {}
         self._element_indices_needs_update = True
         self.element_indices_changed = Signal(self.cell.tree_changed)
-        self.element_indices_changed.register(self._on_element_indices_changed)
+        self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_kicks = 0
         self._n_kicks_needs_update = True
         self.n_kicks_changed = Signal(self.cell.tree_changed, self.element_n_kicks_changed)
-        self.n_kicks_changed.register(self._on_n_kicks_changed)
+        self.n_kicks_changed.connect(self._on_n_kicks_changed)
 
         self._step_size = np.empty(0)
         self._step_size_needs_update = True
         self.step_size_changed = Signal(self.n_kicks_changed, self.cell.length_changed)
-        self.step_size_changed.register(self._on_step_size_changed)
+        self.step_size_changed.connect(self._on_step_size_changed)
 
         self._s = np.empty(0)
         self._s_needs_update = True
         self.s_changed = Signal(self.step_size_changed)
-        self.s_changed.register(self._on_s_changed)
+        self.s_changed.connect(self._on_s_changed)
 
         self._matrix_array = np.empty(0)
         self._matrix_array_needs_full_update = True

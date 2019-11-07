@@ -74,10 +74,10 @@ class Element(Object):
         self._length = length
         self.length_changed: Signal = Signal()
         """Gets emitted when the length changes."""
-        self.length_changed.register(self._on_length_changed)
+        self.length_changed.connect(self._on_length_changed)
         self.value_changed: Signal = Signal()
         """Gets emitted when one of the attributes changes."""
-        self.value_changed.register(self._on_value_changed)
+        self.value_changed.connect(self._on_value_changed)
 
     @property
     def length(self) -> float:
@@ -268,17 +268,17 @@ class Cell(Object):
         self._tree_properties_needs_update = True
         self.tree_properties_changed: Signal = Signal(self.tree_changed)
         """Gets emitted when one of the attributes lattice, element or cells changes."""
-        self.tree_properties_changed.register(self._on_tree_properties_changed)
+        self.tree_properties_changed.connect(self._on_tree_properties_changed)
 
         self._length = 0
         self._length_needs_update = True
         self.length_changed: Signal = Signal(self.tree_changed)
-        """Get emitted when the length of cell changes."""
-        self.length_changed.register(self._on_length_changed)
+        """Gets emitted when the length of cell changes."""
+        self.length_changed.connect(self._on_length_changed)
 
         self.element_changed: Signal = Signal()
-        """Get emitted when an attribute of an element within this cell changes."""
-        self.element_changed.register(self._on_element_changed)
+        """Gets emitted when an attribute of an element within this cell changes."""
+        self.element_changed.connect(self._on_element_changed)
 
     def __getitem__(self, key):
         if isinstance(key, str):

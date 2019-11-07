@@ -4,7 +4,7 @@ import apace as ap
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, 'data', 'lattices', 'fodo_ring.json')
-fodo = ap.load_lattice_file(file_path)
+fodo = ap.load_lattice(file_path)
 
 
 def test_attributes():
@@ -23,8 +23,8 @@ def test_attributes():
 
 def test_save_lattice():
     path = '/tmp/tmp_lattice.json'
-    ap.save_lattice_file(fodo, path)
-    lattice = ap.load_lattice_file(path)
+    ap.save_lattice(fodo, path)
+    lattice = ap.load_lattice(path)
     assert fodo.length == lattice.length
     assert len(fodo.elements) == len(lattice.elements)
     assert len(fodo.cells) == len(lattice.cells)

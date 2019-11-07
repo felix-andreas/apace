@@ -26,7 +26,7 @@ class MatrixTracking:
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
         self.particle_trajectories_changed = Signal(self.matrix_method.matrix_array_changed)
-        self.particle_trajectories_changed.register(self._on_particle_trajectories_changed)
+        self.particle_trajectories_changed.connect(self._on_particle_trajectories_changed)
 
     @property
     def initial_distribution(self) -> np.ndarray:

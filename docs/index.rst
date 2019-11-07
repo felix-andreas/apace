@@ -20,11 +20,4 @@ libraries.
    cli
    reference/apace/index
 
-
-
-Indices and tables
-==================
-
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
