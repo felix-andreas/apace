@@ -3,6 +3,9 @@
 #define DEBUG 0
 
 void twiss_product_parallel (int n, double (*matrix_array)[6][6], double *B0, double (*twiss_array)[n]) {
+  for (int i = 0; i < 8; i++) {
+    twiss_array[i][0] = B0[i];
+  }
 #pragma omp parallel shared(twiss_array, B0, matrix_array)  // private(thread_id, n_loops)
   {
 #if DEBUG
@@ -10,8 +13,8 @@ void twiss_product_parallel (int n, double (*matrix_array)[6][6], double *B0, do
 #endif
 
 #pragma omp for schedule(static, 1000)
-    for (int pos = 0; pos < n; pos++) {
-        double(*m)[6] = matrix_array[pos];
+    for (int pos = 1; pos < n; pos++) {
+        double(*m)[6] = matrix_array[pos - 1];
 
         // beta
         twiss_array[0][pos] = m[0][0] * m[0][0] * B0[0] - 2. * m[0][0] * m[0][1] * B0[2] + m[0][1] * m[0][1] * B0[4];

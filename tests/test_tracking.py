@@ -2,8 +2,8 @@ import apace as ap
 import os
 
 dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, 'data', 'lattices', 'FODO-lattice.json')
-fodo = ap.read_lattice_file(file_path)
+file_path = os.path.join(dir_name, 'data', 'lattices', 'fodo_ring.json')
+fodo = ap.load_lattice(file_path)
 
 
 def test_tune():
@@ -25,9 +25,8 @@ def test_tune():
 
 
 def test_particle_trajectory():
-    """
-    compare particle trajectory from matrix tracking with particle trajectory from beta functions
-    x(s) = sqrt(beta_x * e) * cos(psi_x + psi_x0)
+    """Compare particle trajectory from matrix tracking x(s) with particle trajectory
+    from beta functions x(s) = sqrt(beta_x * e) * cos(psi_x + psi_x0).
     """
     from math import sqrt, cos
     import numpy as np

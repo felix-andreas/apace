@@ -4,9 +4,12 @@
 // 0 betax 1 betay 2 alphax 3 alphay 4 gammax 5 gammay 6 etax 7 d/ds etax
 
 void twiss_product_serial (int n, double (*matrix_array)[6][6], double *B0, double (*twiss_array)[n]) {
-  for (int pos = 0; pos < n; pos++) {
+  for (int i = 0; i < 8; i++) {
+    twiss_array[i][0] = B0[i];
+  }
 
-    double(*m)[6] = matrix_array[pos];
+  for (int pos = 1; pos < n; pos++) {
+    double(*m)[6] = matrix_array[pos - 1]; // matrix array has shape (6, 6, n - 1)
 
     // beta
     twiss_array[0][pos] = m[0][0] * m[0][0] * B0[0] - 2. * m[0][0] * m[0][1] * B0[2] + m[0][1] * m[0][1] * B0[4];

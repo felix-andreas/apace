@@ -25,3 +25,36 @@ def test_unique_names():
 
     with pytest.raises(ap.AmbiguousNameError):
         ap.Cell('Cell', [cell_1, cell_2]).update_tree_properties()
+
+
+def test_add_remove_objects():
+    e1 = ap.Element('e1', length=1)
+    e2 = ap.Element('e2', length=1)
+    cell = ap.Cell('cell')
+    cell_2 = ap.Cell('Main Cell', [cell] * 2)
+
+    assert 0 == cell_2.length
+
+    cell.add(e1)
+    assert [e1] == cell.tree
+    assert 2 == cell_2.length
+
+    cell.add(e2, pos=-1)
+    assert [e2, e1] == cell.tree
+    assert 4 == cell_2.length
+
+    cell.add([e1, e2], pos=0)  # add list
+    assert [e1, e2, e2, e1] == cell.tree
+    assert 8 == cell_2.length
+
+    cell.add((e1,), pos=-2)  # add tuple
+    assert [e1, e2, e1, e2, e1] == cell.tree
+    assert 10 == cell_2.length
+
+    cell.remove(2)
+    assert [e1, e2, e2, e1] == cell.tree
+    assert 8 == cell_2.length
+
+    cell.remove(-3, 2)
+    assert [e1, e1] == cell.tree
+    assert 4 == cell_2.length

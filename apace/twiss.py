@@ -9,16 +9,21 @@ TWO_PI = 2 * np.pi
 
 
 class Twiss:
-    def __init__(self, main_cell):
-        self.main_cell = main_cell
-        self.matrix_method = MatrixMethod(main_cell)
+    """Calculate the Twiss parameter for a given cell.
 
-        self._twiss_array = None
+    :param Cell cell: Cell to calculate the Twiss parameter for.
+    """
+
+    def __init__(self, cell):
+        self.cell = cell
+        self.matrix_method = MatrixMethod(cell)
+
+        self._twiss_array = np.empty(0)
         self._twiss_array_needs_update = True
         self.twiss_array_changed = Signal(self.matrix_method.matrix_array_changed)
-        self.twiss_array_changed.register(self._on_twiss_array_changed)
-        self._full_matrix = None
-        self._accumulated_array = None
+        self.twiss_array_changed.connect(self._on_twiss_array_changed)
+        self._full_matrix = np.empty(0)
+        self._accumulated_array = np.empty(0)
 
         self.stable = None
         self.stable_x = None
@@ -27,7 +32,7 @@ class Twiss:
         self._tune_fractional_needs_update = True
         # TODO: only depends on full-matrix not on beta functions - change signals!
         self.tune_fractional_changed = Signal(self.twiss_array_changed)
-        self.tune_fractional_changed.register(self._on_tune_fractional_changed)
+        self.tune_fractional_changed.connect(self._on_tune_fractional_changed)
         self._tune_x_fractional = None
         self._tune_y_fractional = None
         self._tune_x_fractional_hz = None
@@ -35,7 +40,7 @@ class Twiss:
 
         self._betatron_phase_needs_update = True
         self.betatron_phase_changed = Signal(self.twiss_array_changed)
-        self.betatron_phase_changed.register(self._on_betatron_phase_changed)
+        self.betatron_phase_changed.connect(self._on_betatron_phase_changed)
         self._psi_x = None
         self._psi_y = None
         self._tune_x = None
@@ -43,6 +48,7 @@ class Twiss:
 
     @property
     def twiss_array(self) -> np.ndarray:
+        """Contains the twiss parameter."""
         if self._twiss_array_needs_update:
             self.update_twiss_array()
 
@@ -50,6 +56,7 @@ class Twiss:
 
     @property
     def full_matrix(self) -> np.ndarray:
+        """One turn matrix."""
         if self._twiss_array_needs_update:
             self.update_twiss_array()
 
@@ -57,18 +64,20 @@ class Twiss:
 
     @property
     def accumulated_array(self) -> np.ndarray:
+        """Contains accumulated transfer matrices."""
         if self._twiss_array_needs_update:
             self.update_twiss_array()
 
         return self._accumulated_array
 
     def update_twiss_array(self):
-        transfer_matrices = self.matrix_method.matrix_array
-        size = transfer_matrices.shape[0]
-        if self._twiss_array is None or self._twiss_array.shape[0] != size:
+        """Manually update twiss_array."""
+        matrix_array = self.matrix_method.matrix_array
+        size = self.matrix_method.n_kicks + 1
+        if self._twiss_array.shape[0] != size:
             self._twiss_array = np.empty((8, size))
-            self._accumulated_array = np.empty(transfer_matrices.shape)
-        accumulated_array(transfer_matrices, self._accumulated_array)
+            self._accumulated_array = np.empty(matrix_array.shape)
+        accumulated_array(matrix_array, self._accumulated_array)
         self._full_matrix = full_matrix = self._accumulated_array[-1]
 
         term_x = 2 - full_matrix[0, 0] ** 2 - 2 * full_matrix[0, 1] * full_matrix[1, 0] - full_matrix[1, 1] ** 2
@@ -102,65 +111,79 @@ class Twiss:
 
     @property
     def s(self) -> np.ndarray:
+        """Contains the position with regard to the orbit."""
         return self.matrix_method.s
 
     @property
     def beta_x(self) -> np.ndarray:
+        """Horizontal beta function."""
         return self.twiss_array[0]
 
     @property
     def beta_y(self) -> np.ndarray:
+        """Vertical beta function."""
         return self.twiss_array[1]
 
     @property
     def alpha_x(self) -> np.ndarray:
+        """Horizontal alpha function."""
         return self.twiss_array[2]
 
     @property
     def alpha_y(self) -> np.ndarray:
+        """Vertical alpha function."""
         return self.twiss_array[3]
 
     @property
     def gamma_x(self) -> np.ndarray:
+        """Horizontal gamma function."""
         return self.twiss_array[4]
 
     @property
     def gamma_y(self) -> np.ndarray:
+        """Vertical gamma function."""
         return self.twiss_array[5]
 
     @property
     def eta_x(self) -> np.ndarray:
+        """Horizontal dispersion function."""
         return self.twiss_array[6]
 
     @property
     def eta_x_dds(self) -> np.ndarray:
+        """Derivative of the horizontal dispersion function with respect to the orbit position s."""
         return self.twiss_array[7]
 
     @property
     def psi_x(self) -> np.ndarray:
+        """Horizontal betatron phase."""
         if self._betatron_phase_needs_update:
             self.update_betatron_phase()
         return self._psi_x
 
     @property
     def psi_y(self) -> np.ndarray:
+        """Vertical betatron phase."""
         if self._betatron_phase_needs_update:
             self.update_betatron_phase()
         return self._psi_y
 
     @property
     def tune_x(self) -> float:
+        """Horizontal tune. Corresponds to psi_x[-1] / 2 pi. Strongly depends on the selected step size."""
         if self._betatron_phase_needs_update:
             self.update_betatron_phase()
         return self._tune_x
 
     @property
     def tune_y(self) -> float:
+        """Vertical tune. Corresponds to psi_y[-1] / 2 pi. Strongly depends on the selected step size."""
         if self._betatron_phase_needs_update:
             self.update_betatron_phase()
         return self._tune_y
 
     def update_betatron_phase(self):
+        """Manually update betatron phase psi and tune."""
         size = self.accumulated_array.shape[0]
         self._psi_x = np.empty(size)  # TODO: do not always allocate new!
         self._psi_y = np.empty(size)
@@ -177,6 +200,10 @@ class Twiss:
 
     @property
     def tune_x_fractional(self) -> float:
+        """Fractional part of the horizontal tune.
+        Gets calculatd from the one turn matrix.
+        """
+
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
 
@@ -184,6 +211,9 @@ class Twiss:
 
     @property
     def tune_y_fractional(self) -> float:
+        """Fractional part of the vertical tune.
+        Gets calculatd from the one turn matrix.
+        """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
 
@@ -191,6 +221,7 @@ class Twiss:
 
     @property
     def tune_x_fractional_hz(self) -> float:
+        """Fractional part of the horizontal tune in Hz."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
 
@@ -198,16 +229,18 @@ class Twiss:
 
     @property
     def tune_y_fractional_hz(self) -> float:
+        """Fractional part of the vertical tune in Hz."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
 
         return self._tune_y_fractional_hz
 
     def update_fractional_tune(self):
+        """Manually update fractional tune."""
         full_matrix = self.full_matrix
         self._tune_x_fractional = np.arccos((full_matrix[0, 0] + full_matrix[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((full_matrix[2, 2] + full_matrix[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.main_cell.length  # Hz
+        tmp = self.matrix_method.velocity / self.cell.length  # Hz
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False
@@ -216,10 +249,20 @@ class Twiss:
         self._tune_fractional_needs_update = True
 
     # TODO: save results
-    def beta_x_int(self, steps):
+    def beta_x_int(self, steps) -> np.ndarray:
+        """Linear interpolated beta_x for n steps.
+
+        :param int steps: Number of interpolation steps.
+        :return: Interpolated horizontal beta function.
+        """
         s_int = np.linspace(0, self.s[-1], steps)
         return np.interp(s_int, self.s, self.beta_x)
 
-    def beta_y_int(self, steps):
+    def beta_y_int(self, steps) -> np.ndarray:
+        """Linear interpolated beta_y for n steps.
+
+        :param int steps: Number of interpolation steps.
+        :return: Interpolated vertical beta function.
+        """
         s_int = np.linspace(0, self.s[-1], steps)
         return np.interp(s_int, self.s, self.beta_x)

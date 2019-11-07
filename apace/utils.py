@@ -2,16 +2,35 @@ import collections
 
 
 class Signal:
-    def __init__(self, *args):
+    """A callable signal class to which callbacks can be registered.
+
+    When ever the signal is emitted all registered functions are called.
+
+    :param signals: Signals which this signal gets registered to.
+    :type signals: Signal, optional
+    """
+
+    def __init__(self, *signals):
         self.callbacks = set()
-        for signal in args:
-            signal.register(self)
+        """Functions called when the signal is emitted."""
+        for signal in signals:
+            signal.connect(self)
 
     def __call__(self, *args, **kwargs):
+        """Emit signal and call registered functions."""
         for callback in self.callbacks:
             callback(*args, **kwargs)
 
-    def register(self, callback):
+    def __str__(self):
+        return 'Signal'
+
+    __repr__ = __str__
+
+    def connect(self, callback):
+        """Connect a callback to this signal.
+
+        :param function callback: Function which gets called when the signal is emitted.
+        """
         self.callbacks.add(callback)
 
 
@@ -19,7 +38,7 @@ class Flag:
     def __init__(self, initial_value, signals=None):
         self.value = initial_value
         for signal in signals:
-            signal.register(self.set_value(True))
+            signal.connect(self.set_value(True))
 
     def __bool__(self):
         return self.value
@@ -29,7 +48,10 @@ class Flag:
 
 
 class AmbiguousNameError(Exception):
-    """Raised if multiple elements or cells have the same name"""
+    """Raised if multiple elements or cells have the same name.
+
+    :param str name: The ambiguous name.
+    """
 
     def __init__(self, name):
         super().__init__(f'The name "{name}" is ambiguous. Names must be unique!')

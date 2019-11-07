@@ -2,7 +2,7 @@
 [![Python Version](https://img.shields.io/pypi/pyversions/apace)](https://pypi.org/project/apace/)
 [![PyPI](https://img.shields.io/pypi/v/apace.svg)](https://pypi.org/project/apace/)
 [![CI](https://github.com/andreasfelix/apace/workflows/CI/badge.svg)](https://github.com/andreasfelix/apace/actions?query=workflow%3ACI)
-[![Docs](https://readthedocs.org/projects/apace/badge/?version=docs)](https://apace.readthedocs.io/en/docs/)
+[![Docs](https://readthedocs.org/projects/apace/badge/?version=latest)](https://apace.readthedocs.io/en/docs/)
 
 **apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python package and aims to provide a convenient and straightforward API to make use of Python's numerous scientific libraries.
 
@@ -15,7 +15,7 @@ pip install -U apace
 ```
 
 ## Requirements
-- Python 3.7 or higher (CPython or PyPy)
+- Python 3.6 or higher (CPython or PyPy)
 - CFFI 1.0.0 or higher
 - NumPy/SciPy
 - Matplotlib
@@ -41,7 +41,6 @@ Calculate the Twiss parameters:
 ```python
 twiss = ap.Twiss(ring)
 ```
-
 
 Plot horizontal and vertical beta functions using matplotlib:
 ```python
