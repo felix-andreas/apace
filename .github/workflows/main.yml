@@ -22,4 +22,4 @@ jobs:
         pytest
     - name: Create source distributions 
       run: |
-        python setup.py bdist
+        python setup.py sdist
