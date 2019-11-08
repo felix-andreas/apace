@@ -1,3 +1,4 @@
+import numpy as np
 import apace as ap
 
 # FODO circular accelerator from Klaus Wille Chapter 3.13.3
@@ -9,6 +10,19 @@ fodo = ap.Cell('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.Cell('fodo-ring', [fodo] * 8)
 
 twiss = ap.Twiss(ring)
+
+one_turn = np.array([
+    [0.79784474, - 5.91866399, 0., 0., 0., 0.69110258],
+    [0.06140639, 0.79784474, 0., 0., 0., - 0.20992831],
+    [0., 0., - 0.9687207, - 0.30710998, 0., 0.],
+    [0., 0., 0.20051513, - 0.9687207, 0., 0.],
+    [0.20992831, - 0.69110258, 0., 0., 1., - 15.93422326],
+    [0., 0., 0., 0., 0., 1.]
+])
+
+
+def test_one_turn_matrix():
+    assert np.allclose(one_turn, twiss.full_matrix)
 
 
 def test_beta():

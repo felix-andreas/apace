@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import integrate
-from .clib import twiss_product, accumulated_array
+from .clib import twiss_product, accumulate_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
 
@@ -20,7 +20,7 @@ class Twiss:
 
         self._twiss_array = np.empty(0)
         self._twiss_array_needs_update = True
-        self.twiss_array_changed = Signal(self.matrix_method.matrix_array_changed)
+        self.twiss_array_changed = Signal(self.matrix_method.transfer_matrices_changed)
         self.twiss_array_changed.connect(self._on_twiss_array_changed)
         self._full_matrix = np.empty(0)
         self._accumulated_array = np.empty(0)
@@ -72,13 +72,14 @@ class Twiss:
 
     def update_twiss_array(self):
         """Manually update twiss_array."""
-        matrix_array = self.matrix_method.matrix_array
+        transfer_matrices = self.matrix_method.transfer_matrices
         size = self.matrix_method.n_kicks + 1
+        start_idx = 0
         if self._twiss_array.shape[0] != size:
             self._twiss_array = np.empty((8, size))
-            self._accumulated_array = np.empty(matrix_array.shape)
-        accumulated_array(matrix_array, self._accumulated_array)
-        self._full_matrix = full_matrix = self._accumulated_array[-1]
+            self._accumulated_array = np.empty(transfer_matrices.shape)
+        accumulate_array(transfer_matrices, self._accumulated_array, start_idx)
+        self._full_matrix = full_matrix = self._accumulated_array[start_idx - 1]
 
         term_x = 2 - full_matrix[0, 0] ** 2 - 2 * full_matrix[0, 1] * full_matrix[1, 0] - full_matrix[1, 1] ** 2
         self.stable_x = term_x > 0
@@ -102,7 +103,7 @@ class Twiss:
             eta_x0 = (full_matrix[0, 1] * eta_x_dds0 + full_matrix[0, 5]) / (1 - full_matrix[1, 1])
 
             initial_twiss_vec = np.array([beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0])
-            twiss_product(self._accumulated_array, initial_twiss_vec, self._twiss_array)
+            twiss_product(self._accumulated_array, initial_twiss_vec, self._twiss_array, start_idx)
 
         self._twiss_array_needs_update = False
 

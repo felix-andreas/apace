@@ -16,9 +16,9 @@ ffi_builder.set_source(
 
 ffi_builder.cdef(
     f'''
-    void twiss_product_serial(int n, double (*matrix_array)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
-    void twiss_product_parallel(int n, double (*matrix_array)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
-    void accumulate_array(int n, int size, double (*ina)[{SIZE}][{SIZE}], double (*outa)[{SIZE}][{SIZE}]);
+    void twiss_product_serial(int n, int from_idx, double (*transfer_matrices)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
+    void twiss_product_parallel(int n, int from_idx, double (*transfer_matrices)[{SIZE}][{SIZE}], double *B0, double (*twiss_array)[]);
+    void accumulate_array(int n, int from_idx, double (*ina)[{SIZE}][{SIZE}], double (*outa)[{SIZE}][{SIZE}]);
     '''
 )
 

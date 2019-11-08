@@ -262,6 +262,7 @@ class Cell(Object):
             self.add(tree, pos=len(self.tree))
 
         # tree properties: # TODO: tree properties should be weak reference
+        # just clear tree properties when updated needed!
         self._lattice = []
         self._elements = {}
         self._cells = {}

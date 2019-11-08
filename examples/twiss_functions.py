@@ -11,3 +11,5 @@ ring = ap.Cell('fodo-ring', [fodo] * 8)
 twiss = ap.Twiss(ring)
 
 plt.plot(twiss.s, twiss.beta_x)
+plt.show()
+
