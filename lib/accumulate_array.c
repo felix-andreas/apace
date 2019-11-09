@@ -40,21 +40,27 @@ void accumulate_array(
 
 
 void accumulate_array_partial(
-        int n,
-        int (*ranges)[2],
+        int n_indices,
+        int (*indices)[2],
+        int n_kicks,
         double (*input_array)[6][6],
         double (*accumulated_array)[6][6]
 ) {
-    for (int l = 0; l < n; l++) {
-        int start = ranges[l][0];
-        int end = ranges[l][1];
+    for (int l = 0; l < n_indices; l++) {
+        int start = indices[l][0];
+        int end = indices[l][1];
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
-            accumulated_array[l][i][j] = input_array[start][i][j];
+                accumulated_array[l][i][j] = input_array[start][i][j];
             }
         }
 
-        for (int pos = start + 1; pos < end; pos++) {
+        if (end < start) {
+            end += n_kicks;
+        }
+
+        for (int m = start + 1; m < end; m++) {
+            int pos = m < n_kicks ? m : m - n_kicks;
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {
                     for (int k = 0; k < 6; k++) {

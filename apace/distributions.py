@@ -15,7 +15,7 @@ def create_particle_distribution(
     :param int n_particles: Number of particles.
     :param str x_dist: Type of distribution in horizontal phase space.
     :param float x_center: Center of distribution.
-    :param int x_width: Width of distribution.
+    :param float x_width: Width of distribution.
     :param str y_dist: Type of distribution in vertical phase space.
     :param float y_center: Center of distribution.
     :param float y_width: Width of distribution.
