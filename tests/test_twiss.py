@@ -1,3 +1,5 @@
+import numpy as np
+from random import randrange
 import apace as ap
 
 # FODO circular accelerator from Klaus Wille Chapter 3.13.3
@@ -8,7 +10,8 @@ Q2 = ap.Quad('Q2', length=0.4, k1=-1.2)
 fodo = ap.Cell('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.Cell('fodo-ring', [fodo] * 8)
 
-twiss = ap.Twiss(ring)
+twiss = ap.Twiss(ring)  # a different start_idx should make no difference!
+twiss.start_idx = randrange(twiss.n_kicks)
 
 
 def test_beta():
@@ -45,7 +48,42 @@ def test_tune_fractional():
 def test_element_change():
     beta_x_start = twiss.beta_x[0]
     tune_x_initial = twiss.tune_x
-    Q1.k1 += 0.1
-
+    Q1.k1 += 0.25
     assert beta_x_start != twiss.beta_x[0]
     assert tune_x_initial != twiss.tune_x
+    Q1.k1 -= 0.25  # set back to avoid failure of other tests
+
+
+def test_periodic_solution():
+    assert twiss.stable
+    assert twiss.stable_x
+    assert twiss.stable_y
+
+    tmp_k1 = Q1.k1
+    Q1.k1 = 0
+    assert not twiss.stable
+    assert not twiss.stable_x
+    assert twiss.stable_y
+    Q1.k1 = tmp_k1
+
+    tmp_k1 = Q2.k1
+    Q2.k1 = 0
+    assert not twiss.stable
+    assert twiss.stable_x
+    assert not twiss.stable_y
+    Q2.k1 = tmp_k1
+
+
+one_turn = np.array([
+    [+0.79784474, -5.91866399, +0.00000000, +0.00000000, +0.00000000, +0.69110258],
+    [+0.06140639, +0.79784474, +0.00000000, +0.00000000, +0.00000000, -0.20992831],
+    [+0.00000000, +0.00000000, -0.96872070, -0.30710998, +0.00000000, +0.00000000],
+    [+0.00000000, +0.00000000, +0.20051513, -0.96872070, +0.00000000, +0.00000000],
+    [+0.20992831, -0.69110258, +0.00000000, +0.00000000, +1.00000000, -15.9342232],
+    [+0.00000000, +0.00000000, +0.00000000, +0.00000000, +0.00000000, +1.00000000]
+])
+
+
+def test_one_turn_matrix():  # ony true if one turn matrix is calculated from pos = 0
+    twiss_idx_0 = ap.Twiss(ring, start_idx=0)
+    assert np.allclose(one_turn, twiss_idx_0.one_turn_matrix)

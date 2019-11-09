@@ -1,5 +1,7 @@
 import apace as ap
+from apace.plot import plot_lattice
 import matplotlib.pyplot as plt
+import numpy as np
 
 D1 = ap.Drift('D1', length=0.55)
 Q1 = ap.Quad('Q1', length=0.2, k1=1.2)
@@ -8,6 +10,8 @@ Q2 = ap.Quad('Q2', length=0.4, k1=-1.2)
 fodo = ap.Cell('fodo-cell', [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.Cell('fodo-ring', [fodo] * 8)
 
-twiss = ap.Twiss(ring)
+np.set_printoptions(precision=3)
 
-plt.plot(twiss.s, twiss.beta_x)
+twiss = ap.Twiss(ring, start_idx=0)
+plot_lattice(twiss, ring)
+plt.savefig('/tmp/twiss_plot.pdf')
