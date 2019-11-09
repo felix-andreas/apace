@@ -211,7 +211,7 @@ class Sext(Element):
 
     @property
     def k2(self) -> float:
-        """Geometric sextupole strength (m^-1)."""
+        """Geometric sextupole strength (m^-3)."""
         return self._k2
 
     @k2.setter
@@ -225,23 +225,23 @@ class Octu(Element):
 
     :param str name: Name of the element.
     :param float length: Length of the element (m).
-    :param float k1: Geometric quadrupole strength (m^-4).
+    :param float k3: Geometric quadrupole strength (m^-4).
     :param description: A brief description of the element.
     :type description: str, optional
     """
 
-    def __init__(self, name, length, k2, description=''):
+    def __init__(self, name, length, k3, description=''):
         super().__init__(name, length, description)
-        self._k2 = k2
+        self._k3 = k3
 
     @property
-    def k2(self) -> float:
+    def k3(self) -> float:
         """Geometric sextupole strength (m^-1)."""
-        return self._k2
+        return self._k3
 
-    @k2.setter
-    def k2(self, value):
-        self._k2 = value
+    @k3.setter
+    def k3(self, value):
+        self._k3 = value
         self.value_changed()
 
 
@@ -262,7 +262,7 @@ class Cell(Object):
             self.add(tree, pos=len(self.tree))
 
         # tree properties: # TODO: tree properties should be weak reference
-        # just clear tree properties when updated needed!
+        # just clear tree properties when update needed!
         self._lattice = []
         self._elements = {}
         self._cells = {}
@@ -318,7 +318,7 @@ class Cell(Object):
 
     @property
     def tree(self) -> List[Type[Object]]:  # do not set tree manually
-        """The tree of objeccts defines the physical order of elements withing this cell."""
+        """The tree of objects defines the physical order of elements withing this cell."""
 
         return self._tree
 

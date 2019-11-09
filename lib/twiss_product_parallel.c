@@ -31,10 +31,6 @@ void twiss_product_parallel (
         int pos_1 = (pos != 0) ? pos - 1 : n - 2;
         double(*m)[6] = matrix_array[pos_1];
 
-        if (pos == 2) {
-            printf("hey pos ist zero!");
-        }
-
         // beta
         twiss_array[0][pos] = m[0][0] * m[0][0] * B0[0] - 2. * m[0][0] * m[0][1] * B0[2] + m[0][1] * m[0][1] * B0[4];
         twiss_array[1][pos] = m[2][2] * m[2][2] * B0[1] - 2. * m[2][2] * m[2][3] * B0[3] + m[2][3] * m[2][3] * B0[5];

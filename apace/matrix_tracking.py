@@ -12,7 +12,7 @@ class MatrixTracking:
     :param Cell cell: Cell which particles will be tracked through.
     :param np.ndarray initial_distribution: Initial particle distribution.
     :param int turns: Number of turns.
-    :param position: List of positions to watch. If unset all particle trajectory
+    :param positions: List of positions to watch. If unset all particle trajectory
            will be saved for all positions.
     :type positions: list, optional
     """
@@ -102,7 +102,6 @@ class MatrixTracking:
             for i in range(1, turns):
                 trajectories[i] = np.dot(full_matrix, trajectories[i - 1])
                 orbit_position[i] = orbit_position[i - 1] + self.cell.length
-
         elif position is None:  # calc for all positions
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
@@ -113,7 +112,6 @@ class MatrixTracking:
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.cell.length
-
         else:
             raise NotImplementedError  # TODO: change accumulated array for all positions
 
