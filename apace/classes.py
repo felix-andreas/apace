@@ -1,4 +1,4 @@
-from typing import List, Set, Dict, Union, Type, Iterable
+from typing import List, Set, Dict, Union, Type, Iterable  # noqa: F401
 
 import weakref  # only tree should contain strong ref
 from .utils import Signal, AmbiguousNameError

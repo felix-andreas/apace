@@ -200,9 +200,9 @@ class MatrixMethod:
             velocity = self.velocity
             if velocity < C:
                 gamma = 1 / np.sqrt(1 - velocity ** 2 / C_SQUARED)
-                el_45 = step_size / gamma ** 2
+                el_45 = step_size / gamma ** 2  # noqa: F841
             else:
-                el_45 = 0
+                el_45 = 0  # noqa: F841
 
             if isinstance(element, Quad) and element.k1:  # Quad with k != 0
                 sqk = np.sqrt(np.absolute(element.k1))

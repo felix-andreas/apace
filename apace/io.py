@@ -1,4 +1,7 @@
-import os, re, inspect, json
+import os
+import re
+import inspect
+import json
 
 from . import classes
 from .classes import Cell

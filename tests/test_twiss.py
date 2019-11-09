@@ -61,16 +61,16 @@ def test_periodic_solution():
 
     tmp_k1 = Q1.k1
     Q1.k1 = 0
-    assert twiss.stable == False
-    assert twiss.stable_x == False
-    assert twiss.stable_y == True
+    assert not twiss.stable
+    assert not twiss.stable_x
+    assert twiss.stable_y
     Q1.k1 = tmp_k1
 
     tmp_k1 = Q2.k1
     Q2.k1 = 0
-    assert twiss.stable == False
-    assert twiss.stable_x == True
-    assert twiss.stable_y == False
+    assert not twiss.stable
+    assert twiss.stable_x
+    assert not twiss.stable_y
     Q2.k1 = tmp_k1
 
 

@@ -1,4 +1,3 @@
-from .classes import Cell
 import numpy as np
 
 from .clib import accumulate_array
@@ -22,7 +21,7 @@ class MatrixTracking:
         self.matrix_method = MatrixMethod(cell)
         self._initial_distribution = initial_distribution
         self.turns = turns
-        self.positions = positions # TODO: make sure it is list!
+        self.positions = positions  # TODO: make sure it is list!
 
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
@@ -95,7 +94,7 @@ class MatrixTracking:
         # TODO: implement in C
         if position == 0:
             acc_array = np.empty(matrix_array.shape)
-            accumulate_array(matrix_array, acc_array, 0) # TODO: use partial method!
+            accumulate_array(matrix_array, acc_array, 0)  # TODO: use partial method!
             full_matrix = acc_array[-1]
             trajectories[0] = initial_distribution
             orbit_position[0] = 0
