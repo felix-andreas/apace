@@ -73,7 +73,7 @@ Now we can create a DBA cell::
 
    dba_cell = ap.Cell('DBA Cell', [drift, bend, drift, quad, drift, bend, drift])
 
-As you can see, it is possible for elements to occur multiple times within the same cell. Elements can even be in different cells at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
+As you can see, it is possible for elements to occur multiple times within the same cell. Elements can even be in different cells at the same time. What is important to note is, that elements which appear within a cell multiple times (e.g. all instances of :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object. This means that whenever on an
 
 You can easily check this by changing the length of the :code:`drift` and displaying the length of the :code:`dba_cell` before and afterwards::
 
@@ -165,7 +165,7 @@ As a nested structure is not always convenient to work with, there are three oth
 
    On the other hand, the :attr:`~Cell.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Cell.tree`::
 
-      >>> dba_ring.tree
+      >>> dba_ring.lattice
       [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift]
 
 
@@ -192,7 +192,7 @@ As a nested structure is not always convenient to work with, there are three oth
 
 #. The :attr:`~Cell.cells` attribute
 
-    Similar to the :attr:`~Cell.elements` attribute but for cells. Contains all cells within a given cell, including grandchilrden, great grandchildren, etc.
+    This attribute is equivalent to the :attr:`~Cell.elements` attribute for cells. It contains all cells within a given cell, including grandchilrden, great grandchildren, etc.
     The :attr:`~Cell.cells` attribute should be empty for the :code:`dba_cell` as it does not contain any other cells::
 
       >>> dba_cell.cells
