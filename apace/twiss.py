@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import integrate
-from .clib import twiss_product, accumulated_array
+from .clib import twiss_product, accumulate_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
 
@@ -12,26 +12,35 @@ class Twiss:
     """Calculate the Twiss parameter for a given cell.
 
     :param Cell cell: Cell to calculate the Twiss parameter for.
+    :param start_idx: Index from which the accumulated array is calculated.
+                       This index is also used to calculated the initial twiss parameter
+                       using the periodicity condition.
+    :type start_idx: int, optional
     """
 
-    def __init__(self, cell):
+    def __init__(self, cell, start_idx=0):
         self.cell = cell
         self.matrix_method = MatrixMethod(cell)
 
-        self._twiss_array = np.empty(0)
-        self._twiss_array_needs_update = True
-        self.twiss_array_changed = Signal(self.matrix_method.matrix_array_changed)
-        self.twiss_array_changed.connect(self._on_twiss_array_changed)
-        self._full_matrix = np.empty(0)
-        self._accumulated_array = np.empty(0)
+        self._start_idx = start_idx
+        self.start_idx_changed = Signal()
 
-        self.stable = None
-        self.stable_x = None
-        self.stable_y = None
+        self._one_turn_matrix = np.empty(0)
+        self._accumulated_array = np.empty(0)
+        self._term_x = None
+        self._term_y = None
+        self.one_turn_matrix_changed = Signal(self.start_idx_changed, self.matrix_method.transfer_matrices_changed)
+        self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
+        self._one_turn_matrix_needs_update = True
+
+        self._initial_twiss = np.empty(8)
+        self._twiss_array = np.empty(0)
+        self.twiss_array_changed = Signal(self.one_turn_matrix_changed)
+        self.twiss_array_changed.connect(self._on_twiss_array_changed)
+        self._twiss_array_needs_update = True
 
         self._tune_fractional_needs_update = True
-        # TODO: only depends on full-matrix not on beta functions - change signals!
-        self.tune_fractional_changed = Signal(self.twiss_array_changed)
+        self.tune_fractional_changed = Signal(self.one_turn_matrix_changed)
         self.tune_fractional_changed.connect(self._on_tune_fractional_changed)
         self._tune_x_fractional = None
         self._tune_y_fractional = None
@@ -47,6 +56,98 @@ class Twiss:
         self._tune_y = None
 
     @property
+    def n_kicks(self):
+        return self.matrix_method.n_kicks
+
+    @property
+    def start_idx(self) -> int:
+        """Index from which the accumulated array is calculated. This index is also used
+        to calculated the initial twiss parameter using the periodicity condition."""
+        return self._start_idx
+
+    @start_idx.setter
+    def start_idx(self, value):
+        if value >= self.n_kicks:
+            raise ValueError(f'Start index {value} is too high! (Maximum {self.n_kicks})')
+
+        self._start_idx = value
+        self.start_idx_changed()
+
+    @property
+    def accumulated_array(self) -> np.ndarray:
+        """Contains accumulated transfer matrices."""
+        if self._one_turn_matrix_needs_update:
+            self.update_one_turn_matrix()
+
+        return self._accumulated_array
+
+    @property
+    def one_turn_matrix(self) -> np.ndarray:
+        """The transfer matrix for a full turn."""
+        if self._one_turn_matrix_needs_update:
+            self.update_one_turn_matrix()
+
+        return self._one_turn_matrix
+
+    @property
+    def term_x(self) -> float:
+        """Corresponds to :math:`2 - m_{11}^2 - 2 m_{12} m_{21} - m_{22}^2`, where :math:`m` is the one turn matrix.
+        Can be used to calculate the initial :attr:`beta_x` value :math:`\\beta_{x0} = |2 m_{12}| / \\sqrt{term_x}`.
+        If :attr:`term_x` > 0, this means that there exists a periodic solution within the horizontal plane."""
+        if self._one_turn_matrix_needs_update:
+            self.update_one_turn_matrix()
+
+        return self._term_x
+
+    @property
+    def term_y(self) -> float:
+        """Corresponds to :math:`2 - m_{33}^2 - 2 m_{34} m_{43} - m_{44}^2`, where :math:`m` is the one turn matrix.
+        Can be used to calculate the initial :attr:`beta_y` value :math:`\\beta_{y0} = |2 m_{12}| / \\sqrt{term_y}`.
+        If :attr:`term_y` > 0, this means that there exists a periodic solution within the vertical plane."""
+        if self._one_turn_matrix_needs_update:
+            self.update_one_turn_matrix()
+
+        return self._term_y
+
+    @property
+    def stable_x(self) -> bool:
+        """Periodicity condition :attr:`term_x` > 0 for a stable solution in the horizontal plane."""
+        return self.term_x > 0
+
+    @property
+    def stable_y(self) -> bool:
+        """Periodicity condition :attr:`term_y` > 0 for a stable solution in the vertical plane."""
+        return self.term_y > 0
+
+    @property
+    def stable(self) -> bool:
+        """Periodicity condition :attr:`term_x` > 0 and :attr:`term_y` > 0 for a stable solution in both planes."""
+        return self.term_x > 0 and self.term_y > 0
+
+    def update_one_turn_matrix(self):
+        """Manually update the one turn matrix and the accumulated array."""
+        matrix_array = self.matrix_method.transfer_matrices
+        if self._accumulated_array.shape[0] != self.matrix_method.n_kicks:
+            self._accumulated_array = np.empty(matrix_array.shape)
+
+        accumulate_array(matrix_array, self._accumulated_array, self.start_idx)
+        self._one_turn_matrix = m = self._accumulated_array[self.start_idx - 1]
+        self._term_x = 2 - m[0, 0] ** 2 - 2 * m[0, 1] * m[1, 0] - m[1, 1] ** 2
+        self._term_y = 2 - m[2, 2] ** 2 - 2 * m[2, 3] * m[3, 2] - m[3, 3] ** 2
+        self._one_turn_matrix_needs_update = False
+
+    def _on_one_turn_matrix_changed(self):
+        self._one_turn_matrix_needs_update = True
+
+    @property
+    def initial_twiss(self) -> np.ndarray:
+        """Array containing the initial twiss parameter."""
+        if self._twiss_array_needs_update:
+            self.update_twiss_array()
+
+        return self._initial_twiss
+
+    @property
     def twiss_array(self) -> np.ndarray:
         """Contains the twiss parameter."""
         if self._twiss_array_needs_update:
@@ -54,55 +155,33 @@ class Twiss:
 
         return self._twiss_array
 
-    @property
-    def full_matrix(self) -> np.ndarray:
-        """One turn matrix."""
-        if self._twiss_array_needs_update:
-            self.update_twiss_array()
-
-        return self._full_matrix
-
-    @property
-    def accumulated_array(self) -> np.ndarray:
-        """Contains accumulated transfer matrices."""
-        if self._twiss_array_needs_update:
-            self.update_twiss_array()
-
-        return self._accumulated_array
-
     def update_twiss_array(self):
-        """Manually update twiss_array."""
-        matrix_array = self.matrix_method.matrix_array
+        """Manually update the twiss_array."""
         size = self.matrix_method.n_kicks + 1
         if self._twiss_array.shape[0] != size:
             self._twiss_array = np.empty((8, size))
-            self._accumulated_array = np.empty(matrix_array.shape)
-        accumulated_array(matrix_array, self._accumulated_array)
-        self._full_matrix = full_matrix = self._accumulated_array[-1]
-
-        term_x = 2 - full_matrix[0, 0] ** 2 - 2 * full_matrix[0, 1] * full_matrix[1, 0] - full_matrix[1, 1] ** 2
-        self.stable_x = term_x > 0
-
-        term_y = 2 - full_matrix[2, 2] ** 2 - 2 * full_matrix[2, 3] * full_matrix[3, 2] - full_matrix[3, 3] ** 2
-        self.stable_y = term_y > 0
-        self.stable = self.stable_x and self.stable_y
 
         if not self.stable:
-            pass
             # warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
-        else:
-            beta_x0 = np.abs(2 * full_matrix[0, 1]) / np.sqrt(term_x)
-            alpha_x0 = (full_matrix[0, 0] - full_matrix[1, 1]) / (2 * full_matrix[0, 1]) * beta_x0
-            gamma_x0 = (1 + alpha_x0 ** 2) / beta_x0
-            beta_y0 = np.abs(2 * full_matrix[2, 3]) / np.sqrt(term_y)
-            alpha_y0 = (full_matrix[2, 2] - full_matrix[3, 3]) / (2 * full_matrix[2, 3]) * beta_y0
-            gamma_y0 = (1 + alpha_y0 ** 2) / beta_y0
-            eta_x_dds0 = (full_matrix[1, 0] * full_matrix[0, 5] + full_matrix[1, 5] * (1 - full_matrix[0, 0])) / (
-                    2 - full_matrix[0, 0] - full_matrix[1, 1])
-            eta_x0 = (full_matrix[0, 1] * eta_x_dds0 + full_matrix[0, 5]) / (1 - full_matrix[1, 1])
+            return
 
-            initial_twiss_vec = np.array([beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0])
-            twiss_product(self._accumulated_array, initial_twiss_vec, self._twiss_array)
+        m = self.one_turn_matrix
+        beta_x0 = np.abs(2 * m[0, 1]) / np.sqrt(self.term_x)
+        alpha_x0 = (m[0, 0] - m[1, 1]) / (2 * m[0, 1]) * beta_x0
+        gamma_x0 = (1 + alpha_x0 ** 2) / beta_x0
+        beta_y0 = np.abs(2 * m[2, 3]) / np.sqrt(self.term_y)
+        alpha_y0 = (m[2, 2] - m[3, 3]) / (2 * m[2, 3]) * beta_y0
+        gamma_y0 = (1 + alpha_y0 ** 2) / beta_y0
+
+        # TODO: Wille seems to be wrong, investigate!
+        # eta_x_dds0 = (m[1, 0] * m[0, 5] + m[1, 5] * (1 - m[0, 0])) / (2 - m[0, 0] - m[1, 1])
+        # eta_x0 = (m[0, 1] * eta_x_dds0 + m[0, 5]) / (1 - m[1, 1])
+
+        eta_x0, eta_x_dds0 = (m[0, 5] * (1 - m[1, 1]) + m[0, 1] * m[1, 5]) / (2 - m[0, 0] - m[1, 1]), \
+                             (m[1, 5] * (1 - m[0, 0]) + m[1, 0] * m[0, 5]) / (2 - m[0, 0] - m[1, 1])
+
+        self._initial_twiss[:] = (beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0)
+        twiss_product(self.accumulated_array, self._initial_twiss, self._twiss_array, self.start_idx)
 
         self._twiss_array_needs_update = False
 
@@ -183,7 +262,7 @@ class Twiss:
         return self._tune_y
 
     def update_betatron_phase(self):
-        """Manually update betatron phase psi and tune."""
+        """Manually update the betatron phase psi and the tune."""
         size = self.accumulated_array.shape[0]
         self._psi_x = np.empty(size)  # TODO: do not always allocate new!
         self._psi_y = np.empty(size)
@@ -201,9 +280,8 @@ class Twiss:
     @property
     def tune_x_fractional(self) -> float:
         """Fractional part of the horizontal tune.
-        Gets calculatd from the one turn matrix.
+        Gets calculated from the one turn matrix.
         """
-
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
 
@@ -212,7 +290,7 @@ class Twiss:
     @property
     def tune_y_fractional(self) -> float:
         """Fractional part of the vertical tune.
-        Gets calculatd from the one turn matrix.
+        Gets calculated from the one turn matrix.
         """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
@@ -236,11 +314,11 @@ class Twiss:
         return self._tune_y_fractional_hz
 
     def update_fractional_tune(self):
-        """Manually update fractional tune."""
-        full_matrix = self.full_matrix
-        self._tune_x_fractional = np.arccos((full_matrix[0, 0] + full_matrix[1, 1]) / 2) / TWO_PI
-        self._tune_y_fractional = np.arccos((full_matrix[2, 2] + full_matrix[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.cell.length  # Hz
+        """Manually update the fractional tune."""
+        m = self.one_turn_matrix
+        self._tune_x_fractional = np.arccos((m[0, 0] + m[1, 1]) / 2) / TWO_PI
+        self._tune_y_fractional = np.arccos((m[2, 2] + m[3, 3]) / 2) / TWO_PI
+        tmp = self.matrix_method.velocity / self.cell.length
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False
@@ -248,21 +326,18 @@ class Twiss:
     def _on_tune_fractional_changed(self):
         self._tune_fractional_needs_update = True
 
-    # TODO: save results
-    def beta_x_int(self, steps) -> np.ndarray:
-        """Linear interpolated beta_x for n steps.
+    def beta_x_int(self, positions) -> np.ndarray:
+        """Linear interpolated :attr:`beta_x` for given orbit positions.
 
-        :param int steps: Number of interpolation steps.
+        :param array_like positions: The orbit position at which to evaluate the interpolated values.
         :return: Interpolated horizontal beta function.
         """
-        s_int = np.linspace(0, self.s[-1], steps)
-        return np.interp(s_int, self.s, self.beta_x)
+        return np.interp(positions, self.s, self.beta_x)
 
-    def beta_y_int(self, steps) -> np.ndarray:
-        """Linear interpolated beta_y for n steps.
+    def beta_y_int(self, positions) -> np.ndarray:
+        """Linear interpolated :attr:`beta_y` for given orbit positions.
 
-        :param int steps: Number of interpolation steps.
+        :param array_like positions: The orbit position at which to evaluate the interpolated values.
         :return: Interpolated vertical beta function.
         """
-        s_int = np.linspace(0, self.s[-1], steps)
-        return np.interp(s_int, self.s, self.beta_x)
+        return np.interp(positions, self.s, self.beta_x)

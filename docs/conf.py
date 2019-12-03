@@ -17,7 +17,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.abspath('../apace'))
 sys.path.insert(0, os.path.abspath('..'))
 # noinspection PyUnresolvedReferences
-from __about__ import __title__, __version__, __author__
+from __about__ import __title__, __version__, __author__  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 # https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
@@ -72,7 +72,7 @@ extensions.append('recommonmark')
 extensions.append('sphinx.ext.intersphinx')
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
-    'numpy': ('https://docs.scipy.org/doc/numpy/', None), # TODO: check how sparse did it
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),  # TODO: check how sparse did it
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
 }
 
