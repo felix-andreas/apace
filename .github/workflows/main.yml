@@ -52,5 +52,3 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
           git commit -am "Automated autopep8 fixes"
           git push
-  
-
