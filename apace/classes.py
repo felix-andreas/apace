@@ -12,7 +12,7 @@ class Object:
     :type description: str, optional
     """
 
-    def __init__(self, name, length, description=''):
+    def __init__(self , name, length, description=''):
         self.name: str = name
         """The name of the object."""
         self.description: str = description
