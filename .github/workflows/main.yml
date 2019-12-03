@@ -26,7 +26,9 @@ jobs:
         pytest
 
 # from https://github.com/marketplace/actions/autopep8
-  autopep8:
+  lint:
+    name: Lint and Autoformat
+
     # Check if the PR is not from a fork
     if: github.event.pull_request.head.repo.full_name == github.repository
 
