@@ -25,7 +25,6 @@ jobs:
         pip install pytest
         pytest
 
-# from https://github.com/marketplace/actions/autopep8
   lint:
     name: Lint and Autoformat
 
