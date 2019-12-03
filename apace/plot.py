@@ -86,10 +86,13 @@ def annotate_info(main_cell, twiss, eta_x_scale=10):
 
     ax.annotate(main_cell.name, xy=(1 - margin, 1 - margin), xycoords='figure fraction', va='top', ha='right',
                 fontsize=fs)
-    # annolist_string1 = f"$Q_x$: {twiss.Qx:.2f} ({twiss.Qx_freq:.0f} kHz)   $Q_y$: {twiss.Qy:.2f} ({twiss.Qy_freq:.0f} kHz)   $\\alpha_C$: {twiss.alphac:.2e}"
-    # fig.annotate(annolist_string1, xy=(start, height_1), xycoords='figure fraction', va='center', ha='left', fontsize=fs)
 
+    # annolist_string1 = f"$Q_x$: {twiss.Qx:.2f} ({twiss.Qx_freq:.0f} kHz)   $Q_y$: {twiss.Qy:.2f} " \
+    #                    f"({twiss.Qy_freq:.0f} kHz)   $\\alpha_C$: {twiss.alphac:.2e}"
+    # fig.annotate(annolist_string1, xy=(start, height_1),
+    #              xycoords='figure fraction', va='center', ha='left', fontsize=fs)
     # r = fig.canvas.get_renderer()
+
     string = ['$\\beta_x$/m', '$\\beta_y$/m', f'$\\eta_x$/{100 / eta_x_scale:.0f}cm']
     w = margin
 
@@ -101,10 +104,11 @@ def annotate_info(main_cell, twiss, eta_x_scale=10):
     # space = 0
     # x_min, x_max = ax.get_xlim()
     # for i, s in enumerate(string):
-    #     t = ax.annotate(s, xy=(w, 1 - margin), xycoords='figure fraction', color=mpl.cm.Set1(i / 9), fontsize=fs, va="top", ha="left")
-    #     transf = ax.transData.inverted()
+    #     t = ax.annotate(s, xy=(w, 1 - margin), xycoords='figure fraction',
+    #                            color=mpl.cm.Set1(i / 9), fontsize=fs, va="top", ha="left")
+    #     transform = ax.transData.inverted()
     #     bb = t.get_window_extent(renderer=r)
-    #     bb = bb.transformed(transf)
+    #     bb = bb.transformed(transform)
     #     w = w + (bb.x_max - bb.x_min) / (x_max - x_min) + space
 
 
@@ -132,15 +136,18 @@ def plot_full(ax,
         paint_lattice(ax, main_cell, x_min, x_max, y_min, y_max, annotate_elements, annotate_cells)
 
 
-def plot_lattice(twiss,
-                 main_cell=None,
-                 main=True,
-                 fig_size=(16, 9),
-                 sections=None,
-                 y_min=None, y_max=None,
-                 eta_x_scale=10,
-                 ref_twiss=None,
-                 path=None):
+def plot_lattice(
+        twiss,
+        main_cell=None,
+        main=True,
+        fig_size=(16, 9),
+        sections=None,
+        y_min=None,
+        y_max=None,
+        eta_x_scale=10,
+        ref_twiss=None,
+        path=None
+):
     fig = plt.figure(figsize=fig_size)  # , constrained_layout=True)
     height_ratios = [2, 7] if (main and sections) else [1]
     main_grid = grid_spec.GridSpec(len(height_ratios), 1, figure=fig, height_ratios=height_ratios)
@@ -151,7 +158,8 @@ def plot_lattice(twiss,
                   eta_x_scale=eta_x_scale)
 
     if sections:
-        if isinstance(sections, str) or not isinstance(sections[0], Iterable): sections = [sections]
+        if isinstance(sections, str) or not isinstance(sections[0], Iterable):
+            sections = [sections]
 
         N_sections = len(sections)
         rows, cols = find_optimal_grid(N_sections)
@@ -170,7 +178,9 @@ def plot_lattice(twiss,
     fig.tight_layout()
     fig.subplots_adjust(top=0.93)
     annotate_info(main_cell, twiss, eta_x_scale=eta_x_scale)
-    if path: fig.savefig(path)
+    if path:
+        fig.savefig(path)
+
     return fig
 
 

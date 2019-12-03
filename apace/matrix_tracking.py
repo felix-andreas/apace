@@ -1,7 +1,6 @@
-from .classes import Cell
 import numpy as np
 
-from .clib import accumulated_array
+from .clib import accumulate_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
 
@@ -10,22 +9,24 @@ class MatrixTracking:
     """Particle tracking using the transfer matrix method.
 
     :param Cell cell: Cell which particles will be tracked through.
-    :param np.ndarray initial_distribution: Initial partical distribution.
+    :param np.ndarray initial_distribution: Initial particle distribution.
     :param int turns: Number of turns.
-    :param int position:
+    :param positions: List of positions to watch. If unset all particle trajectory
+           will be saved for all positions.
+    :type positions: list, optional
     """
 
-    def __init__(self, cell, initial_distribution, turns=1, position=0):
+    def __init__(self, cell, initial_distribution, turns=1, positions=None):
         self.cell = cell
         self.matrix_method = MatrixMethod(cell)
         self._initial_distribution = initial_distribution
         self.turns = turns
-        self.position = position
+        self.positions = positions  # TODO: make sure it is list!
 
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
-        self.particle_trajectories_changed = Signal(self.matrix_method.matrix_array_changed)
+        self.particle_trajectories_changed = Signal(self.matrix_method.transfer_matrices_changed)
         self.particle_trajectories_changed.connect(self._on_particle_trajectories_changed)
 
     @property
@@ -78,9 +79,9 @@ class MatrixTracking:
     def update_particle_trajectories(self):
         n_kicks = self.matrix_method.n_kicks
         turns = self.turns
-        position = self.position
+        position = self.positions
         initial_distribution = self.initial_distribution
-        matrix_array = self.matrix_method.matrix_array
+        matrix_array = self.matrix_method.transfer_matrices
 
         n = turns if position is not None else turns * n_kicks + 1
         if self._orbit_position.size != n:
@@ -93,18 +94,16 @@ class MatrixTracking:
         # TODO: implement in C
         if position == 0:
             acc_array = np.empty(matrix_array.shape)
-            accumulated_array(matrix_array, acc_array)
+            accumulate_array(matrix_array, acc_array, 0)  # TODO: use partial method!
             full_matrix = acc_array[-1]
             trajectories[0] = initial_distribution
             orbit_position[0] = 0
             for i in range(1, turns):
                 trajectories[i] = np.dot(full_matrix, trajectories[i - 1])
                 orbit_position[i] = orbit_position[i - 1] + self.cell.length
-
         elif position is None:  # calc for all positions
             acc_array = np.empty(matrix_array.shape)
-            # TODO: Remove identity from matrix_array ?
-            accumulated_array(matrix_array, acc_array)
+            accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
             trajectories[1:n_kicks + 1] = np.dot(acc_array, initial_distribution)
             orbit_position[0:n_kicks + 1] = self.matrix_method.s
@@ -112,7 +111,6 @@ class MatrixTracking:
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.cell.length
-
         else:
             raise NotImplementedError  # TODO: change accumulated array for all positions
 

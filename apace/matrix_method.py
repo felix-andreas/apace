@@ -3,6 +3,8 @@ from .classes import Element, Drift, Bend, Quad
 from .utils import Signal
 from typing import List, Dict
 
+from .clib import accumulate_array
+
 MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
 C = 299_792_458
@@ -14,10 +16,14 @@ class MatrixMethod:
     """The transfer matrix method.
 
     :param cell: Cell which transfer matrices gets calculated for.
-    :param velocity: Velocity of the particles.
+    :param int start_index: Start index for the one-turn matrix
+           and for the accumulated transfer matrices.
+    :param float start_position: Same as start_index but uses position instead of index of the position.
+           Is ignored if start_index is set.
+    :param number velocity: Velocity of the particles.
     """
 
-    def __init__(self, cell, velocity=C):
+    def __init__(self, cell, start_index=None, start_position=None, velocity=C):
         self.cell = cell
         self.velocity = velocity
 
@@ -48,17 +54,30 @@ class MatrixMethod:
         self.s_changed = Signal(self.step_size_changed)
         self.s_changed.connect(self._on_s_changed)
 
-        self._matrix_array = np.empty(0)
-        self._matrix_array_needs_full_update = True
-        self.matrix_array_changed = Signal()
+        self._transfer_matrices = np.empty(0)
+        self._transfer_matrices_needs_full_update = True
+        self.transfer_matrices_changed = Signal()
+
+        self._start_index = start_index
+        self._start_position_changed = Signal()
+
+        if start_position is not None and start_index is None:
+            self.start_position = start_position
+
+        self._transfer_matrices_acc = np.empty(0)
+        self._transfer_matrices_acc_needs_update = True
+        self.transfer_matrices_acc_changed = Signal(self.transfer_matrices_changed, self._start_position_changed)
+        self.transfer_matrices_acc_changed.connect(self._on_transfer_matrices_accumulated_changed)
+
+        self._one_turn_matrix = np.empty(0)
 
     def _on_tree_change(self):
-        self._matrix_array_needs_full_update = True
-        self.matrix_array_changed()
+        self._transfer_matrices_needs_full_update = True
+        self.transfer_matrices_changed()
 
     def _on_element_changed(self, element):
         self.changed_elements.add(element)
-        self.matrix_array_changed()
+        self.transfer_matrices_changed()
 
     # TODO: Better API to set n_kicks
     def set_n_kicks(self):
@@ -87,7 +106,7 @@ class MatrixMethod:
 
     @property
     def element_indices(self) -> Dict[Element, List[int]]:
-        """Contains the indices of each element within the matrix_array."""
+        """Contains the indices of each element within the transfer_matrices."""
         if self._element_indices_needs_update:
             self.update_element_indices()
 
@@ -113,7 +132,7 @@ class MatrixMethod:
 
     @property
     def step_size(self) -> np.ndarray:
-        """Same dimension as matrix_array. Contains the step_size for each point."""
+        """Same dimension as transfer_matrices. Contains the step_size for each point."""
         if self._step_size_needs_update:
             self.update_step_size()
 
@@ -135,7 +154,7 @@ class MatrixMethod:
 
     @property
     def s(self) -> np.ndarray:
-        """Same dimension as matrix_array. Contains the orbit position s for each point."""
+        """Same dimension as transfer_matrices. Contains the orbit position s for each point."""
         if self._s_needs_update:
             self.update_s()
 
@@ -154,26 +173,26 @@ class MatrixMethod:
         self._s_needs_update = True
 
     @property
-    def matrix_array(self) -> np.ndarray:
+    def transfer_matrices(self) -> np.ndarray:
         """Array of transfer matrices. (6, 6, n_kicks)"""
-        if self.changed_elements or self._matrix_array_needs_full_update:
-            self.update_matrix_array()
+        if self.changed_elements or self._transfer_matrices_needs_full_update:
+            self.update_transfer_matrices()
 
-        return self._matrix_array
+        return self._transfer_matrices
 
-    def update_matrix_array(self):
-        """Manually update the matrix_array."""
-        if self._matrix_array.shape[0] != self.n_kicks:
-            self._matrix_array = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
+    def update_transfer_matrices(self):
+        """Manually update the transfer_matrices."""
+        if self._transfer_matrices.shape[0] != self.n_kicks:
+            self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
 
-        if self._matrix_array_needs_full_update:
+        if self._transfer_matrices_needs_full_update:
             elements = self.cell.elements.values()
         else:
             elements = self.changed_elements
 
-        matrix_array = self._matrix_array
+        matrix_array = self._transfer_matrices
         for element in elements:
-            pos = self.element_indices[element]  # indices in matrix matrix_array
+            pos = self.element_indices[element]  # indices in matrix transfer_matrices
             n_kicks = self.get_element_n_kicks(element)
             step_size = element.length / n_kicks
 
@@ -181,9 +200,9 @@ class MatrixMethod:
             velocity = self.velocity
             if velocity < C:
                 gamma = 1 / np.sqrt(1 - velocity ** 2 / C_SQUARED)
-                el_45 = step_size / gamma ** 2
+                el_45 = step_size / gamma ** 2  # noqa: F841
             else:
-                el_45 = 0
+                el_45 = 0  # noqa: F841
 
             if isinstance(element, Quad) and element.k1:  # Quad with k != 0
                 sqk = np.sqrt(np.absolute(element.k1))
@@ -242,4 +261,37 @@ class MatrixMethod:
                 matrix_array[pos] = matrix
 
         self.changed_elements.clear()
-        self._matrix_array_needs_full_update = False
+        self._transfer_matrices_needs_full_update = False
+
+    @property
+    def start_index(self) -> int:
+        """Start index of the one-turn matrix and the accumulated transfer matrices."""
+        return self._start_index
+
+    @start_index.setter
+    def start_index(self, value):
+        self._start_index = value
+        self._start_position_changed()
+
+    @property
+    def start_position(self) -> float:
+        """Same as start_index, but position in meter instead of index."""
+        return self.s[self.start_index]
+
+    @start_position.setter
+    def start_position(self, value):
+        self.start_index = np.searchsorted(self.s, value) - 1
+
+    @property
+    def transfer_matrices_acc(self) -> np.ndarray:
+        """The accumulated transfer matrices starting from start_index."""
+        if self._transfer_matrices_acc_needs_update:
+            self.update_transfer_matrices_acc()
+
+        return self._transfer_matrices_acc
+
+    def update_transfer_matrices_acc(self):
+        accumulate_array(self.transfer_matrices, self.transfer_matrices_acc, self.start_index)
+
+    def _on_transfer_matrices_accumulated_changed(self):
+        self.transfer_matrices_acc_changed = True
