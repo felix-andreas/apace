@@ -37,8 +37,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-        with:
-          ref: ${{ github.head_ref }}
+#        with: // throws error
+#          ref: ${{ github.head_ref }}
       - name: Autoformat with autopep8
         id: autopep8
         uses: peter-evans/autopep8@v1.1.0
