@@ -37,7 +37,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-#        with: // throws error
+##      throws error:
+##       fatal: You are not currently on a branch.
+##       To push the history leading to the current (detached HEAD)
+#        with:
 #          ref: ${{ github.head_ref }}
       - name: Autoformat with autopep8
         id: autopep8
