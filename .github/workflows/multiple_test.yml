@@ -26,8 +26,14 @@ jobs:
           pytest
 
   lint:
-    name: Add 3 and 7
+    name: Lint and Autoformat
+    needs: build
+
+    # Check if the PR is not from a fork
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
     runs-on: ubuntu-latest
+
     steps:
       - shell: bash
         run: |
