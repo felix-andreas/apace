@@ -30,18 +30,12 @@ jobs:
     name: Lint and Autoformat
 #    needs: build
 
-    # Check if the PR is not from a fork // does currently not trigger workflow at all
-    # if: github.event.pull_request.head.repo.full_name == github.repository
-
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
-##      throws error:
-##       fatal: You are not currently on a branch.
-##       To push the history leading to the current (detached HEAD)
-        with:
-          ref: ${{ github.ref }}
+      - uses: actions/checkout@master
+          with:
+            ref: ${{ github.ref }}
       - name: Autoformat with autopep8
         id: autopep8
         uses: peter-evans/autopep8@v1.1.0
@@ -51,7 +45,7 @@ jobs:
         if: steps.autopep8.outputs.exit-code == 2
         run: |
           echo "$(git branch)"
-          echo "$(git log)"
+          echo ${{ github.ref }}
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
