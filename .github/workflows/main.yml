@@ -48,9 +48,7 @@ jobs:
         with:
           args: --exit-code --recursive --in-place --aggressive --aggressive .
       - name: Extract branch name
-          shell: bash
           run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-          id: extract_branch
       - name: Commit autopep8 changes
         if: steps.autopep8.outputs.exit-code == 2
         run: |
