@@ -112,7 +112,7 @@ def annotate_info(main_cell, twiss, eta_x_scale=10):
     #     w = w + (bb.x_max - bb.x_min) / (x_max - x_min) + space
 
 
-def plot_full(ax ,
+def plot_full(ax  ,
               twiss,
               main_cell=None,
               x_min=None, x_max=None, y_min=None, y_max=None,
