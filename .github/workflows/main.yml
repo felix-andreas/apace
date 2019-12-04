@@ -46,7 +46,6 @@ jobs:
         run: |
           echo "$(git branch)"
           echo ${{ github.ref }}
-          git checkout "$GITHUB_REF"
           echo "$(git branch)"
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
