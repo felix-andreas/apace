@@ -4,22 +4,52 @@ on: [push]
 
 jobs:
   build:
+    name: Build and Test
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Build and install
+        run: |
+          pip install .
+      - name: Create source distributions
+        run: |
+          python setup.py sdist
+      - name: Test with pytest
+        run: |
+          pip install pytest
+          pytest
+
+  # from https://github.com/marketplace/actions/autopep8
+  lint:
+    name: Lint and Autoformat
+    needs: build
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    - name: Build
-      run: |
-        pip install .
-    - name: Test with pytest
-      run: |
-        pip install pytest
-        pytest
-    - name: Create source distributions 
-      run: |
-        python setup.py bdist
+      - uses: actions/checkout@master
+        with:
+          ref: ${{ github.ref }}
+      - name: Autoformat with autopep8
+        id: autopep8
+        uses: peter-evans/autopep8@v1.1.0
+        with:
+          args: --exit-code --recursive --in-place --aggressive --aggressive .
+      - name: Commit autopep8 changes
+        if: steps.autopep8.outputs.exit-code == 2
+        run: |
+          git config --global user.name 'Felix Andreas'
+          git config --global user.email 'felix.andreas95@googlemail.com'
+          git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
+          git commit -am "Automated autopep8 fixes"
+          git push

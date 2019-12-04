@@ -24,6 +24,9 @@ wheels/
 *.egg
 *.egg-info/
 
+# mypy
+.mypy_cache/
+
 # Unit test / coverage reports
 .pytest_cache/
 
