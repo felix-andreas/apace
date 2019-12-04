@@ -46,6 +46,7 @@ jobs:
         run: |
           echo "$(git branch)"
           echo ${{ github.ref }}
+          git checkout "$GITHUB_REF"
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
