@@ -47,10 +47,12 @@ jobs:
         uses: peter-evans/autopep8@v1.1.0
         with:
           args: --exit-code --recursive --in-place --aggressive --aggressive .
+      - name: Extract branch name
+          shell: bash
+          run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       - name: Commit autopep8 changes
         if: steps.autopep8.outputs.exit-code == 2
         run: |
-          echo $(git branch)
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
