@@ -41,7 +41,7 @@ jobs:
 ##       fatal: You are not currently on a branch.
 ##       To push the history leading to the current (detached HEAD)
         with:
-          ref: ${{ github.head_ref }}
+          ref: ${{ github.ref }}
       - name: Autoformat with autopep8
         id: autopep8
         uses: peter-evans/autopep8@v1.1.0
