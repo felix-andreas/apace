@@ -45,6 +45,7 @@ jobs:
         if: steps.autopep8.outputs.exit-code == 2
         run: |
           echo "$(git branch)"
+          echo ${{ github.ref }}
           git checkout "$GITHUB_REF"
           echo "$(git branch)"
           git config --global user.name 'Felix Andreas'
