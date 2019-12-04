@@ -34,8 +34,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-          with:
-            ref: ${{ github.ref }}
+        with:
+          ref: ${{ github.ref }}
       - name: Autoformat with autopep8
         id: autopep8
         uses: peter-evans/autopep8@v1.1.0
