@@ -28,7 +28,7 @@ jobs:
   # from https://github.com/marketplace/actions/autopep8
   lint:
     name: Lint and Autoformat
-    needs: build
+#    needs: build
 
     # Check if the PR is not from a fork // does currently not trigger workflow at all
     # if: github.event.pull_request.head.repo.full_name == github.repository
