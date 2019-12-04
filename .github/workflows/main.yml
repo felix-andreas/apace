@@ -40,8 +40,8 @@ jobs:
 ##      throws error:
 ##       fatal: You are not currently on a branch.
 ##       To push the history leading to the current (detached HEAD)
-#        with:
-#          ref: ${{ github.head_ref }}
+        with:
+          ref: ${{ github.head_ref }}
       - name: Autoformat with autopep8
         id: autopep8
         uses: peter-evans/autopep8@v1.1.0
@@ -50,6 +50,7 @@ jobs:
       - name: Commit autopep8 changes
         if: steps.autopep8.outputs.exit-code == 2
         run: |
+          git branch
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
