@@ -3,27 +3,27 @@ name: CI
 on: [push]
 
 jobs:
-  build:
-    name: Build and Test
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-      - name: Build and install
-        run: |
-          pip install .
-      - name: Create source distributions
-        run: |
-          python setup.py sdist
-      - name: Test with pytest
-        run: |
-          pip install pytest
-          pytest
+#  build:
+#    name: Build and Test
+#
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v1
+#      - name: Set up Python 3.7
+#        uses: actions/setup-python@v1
+#        with:
+#          python-version: 3.7
+#      - name: Build and install
+#        run: |
+#          pip install .
+#      - name: Create source distributions
+#        run: |
+#          python setup.py sdist
+#      - name: Test with pytest
+#        run: |
+#          pip install pytest
+#          pytest
 
   # from https://github.com/marketplace/actions/autopep8
   lint:
@@ -50,7 +50,7 @@ jobs:
       - name: Commit autopep8 changes
         if: steps.autopep8.outputs.exit-code == 2
         run: |
-          git branch
+          echo $(git branch)
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
