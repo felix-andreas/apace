@@ -8,7 +8,7 @@ from .utils import Signal
 class MatrixTracking:
     """Particle tracking using the transfer matrix method.
 
-    :param Cell cell: Cell which particles will be tracked through.
+    :param Lattice lattice: Lattice which particles will be tracked through.
     :param np.ndarray initial_distribution: Initial particle distribution.
     :param int turns: Number of turns.
     :param positions: List of positions to watch. If unset all particle trajectory
@@ -16,9 +16,9 @@ class MatrixTracking:
     :type positions: list, optional
     """
 
-    def __init__(self, cell, initial_distribution, turns=1, positions=None):
-        self.cell = cell
-        self.matrix_method = MatrixMethod(cell)
+    def __init__(self, lattice, initial_distribution, turns=1, positions=None):
+        self.lattice = lattice
+        self.matrix_method = MatrixMethod(lattice)
         self._initial_distribution = initial_distribution
         self.turns = turns
         self.positions = positions  # TODO: make sure it is list!
@@ -100,7 +100,7 @@ class MatrixTracking:
             orbit_position[0] = 0
             for i in range(1, turns):
                 trajectories[i] = np.dot(full_matrix, trajectories[i - 1])
-                orbit_position[i] = orbit_position[i - 1] + self.cell.length
+                orbit_position[i] = orbit_position[i - 1] + self.lattice.length
         elif position is None:  # calc for all positions
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
@@ -110,7 +110,7 @@ class MatrixTracking:
             for i in range(1, turns):
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
-                orbit_position[idx] = self.matrix_method.s[1:] + i * self.cell.length
+                orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
             raise NotImplementedError  # TODO: change accumulated array for all positions
 

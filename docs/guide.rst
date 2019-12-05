@@ -27,9 +27,9 @@ Check that the :code:`drift` is actually a subclass of :class:`Element`::
    >>> isinstance(drift, ap.Element)
    True
 
-To create the more interresting :class:`Quad` object use::
+To create the more interresting :class:`Quadrupole` object use::
 
-   quad = ap.Quad(name='Quad', length=1, k1=1)
+   quad = ap.Quadrupole(name='Quadrupole', length=1, k1=1)
 
 The attributes of elements can also be changed after they a created::
 
@@ -45,35 +45,35 @@ The attributes of elements can also be changed after they a created::
 When using Python interactively you can get further information on a specific element with the builtin :func:`print` function::
 
    >>> print(quad)
-   name          : Quad
+   name          : Quadrupole
    description   :
-   parent_cells  : set()
+   parent_lattices  : set()
    k1            : 0.8
    length        : 1
    length_changed: Signal
    value_changed : Signal
 
-As you can see, the :class:`Quad` object has by default also the :attr:`~Object.parent_cells` attribute, which we will
+As you can see, the :class:`Quadrupole` object has by default also the :attr:`~Base.parent_lattices` attribute, which we will
 discuss in the next subsection.
 
-Cell class
+Lattice class
 ==========
-The magnetic lattice of modern Particle accelerators is typically more complex than a single quadrupole. Therefore multiple elements can be arranged into a more complex structure using the :class:`Cell` class.
+The magnetic lattice of modern Particle accelerators is typically more complex than a single quadrupole. Therefore multiple elements can be arranged into a more complex structure using the :class:`Lattice` class.
 
-Creating a Double Bend Achromat
+Creating a Double Dipole Achromat
 -------------------------------
 
 As we already created a FODO structure in :ref:`quickstart`, let's create a
-`Double Bend Achromat Lattice <https://wikipedia.org/wiki/Chasman%E2%80%93Green_lattice>`_ this time. In addition to
-our :code:`drift` and :code:`quad` elements, we need a new :class:`Bend` object::
+`Double Dipole Achromat Lattice <https://wikipedia.org/wiki/Chasman%E2%80%93Green_lattice>`_ this time. In addition to
+our :code:`drift` and :code:`quad` elements, we need a new :class:`Dipole` object::
 
-   bend = ap.Bend('Bend', length=1, angle=math.pi / 16)
+   bend = ap.Dipole('Dipole', length=1, angle=math.pi / 16)
 
-Now we can create a DBA cell::
+Now we can create a DBA lattice::
 
-   dba_cell = ap.Cell('DBA Cell', [drift, bend, drift, quad, drift, bend, drift])
+   dba_cell = ap.Lattice('DBA_CELL', [drift, bend, drift, quad, drift, bend, drift])
 
-As you can see, it is possible for elements to occur multiple times within the same cell. Elements can even be in different cells at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
+As you can see, it is possible for elements to occur multiple times within the same lattice. Elements can even be in different lattices at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
 
 You can easily check this by changing the length of the :code:`drift` and displaying the length of the :code:`dba_cell` before and afterwards::
 
@@ -85,149 +85,149 @@ You can easily check this by changing the length of the :code:`drift` and displa
 
 As the :code:`drift` space appears four times within the :code:`dba_cell` its length increased four-fold.
 
-.. _parent-cells:
+.. _parent-lattices:
 
-Parent Cells
+Parent lattices
 ------------
 
-You may have also noticed that length of the :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent cells through the :attr:`~Object.parent_cells` attribute and informs all parents whenever the length of an element changes.
+You may have also noticed that length of the :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent lattices through the :attr:`~Base.parent_lattices` attribute and informs all parents whenever the length of an element changes.
 
 .. note::
-    Apace only notifies the cell that it has to update its length value. The calculation of new length only happens when the attribute is accessed. This may be not that advantageous for a simple length calculation, but (apace uses this system for all its data) makes a difference for  more computational expensive properties. For more see :ref:`lazy_eval`.
+    Apace only notifies the lattice that it has to update its length value. The calculation of new length only happens when the attribute is accessed. This may be not that advantageous for a simple length calculation, but (apace uses this system for all its data) makes a difference for  more computational expensive properties. For more see :ref:`lazy_eval`.
 
-Try to print the contents of :attr:`~Object.parent_cells` for the :code:`quad` object::
+Try to print the contents of :attr:`~Base.parent_lattices` for the :code:`quad` object::
 
-   >>> quad.parent_cells
-   {Cell}
+   >>> quad.parent_lattices
+   {Lattice}
 
-In contrast to the end of :ref:`elements` section, where it was empty, :code:`quad.parent_cells` now has one entry. Note that this is a Python :class:`set`, so it cannot to contain duplicates in case that an element appears multiple times within the same cell. The set gets updated whenever an element gets added or removed from a cell.
+In contrast to the end of :ref:`elements` section, where it was empty, :code:`quad.parent_latticess` now has one entry. Note that this is a Python :class:`set`, so it cannot to contain duplicates in case that an element appears multiple times within the same lattice. The set gets updated whenever an element gets added or removed from a :class:`Lattice`.
 
-It is also possible to create a cell out of cells. For example you could create a DBA ring using the already existing :code:`dba_cell`::
+It is also possible to create a lattice out of lattices. For example you could create a DBA ring using the already existing :code:`dba_cell`::
 
-   dba_ring = ap.Cell('DBA Ring', [dba_cell] * 16)
+   dba_ring = ap.Lattice('DBA_RING', [dba_cell] * 16)
 
 The :code:`dba_ring` should now be listed as a parent of the :code:`dba_cell`::
 
-   >>> dba_cell.parent_cells
-   {DBA Ring}
+   >>> dba_cell.parent_lattices
+   {DBA_RING}
 
 Its length should be 16 times the length of the :code:`dba_cell`::
 
    >>> dba_ring.length
    192.0
 
-The Object Tree
+The Base Tree
 ---------------
 
-The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the arrangement of objects within a cell is therefore called :attr:`~Cell.tree`. Try to output the tree for the :code:`dba_ring` and :code:`dba_cell` objects::
+The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the order of objects within a lattice is therefore called :attr:`~Lattice.tree`. Try to output the tree for the :code:`dba_ring` and :code:`dba_cell` objects::
 
    >>> dba_ring.tree
-   [DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell, DBA Cell]
+   [DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL]
    >>> dba_cell.tree
-   [Drift, Bend, Drift, Quad, Drift, Bend, Drift]
+   [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
-This can be also visualized by calling the :meth:`Cell.print_tree` method::
+This can be also visualized by calling the :meth:`Lattice.print_tree` method::
 
    >>> dba_ring.print_tree()
-   DBA Ring
-   ├─── DBA Cell
+   DBA_RING
+   ├─── DBA_CELL
    │   ├─── Drift
-   │   ├─── Bend
+   │   ├─── Dipole
    │   ├─── Drift
-   │   ├─── Quad
+   │   ├─── Quadrupole
    │   ├─── Drift
-   │   ├─── Bend
+   │   ├─── Dipole
    │   └─── Drift
    # ... 14 times more ...
-   └─── DBA Cell
+   └─── DBA_CELL
        ├─── Drift
-       ├─── Bend
+       ├─── Dipole
        ├─── Drift
-       ├─── Quad
+       ├─── Quadrupole
        ├─── Drift
-       ├─── Bend
+       ├─── Dipole
        └─── Drift
 
-As a nested structure is not always convenient to work with, there are three other representations of :attr:`~Cell.tree` (internally called :code:`tree_properties`):
+As a nested structure is not always convenient to work with, there are three other representations of :attr:`~Lattice.tree` (internally called :code:`tree_properties`):
 
-#. The :attr:`~Cell.lattice` attribute
+#. The :attr:`~Lattice.lattice` attribute
 
-   To loop over the exact arrangement of objects there is the :attr:`Cell.lattice` attribute, which is a list of :class:`~Element` objects. It can be thought of a flattened version of the tree. The :attr:`~Cell.lattice` attribute can be used in regular Python :code:`for ... in` loops::
+   To loop over the exact arrangement of objects there is the :attr:`Lattice.lattice` attribute, which is a list of :class:`~Element` objects. It can be thought of a flattened version of the tree. The :attr:`~Lattice.lattice` attribute can be used in regular Python :code:`for ... in` loops::
 
       >>> sum(element.length for element in dba_ring.lattice)
       192
 
-   As the :code:`dba_cell` does not contain any other cells, the :attr:`~Cell.lattice` and :attr:`~Cell.tree` attributes should be equal::
+   As the :code:`dba_cell` does not contain any other lattices, the :attr:`~Lattice.lattice` and :attr:`~Lattice.tree` attributes should be equal::
 
-      >>> dba_cell.tree == dba_cell.lattice
+      >>> dba_cell.tree == dba_cell.arrangement
       True
 
-   On the other hand, the :attr:`~Cell.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Cell.tree`::
+   On the other hand, the :attr:`~Lattice.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Lattice.tree`::
 
       >>> dba_ring.tree
-      [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift, Bend, Drift, Quad, Drift, Bend, Drift]
+      [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
-#. The :attr:`~Cell.elements` attribute
+#. The :attr:`~Lattice.elements` attribute
 
-   If the elements are loaded from a lattice file, you do no have individual Python variables to access them. For this purpose you can use the :attr:`Cell.elements` attribute, which is a key value pair of :attr:`Element.name` and :class:`Element` objects. You can access a specific element of a cell with::
+   If the elements are loaded from a lattice file, you do no have individual Python variables to access them. For this purpose you can use the :attr:`Lattice.elements` attribute, which is a key value pair of :attr:`Element.name` and :class:`Element` objects. You can access a specific element of a lattices with::
 
       >>> drift = dba_ring['Drift']
       >>> drift.length
       2.25
 
-   To loop over all elements in no specific order use :func:`Cell.elements.values` ::
+   To loop over all elements in no specific order use :func:`Lattice.elements.values` ::
 
       >>> for element in dba_ring.elements.values():
       >>>   print(element.name, element.length)
       Drift 2.25
-      Bend 1
-      Quad 1
+      Dipole 1
+      Quadrupole 1
 
    .. note::
 
-      In contrary to :attr:`~Cell.lattice` elements to not appear multiple times in :attr:`elements.values()`. It can be thought of as a :class:`set` of :attr:`~Cell.lattice`.
+      In contrary to :attr:`~Lattice.lattice` elements to not appear multiple times in :attr:`elements.values()`. It can be thought of as a :class:`set` of :attr:`~Lattice.lattice`.
 
 
-#. The :attr:`~Cell.cells` attribute
+#. The :attr:`~Lattice.sub_lattices` attribute
 
-    Similar to the :attr:`~Cell.elements` attribute but for cells. Contains all cells within a given cell, including grandchilrden, great grandchildren, etc.
-    The :attr:`~Cell.cells` attribute should be empty for the :code:`dba_cell` as it does not contain any other cells::
+    Similar to the :attr:`~Lattice.elements` attribute but for lattices. Contains all lattices within a given lattice, including grandchilrden, great grandchildren, etc.
+    The :attr:`~Lattice.sub_lattices` attribute should be empty for the :code:`dba_cell` as it does not contain any other lattices::
 
-      >>> dba_cell.cells
+      >>> dba_cell.sub_lattices
       {}
 
 Adding and Removing Objects
 ---------------------------
 
-The :attr:`~Cell.tree` of objects can also be altered after the cell was created. Use :meth:`Cell.add` to add objects to the tree::
+The :attr:`~Lattice.tree` of objects can also be altered after the lattice was created. Use :meth:`Lattice.add` to add objects to the tree::
 
    >>> dba_cell.add(drift)
    >>> dba_cell.tree
-   [Drift, Bend, Drift, Quad, Drift, Bend, Drift, Drift]
+   [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift]
 
-Remove objects from the :attr:`~Cell.tree` with :meth:`Cell.remove`::
+Remove objects from the :attr:`~Lattice.tree` with :meth:`Lattice.remove`::
 
    >>> dba_cell.remove(-1)
    >>> dba_cell.tree
-   [Drift, Bend, Drift, Quad, Drift, Bend, Drift]
+   [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
 Load and Save Lattice Files
 ---------------------------
-Cells can also be imported from a lattice file. This can be done using the :func:`load_lattice` function::
+lattices can also be imported from a lattice file. This can be done using the :func:`load_lattice` function::
 
-   cell = ap.load_lattice('/path/to/file')
+   lattice = ap.load_lattice('/path/to/file')
 
-Individual elements and sub-cells can be accessed through the :attr:`~Cell.elements` and :attr:`~Cell.cells`, respectively::
+Individual elements and sub-lattices can be accessed through the :attr:`~Lattice.elements` and :attr:`~Lattice.sub_lattices`, respectively::
 
-   bend = cell.elements['bend']
-   sub_cell = cell.cells['sub_cell']
+   bend = lattice.elements['bend']
+   sub_cell = lattice.sub_lattices['sub_cell']
 
-A given cell can be saved to a lattice file using the :func:`save_lattice` function::
+A given lattice can be saved to a lattice file using the :func:`save_lattice` function::
 
-   ap.load_lattice(cell, '/path/to/file')
+   ap.load_lattice(lattice, '/path/to/file')
 
 The Twiss class
 ===============
@@ -276,7 +276,7 @@ The layout and order of elements within an accelerator is usually stored in a so
 
 * MAD and elegant have relatively human readable lattice files but are difficult to parse and also not commonly used in other areas.
 
-* The Accelerator Markup Language (AML) is based on XML, which is partical to describe the hierarchical data structure of cells and elements within an accelerator and can be parsed by different languages. XML's main drawback is that it is fairly verbose, hence less human readable and has become less common recently.
+* The Accelerator Markup Language (AML) is based on XML, which is practical to describe the hierarchical data structure elements within an accelerator lattice, and can be parsed by different languages. XML's main drawback is that it is fairly verbose, hence less human readable and has become less common recently.
 
 apace tries to get the best out of both worlds and uses a JSON based lattice file. JSON is able to describe complex data structures, has a simple syntax and is available in all common programming language.
 
@@ -296,7 +296,7 @@ Implementation Details
 Signals and Events
 ------------------
 
-As we have already seen in the :ref:`parent-cells` section, the :attr:`~Cell.length` of of a :class:`Cell` gets updated whenever the length of one of its :class:`Element` objects changes. The same happens for the transfer matrices of  the :class:`Twiss` object. This is not only convenient - as one does not have to call an :func:`update` function every time an attribute changes - but is also more efficient, because apace has internal knowledge about which elements have changed and can accordingly only update the transfer matrices which have actually changed.
+As we have already seen in the :ref:`parent-lattices` section, the :attr:`~Lattice.length` of of a :class:`Lattice` gets updated whenever the length of one of its :class:`Element` objects changes. The same happens for the transfer matrices of  the :class:`Twiss` object. This is not only convenient - as one does not have to call an :func:`update` function every time an attribute changes - but is also more efficient, because apace has internal knowledge about which elements have changed and can accordingly only update the transfer matrices which have actually changed.
 
 
 This is achieved by a so called `Observer Pattern <https://wikipedia.org/wiki/Observer_pattern>`_, where an **subject** emits an **event** to all its **observers**  whenever its state changes.
@@ -325,9 +325,9 @@ This lazy evaluation scheme is especially important in combination with the sign
 To check if a property needs to be updated one can log the private variable :code:`_needs_update` variables::
 
    >>> drift = ap.Drift("Drift", length=2)
-   >>> cell = ap.Cell('Cell', drift)
+   >>> lattice = ap.Lattice('Lattice', drift)
    >>> drift.length = 1
-   >>> cell._length_needs_update
+   >>> lattice._length_needs_update
    True
 
 .. warning::

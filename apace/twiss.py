@@ -9,18 +9,18 @@ TWO_PI = 2 * np.pi
 
 
 class Twiss:
-    """Calculate the Twiss parameter for a given cell.
+    """Calculate the Twiss parameter for a given lattice.
 
-    :param Cell cell: Cell to calculate the Twiss parameter for.
+    :param Lattice lattice: Lattice to calculate the Twiss parameter for.
     :param start_idx: Index from which the accumulated array is calculated.
                        This index is also used to calculated the initial twiss parameter
                        using the periodicity condition.
     :type start_idx: int, optional
     """
 
-    def __init__(self, cell, start_idx=0):
-        self.cell = cell
-        self.matrix_method = MatrixMethod(cell)
+    def __init__(self, lattice, start_idx=0):
+        self.lattice = lattice
+        self.matrix_method = MatrixMethod(lattice)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()
@@ -318,7 +318,7 @@ class Twiss:
         m = self.one_turn_matrix
         self._tune_x_fractional = np.arccos((m[0, 0] + m[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((m[2, 2] + m[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.cell.length
+        tmp = self.matrix_method.velocity / self.lattice.length
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False

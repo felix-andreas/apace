@@ -48,7 +48,7 @@ class Flag:
 
 
 class AmbiguousNameError(Exception):
-    """Raised if multiple elements or cells have the same name.
+    """Raised if multiple elements or lattices have the same name.
 
     :param str name: The ambiguous name.
     """

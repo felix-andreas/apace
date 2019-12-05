@@ -12,7 +12,7 @@ from .__about__ import __version__
 from .io import read_lattice_file_json
 from .twiss import Twiss
 from .plot import plot_lattice
-from .classes import Quad
+from .classes import Quadrupole
 
 
 def main():
@@ -114,16 +114,16 @@ def plot_multiple(args):
 
     figs = []
     for file_path in lattice_files:
-        main_cell = read_lattice_file_json(file_path)
-        twiss = Twiss(main_cell)
+        main_lattice = read_lattice_file_json(file_path)
+        twiss = Twiss(main_lattice)
 
         if args.verbose:
             print(
-                f'Name: {main_cell.name}\n'
-                f'Description: {main_cell.description}\n'
-                f'Length: {main_cell.length}\n'
-                f'Number of elements: {len(main_cell.lattice)}\n'
-                f'Number of independent elements: {len(main_cell.elements)}\n'
+                f'Name: {main_lattice.name}\n'
+                f'Description: {main_lattice.description}\n'
+                f'Length: {main_lattice.length}\n'
+                f'Number of elements: {len(main_lattice.arrangement)}\n'
+                f'Number of independent elements: {len(main_lattice.elements)}\n'
                 f'Horizontal Tune: {twiss.tune_x:.3f}\n'
                 f'Vertical Tune: {twiss.tune_y:.3f}\n',
             )
@@ -135,9 +135,9 @@ def plot_multiple(args):
             print_twiss_array(twiss.s[mask], twiss.twiss_array.T[mask].T)
 
         if args.output_path or args.show_plot:
-            ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
-            ref_twiss = Twiss(ref_main_cell) if ref_main_cell else None
-            fig = plot_lattice(twiss, main_cell, ref_twiss=ref_twiss,
+            ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
+            ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
+            fig = plot_lattice(twiss, main_lattice, ref_twiss=ref_twiss,
                                sections=args.sections, y_min=args.y_min, y_max=args.y_max)
             figs.append(fig)
 
@@ -161,7 +161,7 @@ def plot_multi_knob_quads(args):
     diff_magnets = {}
     for name in lattice1.elements.keys():
         e1, e2 = lattice1.elements[name], lattice2.elements[name]
-        if isinstance(e1, Quad) and e1.k1 != e2.k1:
+        if isinstance(e1, Quadrupole) and e1.k1 != e2.k1:
             diff_magnets[name] = (e1.k1, e2.k1)
 
     with PdfPages(args.output_path) as pdf:
@@ -170,8 +170,8 @@ def plot_multi_knob_quads(args):
             for element, values in diff_magnets.items():
                 lattice_out.elements[element].k1 = values[0] * i + (1 - i) * values[1]
 
-            ref_main_cell = read_lattice_file_json(ref_path) if ref_path else None
-            ref_twiss = Twiss(ref_main_cell) if ref_main_cell else None
+            ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
+            ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
             plot_lattice(Twiss(lattice_out), ref_twiss=ref_twiss, sections=args.sections, y_min=args.y_min,
                          y_max=args.y_max)
             pdf.savefig()
