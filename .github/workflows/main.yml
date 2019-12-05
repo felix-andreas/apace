@@ -31,7 +31,7 @@ jobs:
 
   lint:
     name: Lint and Autoformat
-    needs: build
+#    needs: build
 
     runs-on: ubuntu-latest
 
