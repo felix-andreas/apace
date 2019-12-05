@@ -20,7 +20,13 @@ setup(
     package_data={
         'data': ['data'],
     },
-    install_requires=['numpy', 'scipy', 'matplotlib', 'cffi>=1.0.0'],
+    install_requires=[
+        'latticejson',
+        'numpy',
+        'scipy',
+        'matplotlib',
+        'cffi>=1.0.0'
+    ],
     test_requires=['pytest'],
     setup_requires=['cffi>=1.0.0'],
     python_requires='>=3.6',

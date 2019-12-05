@@ -1,5 +1,5 @@
 import numpy as np
-from .classes import Element, Drift, Bend, Quad
+from .classes import Element, Drift, Dipole, Quadrupole
 from .utils import Signal
 from typing import List, Dict
 
@@ -15,7 +15,7 @@ N_KICKS_DEFAULT = 1
 class MatrixMethod:
     """The transfer matrix method.
 
-    :param cell: Cell which transfer matrices gets calculated for.
+    :param lattice: Lattice which transfer matrices gets calculated for.
     :param int start_index: Start index for the one-turn matrix
            and for the accumulated transfer matrices.
     :param float start_position: Same as start_index but uses position instead of index of the position.
@@ -23,30 +23,30 @@ class MatrixMethod:
     :param number velocity: Velocity of the particles.
     """
 
-    def __init__(self, cell, start_index=None, start_position=None, velocity=C):
-        self.cell = cell
+    def __init__(self, lattice, start_index=None, start_position=None, velocity=C):
+        self.lattice = lattice
         self.velocity = velocity
 
         self.changed_elements = set()
-        self.cell.tree_changed.connect(self._on_tree_change)
-        self.cell.element_changed.connect(self._on_element_changed)
+        self.lattice.tree_changed.connect(self._on_tree_change)
+        self.lattice.element_changed.connect(self._on_element_changed)
 
-        self.element_n_kicks = {Drift: 3, Bend: 10, Quad: 5}
+        self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
         self.element_n_kicks_changed = Signal()
 
         self._element_indices = {}
         self._element_indices_needs_update = True
-        self.element_indices_changed = Signal(self.cell.tree_changed)
+        self.element_indices_changed = Signal(self.lattice.tree_changed)
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_kicks = 0
         self._n_kicks_needs_update = True
-        self.n_kicks_changed = Signal(self.cell.tree_changed, self.element_n_kicks_changed)
+        self.n_kicks_changed = Signal(self.lattice.tree_changed, self.element_n_kicks_changed)
         self.n_kicks_changed.connect(self._on_n_kicks_changed)
 
         self._step_size = np.empty(0)
         self._step_size_needs_update = True
-        self.step_size_changed = Signal(self.n_kicks_changed, self.cell.length_changed)
+        self.step_size_changed = Signal(self.n_kicks_changed, self.lattice.length_changed)
         self.step_size_changed.connect(self._on_step_size_changed)
 
         self._s = np.empty(0)
@@ -98,7 +98,7 @@ class MatrixMethod:
 
     def update_n_kicks(self):
         """Manually update the total number of kicks."""
-        self._n_kicks = sum(self.get_element_n_kicks(element) for element in self.cell.lattice)
+        self._n_kicks = sum(self.get_element_n_kicks(element) for element in self.lattice.arrangement)
         self._n_kicks_needs_update = False
 
     def _on_n_kicks_changed(self):
@@ -116,7 +116,7 @@ class MatrixMethod:
         """Manually update the indices of each element."""
         self._element_indices.clear()
         start = 0
-        for element in self.cell.lattice:
+        for element in self.lattice.arrangement:
             end = start + self.get_element_n_kicks(element)
             tmp = list(range(start, end))
             try:
@@ -144,7 +144,7 @@ class MatrixMethod:
             self._step_size = np.empty(self.n_kicks)
             self._step_size[0] = 0
 
-        for element in self.cell.elements.values():
+        for element in self.lattice.elements.values():
             self._step_size[self.element_indices[element]] = element.length / self.get_element_n_kicks(element)
 
         self._step_size_needs_update = False
@@ -186,7 +186,7 @@ class MatrixMethod:
             self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
 
         if self._transfer_matrices_needs_full_update:
-            elements = self.cell.elements.values()
+            elements = self.lattice.elements.values()
         else:
             elements = self.changed_elements
 
@@ -204,7 +204,7 @@ class MatrixMethod:
             else:
                 el_45 = 0  # noqa: F841
 
-            if isinstance(element, Quad) and element.k1:  # Quad with k != 0
+            if isinstance(element, Quadrupole) and element.k1:  # Quadrupole with k != 0
                 sqk = np.sqrt(np.absolute(element.k1))
                 om = sqk * step_size
                 sin = np.sin(om)
@@ -229,7 +229,7 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1]
                     ]
-            elif isinstance(element, Bend) and element.angle:  # Bend with angle != 0
+            elif isinstance(element, Dipole) and element.angle:  # Dipole with angle != 0
                 phi = step_size / element.radius
                 sin = np.sin(phi)
                 cos = np.cos(phi)

@@ -1,18 +1,18 @@
 import os
 import re
-import inspect
 import json
 
 from . import classes
-from .classes import Cell
+from .classes import Lattice
+import latticejson
 
 
-def load_lattice(file_path, file_format='json') -> Cell:
-    """Read lattice file into cell object.
+def load_lattice(file_path, file_format='json') -> Lattice:
+    """Read lattice file into lattice object.
 
     :param str file_path: Path to lattice file.
     :param str file_format: Format of the lattice file.
-    :return: The root cell of the lattice.
+    :return: The root lattice of the lattice.
     """
     if file_format == 'json':
         return read_lattice_file_json(file_path)
@@ -22,15 +22,15 @@ def load_lattice(file_path, file_format='json') -> Cell:
         raise NotImplementedError
 
 
-def save_lattice(cell, file_path, file_format='json'):
-    """Save cell object to lattice file.
+def save_lattice(lattice, file_path, file_format='json'):
+    """Save lattice object to lattice file.
 
-    :param Cell cell: Cell object to be saved.
+    :param Lattice lattice: lattice object to be saved.
     :param str file_path: File path to which the lattice is saved.
     :param str file_format: Format of the lattice file.
     """
     if file_format == 'json':
-        save_lattice_file_json(cell, file_path)
+        save_lattice_file_json(lattice, file_path)
     else:
         raise NotImplementedError
 
@@ -86,51 +86,15 @@ def read_lattice_file_fle(file_path):  # TODO: check and update
 
 
 def read_lattice_file_json(file_path):
-    with open(file_path) as f:
-        json_data = json.load(f)
-    return from_json(json_data)
+    with open(file_path) as file:
+        lattice_dict = json.load(file)
+
+    latticejson.validate(lattice_dict)
+    return Lattice.from_dict(lattice_dict)
 
 
-def from_json(json_data):
-    objects = {}  # dictionary for all objects (elements + lines)
-    for name, attributes in json_data['elements'].items():
-        type_ = attributes.pop('type')
-        class_ = getattr(classes, type_)
-        objects[name] = class_(name=name, **attributes)
-
-    for cell_name, elements_name_list in json_data['cells'].items():
-        objects[cell_name] = classes.Cell(name=cell_name)
-
-    for cell_name, elements_name_list in json_data['cells'].items():
-        tree = [objects[name] for name in elements_name_list]
-        objects[cell_name].add(tree)
-
-    main_tree = [objects[name] for name in json_data['main_cell']]
-    return classes.Cell(name=json_data['name'], tree=main_tree, description=json_data.get('description', ''))
-
-
-def save_lattice_file_json(cell, file_path):
-    file_path = file_path if file_path else f'{cell.name}.json'
-    # dirname = os.path.dirname(file_path)
-    # if not os.path.exists(dirname):
-    #     os.makedirs(dirname)
+def save_lattice_file_json(lattice, file_path):
+    lattice_dict = lattice.as_dict()
+    latticejson.validate(lattice_dict)
     with open(file_path, 'w') as outfile:
-        json.dump(as_dict(cell), outfile, indent=2)
-
-
-def as_dict(main_cell):
-    elements_dict = {}
-    for element in main_cell.elements.values():
-        tmp = {key: getattr(element, key) for (key, value) in inspect.signature(element.__class__).parameters.items()}
-        tmp.pop('name')
-        elements_dict[element.name] = tmp
-        elements_dict[element.name]['type'] = element.__class__.__name__
-
-    cells_dict = {cell.name: [obj.name for obj in cell.tree] for cell in main_cell.cells.values()}
-    main_dict = dict(name=main_cell.name, description=main_cell.description, elements=elements_dict, cells=cells_dict,
-                     main_cell=[obj.name for obj in main_cell.tree])
-    return main_dict
-
-
-def as_json(main_cell, indent=None):
-    return json.dumps(as_dict(main_cell), indent=indent)
+        json.dump(lattice.as_dict(), outfile, indent=2)
