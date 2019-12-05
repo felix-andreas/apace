@@ -4,7 +4,7 @@ from .classes import (
     Element,
     Drift,
     Dipole,
-  Quadrupole,
+ Quadrupole,
     Sextupole,
     Octupole,
     Lattice,

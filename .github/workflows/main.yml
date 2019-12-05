@@ -2,32 +2,32 @@ name: CI
 
 on: [push]
 
-jobs:
-  build:
-    name: Build and Test
-
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
-
-    steps:
-      - uses: actions/checkout@v1
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Build and install
-        run: |
-          pip install .
-      - name: Create source distributions
-        run: |
-          python setup.py sdist
-      - name: Test with pytest
-        run: |
-          pip install pytest
-          pytest
+#jobs:
+#  build:
+#    name: Build and Test
+#
+#    runs-on: ubuntu-latest
+#    strategy:
+#      max-parallel: 4
+#      matrix:
+#        python-version: [3.6, 3.7, 3.8]
+#
+#    steps:
+#      - uses: actions/checkout@v1
+#      - name: Set up Python ${{ matrix.python-version }}
+#        uses: actions/setup-python@v1
+#        with:
+#          python-version: ${{ matrix.python-version }}
+#      - name: Build and install
+#        run: |
+#          pip install .
+#      - name: Create source distributions
+#        run: |
+#          python setup.py sdist
+#      - name: Test with pytest
+#        run: |
+#          pip install pytest
+#          pytest
 
   lint:
     name: Lint and Autoformat
@@ -50,6 +50,7 @@ jobs:
           black .
           git diff --quiet && git diff --staged --quiet
           has_changed=$?
+          echo has_changed
       - name: Commit black changes
         if: steps.black.outputs.exit-code == 1
         run: |
