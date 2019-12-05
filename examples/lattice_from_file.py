@@ -4,7 +4,7 @@ import apace as ap
 import matplotlib.pyplot as plt
 
 dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, 'lattices', 'fodo_ring.json')
+file_path = os.path.join(dir_name, "lattices", "fodo_ring.json")
 fodo = ap.load_lattice(file_path)
 twiss = ap.Twiss(fodo)
 plt.plot(twiss.s, twiss.beta_x)

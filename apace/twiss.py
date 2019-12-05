@@ -29,7 +29,9 @@ class Twiss:
         self._accumulated_array = np.empty(0)
         self._term_x = None
         self._term_y = None
-        self.one_turn_matrix_changed = Signal(self.start_idx_changed, self.matrix_method.transfer_matrices_changed)
+        self.one_turn_matrix_changed = Signal(
+            self.start_idx_changed, self.matrix_method.transfer_matrices_changed
+        )
         self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
         self._one_turn_matrix_needs_update = True
 
@@ -68,7 +70,9 @@ class Twiss:
     @start_idx.setter
     def start_idx(self, value):
         if value >= self.n_kicks:
-            raise ValueError(f'Start index {value} is too high! (Maximum {self.n_kicks})')
+            raise ValueError(
+                f"Start index {value} is too high! (Maximum {self.n_kicks})"
+            )
 
         self._start_idx = value
         self.start_idx_changed()
@@ -177,11 +181,27 @@ class Twiss:
         # eta_x_dds0 = (m[1, 0] * m[0, 5] + m[1, 5] * (1 - m[0, 0])) / (2 - m[0, 0] - m[1, 1])
         # eta_x0 = (m[0, 1] * eta_x_dds0 + m[0, 5]) / (1 - m[1, 1])
 
-        eta_x0, eta_x_dds0 = (m[0, 5] * (1 - m[1, 1]) + m[0, 1] * m[1, 5]) / (2 - m[0, 0] - m[1, 1]), \
-                             (m[1, 5] * (1 - m[0, 0]) + m[1, 0] * m[0, 5]) / (2 - m[0, 0] - m[1, 1])
+        eta_x0, eta_x_dds0 = (
+            (m[0, 5] * (1 - m[1, 1]) + m[0, 1] * m[1, 5]) / (2 - m[0, 0] - m[1, 1]),
+            (m[1, 5] * (1 - m[0, 0]) + m[1, 0] * m[0, 5]) / (2 - m[0, 0] - m[1, 1]),
+        )
 
-        self._initial_twiss[:] = (beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0)
-        twiss_product(self.accumulated_array, self._initial_twiss, self._twiss_array, self.start_idx)
+        self._initial_twiss[:] = (
+            beta_x0,
+            beta_y0,
+            alpha_x0,
+            alpha_y0,
+            gamma_x0,
+            gamma_y0,
+            eta_x0,
+            eta_x_dds0,
+        )
+        twiss_product(
+            self.accumulated_array,
+            self._initial_twiss,
+            self._twiss_array,
+            self.start_idx,
+        )
 
         self._twiss_array_needs_update = False
 
@@ -268,7 +288,9 @@ class Twiss:
         self._psi_y = np.empty(size)
         beta_x_inverse = 1 / self.beta_x
         beta_y_inverse = 1 / self.beta_y
-        self._psi_x = integrate.cumtrapz(beta_x_inverse, self.s, initial=0)  # TODO: use faster integration!
+        self._psi_x = integrate.cumtrapz(
+            beta_x_inverse, self.s, initial=0
+        )  # TODO: use faster integration!
         self._psi_y = integrate.cumtrapz(beta_y_inverse, self.s, initial=0)
         self._tune_x = self._psi_x[-1] / TWO_PI
         self._tune_y = self._psi_y[-1] / TWO_PI

@@ -20,9 +20,9 @@ def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=Fa
     args = (
         n,
         from_idx,
-        ffi.cast('double (*)[6][6]', ffi.from_buffer(transfer_matrices)),
-        ffi.cast('double *', ffi.from_buffer(twiss_0)),
-        ffi.cast('double (*)[]', ffi.from_buffer(twiss_array)),
+        ffi.cast("double (*)[6][6]", ffi.from_buffer(transfer_matrices)),
+        ffi.cast("double *", ffi.from_buffer(twiss_0)),
+        ffi.cast("double (*)[]", ffi.from_buffer(twiss_array)),
     )
 
     func = lib.twiss_product_parallel if parallel else lib.twiss_product_serial
@@ -49,15 +49,15 @@ def accumulate_array(input_array, output_array, from_idx):
     n = input_array.shape[0]
     if from_idx >= n:
         raise IndexError(
-            f'The parameter from_idx ({from_idx}) '
-            f'cannot be larger than the number of kicks ({n})!'
+            f"The parameter from_idx ({from_idx}) "
+            f"cannot be larger than the number of kicks ({n})!"
         )
 
     args = (
         n,
         from_idx,
-        ffi.cast('double (*)[6][6]', ffi.from_buffer(input_array)),
-        ffi.cast('double (*)[6][6]', ffi.from_buffer(output_array)),
+        ffi.cast("double (*)[6][6]", ffi.from_buffer(input_array)),
+        ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
     lib.accumulate_array(*args)
@@ -86,17 +86,17 @@ def accumulate_array_partial(input_array, output_array, indices):
     n_kicks = input_array.shape[0]
     n_indices = indices.shape[0]
     if indices.shape[1] != 2:
-        raise ValueError('The argument indices has the wrong shape! (Expected (n, 2))')
+        raise ValueError("The argument indices has the wrong shape! (Expected (n, 2))")
 
     if not isinstance(indices, np.ndarray):
         indices = np.array(indices)
 
     args = (
         n_indices,
-        ffi.cast('double (*)[2]', ffi.from_buffer(indices)),
+        ffi.cast("double (*)[2]", ffi.from_buffer(indices)),
         n_kicks,
-        ffi.cast('double (*)[6][6]', ffi.from_buffer(input_array)),
-        ffi.cast('double (*)[6][6]', ffi.from_buffer(output_array)),
+        ffi.cast("double (*)[6][6]", ffi.from_buffer(input_array)),
+        ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
     lib.accumulate_array(*args)

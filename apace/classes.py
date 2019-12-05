@@ -13,12 +13,12 @@ class Base:
     :type description: str, optional
     """
 
-    def __init__(self, name, length, description=''):
+    def __init__(self, name, length, description=""):
         self.name: str = name
         """The name of the object."""
         self.description: str = description
         """A brief description of the object"""
-        self.parent_lattices: Set['Lattice'] = set()
+        self.parent_lattices: Set["Lattice"] = set()
         """All lattices which contain the object."""
         self._length = length
 
@@ -34,7 +34,7 @@ class Base:
         attributes = []
         signals = []
         for name, attr in self.__dict__.items():
-            if name[0] == '_':
+            if name[0] == "_":
                 continue
 
             if isinstance(attr, Signal):
@@ -53,12 +53,14 @@ class Base:
             if isinstance(attr, property):
                 attr = attr.fget(self)
                 if isinstance(attr, weakref.WeakSet):
-                    string = ', '.join(e.name for e in attr)
+                    string = ", ".join(e.name for e in attr)
                 else:
                     string = str(attr)
                 properties.append((name, string))
 
-        return '\n'.join(f'{name:14}: {string}' for name, string in attributes + properties + signals)
+        return "\n".join(
+            f"{name:14}: {string}" for name, string in attributes + properties + signals
+        )
 
 
 class Element(Base):
@@ -70,7 +72,7 @@ class Element(Base):
     :type description: str, optional
     """
 
-    def __init__(self, name, length, description=''):
+    def __init__(self, name, length, description=""):
         super().__init__(name, length, description)
         self._length = length
         self.length_changed: Signal = Signal()
@@ -108,6 +110,7 @@ class Drift(Element):
     :param str description: A brief description of the element.
     :type description: str, optional
     """
+
     pass
 
 
@@ -125,7 +128,7 @@ class Dipole(Element):
     :type description: str, optional
     """
 
-    def __init__(self, name, length, angle, e1=0, e2=0, description=''):
+    def __init__(self, name, length, angle, e1=0, e2=0, description=""):
         super().__init__(name, length, description)
         self._angle = angle
         self._e1 = e1
@@ -181,7 +184,7 @@ class Quadrupole(Element):
     :type description: str, optional
     """
 
-    def __init__(self, name, length, k1, description=''):
+    def __init__(self, name, length, k1, description=""):
         super().__init__(name, length, description)
         self._k1 = k1
 
@@ -206,7 +209,7 @@ class Sextupole(Element):
     :type description: str, optional
     """
 
-    def __init__(self, name, length, k2, description=''):
+    def __init__(self, name, length, k2, description=""):
         super().__init__(name, length, description)
         self._k2 = k2
 
@@ -231,7 +234,7 @@ class Octupole(Element):
     :type description: str, optional
     """
 
-    def __init__(self, name, length, k3, description=''):
+    def __init__(self, name, length, k3, description=""):
         super().__init__(name, length, description)
         self._k3 = k3
 
@@ -382,7 +385,7 @@ class Lattice(Base):
         return self._elements
 
     @property
-    def sub_lattices(self) -> Dict[str, 'Lattice']:  # TODO: Python 3.7 change type hint
+    def sub_lattices(self) -> Dict[str, "Lattice"]:  # TODO: Python 3.7 change type hint
         """Contains all lattices within this lattice."""
         if self._tree_properties_needs_update:
             self.update_tree_properties()
@@ -428,9 +431,9 @@ class Lattice(Base):
     def print_tree(self):
         """Print the tree of objects."""
         self.depth = 0
-        self.filler = ''
-        self.start = '│   '
-        print(f'{self.name}')
+        self.filler = ""
+        self.start = "│   "
+        print(f"{self.name}")
         self._print_tree(self)
         del self.depth
         del self.filler
@@ -440,29 +443,34 @@ class Lattice(Base):
         length = len(lattice.tree)
         for i, x in enumerate(lattice.tree):
             is_last = i == length - 1
-            fill = '└───' if is_last else '├───'
-            print(f'{self.filler}{fill} {x.name}')
+            fill = "└───" if is_last else "├───"
+            print(f"{self.filler}{fill} {x.name}")
             if is_last and self.depth == 0:
-                self.start = '    '
+                self.start = "    "
             if isinstance(x, Lattice):
                 self.depth += 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')
+                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * (
+                    "    " if is_last else "│   "
+                )
                 self._print_tree(x)
                 self.depth -= 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * ('    ' if is_last else '│   ')
+                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * (
+                    "    " if is_last else "│   "
+                )
 
     @classmethod
     def from_dict(cls, data):
         """Creates a new Lattice object from a latticeJSON compliant dictionary."""
 
         objects = {}  # dictionary for all objects (elements + lattices)
-        for name, attributes in data['elements'].items():
-            type_ = attributes.pop('type')
+        for name, attributes in data["elements"].items():
+            type_ = attributes.pop("type")
             import sys
+
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
 
-        sub_lattices = data['sub_lattices']
+        sub_lattices = data["sub_lattices"]
         for name, tree_names in sub_lattices.items():
             objects[name] = Lattice(name=name)
 
@@ -471,9 +479,9 @@ class Lattice(Base):
             objects[name].add(tree)
 
         return Lattice(
-            name=data['name'],
-            tree=[objects[name] for name in data['lattice']],
-            description=data.get('description', '')
+            name=data["name"],
+            tree=[objects[name] for name in data["lattice"]],
+            description=data.get("description", ""),
         )
 
     def as_dict(self):
@@ -481,12 +489,14 @@ class Lattice(Base):
         elements_dict = {}
         for element in self.elements.values():
             attributes = {
-                key: getattr(element, key) for (key, value) in
-                inspect.signature(element.__class__).parameters.items()
+                key: getattr(element, key)
+                for (key, value) in inspect.signature(
+                    element.__class__
+                ).parameters.items()
             }
-            attributes.pop('name')
+            attributes.pop("name")
             elements_dict[element.name] = attributes
-            elements_dict[element.name]['type'] = element.__class__.__name__
+            elements_dict[element.name]["type"] = element.__class__.__name__
 
         sub_lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
@@ -498,5 +508,5 @@ class Lattice(Base):
             description=self.description,
             lattice=[obj.name for obj in self.tree],
             elements=elements_dict,
-            sub_lattices=sub_lattices_dict
+            sub_lattices=sub_lattices_dict,
         )

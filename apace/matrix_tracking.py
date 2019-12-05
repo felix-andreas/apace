@@ -26,8 +26,12 @@ class MatrixTracking:
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
-        self.particle_trajectories_changed = Signal(self.matrix_method.transfer_matrices_changed)
-        self.particle_trajectories_changed.connect(self._on_particle_trajectories_changed)
+        self.particle_trajectories_changed = Signal(
+            self.matrix_method.transfer_matrices_changed
+        )
+        self.particle_trajectories_changed.connect(
+            self._on_particle_trajectories_changed
+        )
 
     @property
     def initial_distribution(self) -> np.ndarray:
@@ -105,8 +109,8 @@ class MatrixTracking:
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
-            trajectories[1:n_kicks + 1] = np.dot(acc_array, initial_distribution)
-            orbit_position[0:n_kicks + 1] = self.matrix_method.s
+            trajectories[1 : n_kicks + 1] = np.dot(acc_array, initial_distribution)
+            orbit_position[0 : n_kicks + 1] = self.matrix_method.s
             for i in range(1, turns):
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
