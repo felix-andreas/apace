@@ -31,7 +31,6 @@ jobs:
 
   lint:
     name: Lint and Autoformat
-#    needs: build
 
     runs-on: ubuntu-latest
 
@@ -50,7 +49,7 @@ jobs:
           black .
           git diff --quiet && git diff --staged --quiet
           has_changed=$?
-          echo has_changed
+          echo $has_changed
       - name: Commit black changes
         if: steps.black.outputs.exit-code == 1
         run: |
