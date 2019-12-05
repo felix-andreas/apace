@@ -71,7 +71,7 @@ our :code:`drift` and :code:`quad` elements, we need a new :class:`Dipole` objec
 
 Now we can create a DBA lattice::
 
-   dba_cell = ap.Lattice('DBA Lattice', [drift, bend, drift, quad, drift, bend, drift])
+   dba_cell = ap.Lattice('DBA_CELL', [drift, bend, drift, quad, drift, bend, drift])
 
 As you can see, it is possible for elements to occur multiple times within the same lattice. Elements can even be in different lattices at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
 
@@ -104,12 +104,12 @@ In contrast to the end of :ref:`elements` section, where it was empty, :code:`qu
 
 It is also possible to create a lattice out of lattices. For example you could create a DBA ring using the already existing :code:`dba_cell`::
 
-   dba_ring = ap.Lattice('DBA Ring', [dba_cell] * 16)
+   dba_ring = ap.Lattice('DBA_RING', [dba_cell] * 16)
 
 The :code:`dba_ring` should now be listed as a parent of the :code:`dba_cell`::
 
    >>> dba_cell.parent_lattices
-   {DBA Ring}
+   {DBA_RING}
 
 Its length should be 16 times the length of the :code:`dba_cell`::
 
@@ -122,7 +122,7 @@ The Base Tree
 The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the order of objects within a lattice is therefore called :attr:`~Lattice.tree`. Try to output the tree for the :code:`dba_ring` and :code:`dba_cell` objects::
 
    >>> dba_ring.tree
-   [DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice, DBA Lattice]
+   [DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL]
    >>> dba_cell.tree
    [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
@@ -130,8 +130,8 @@ The structure which defines the order of elements in our DBA ring can be thought
 This can be also visualized by calling the :meth:`Lattice.print_tree` method::
 
    >>> dba_ring.print_tree()
-   DBA Ring
-   ├─── DBA Lattice
+   DBA_RING
+   ├─── DBA_CELL
    │   ├─── Drift
    │   ├─── Dipole
    │   ├─── Drift
@@ -140,7 +140,7 @@ This can be also visualized by calling the :meth:`Lattice.print_tree` method::
    │   ├─── Dipole
    │   └─── Drift
    # ... 14 times more ...
-   └─── DBA Lattice
+   └─── DBA_CELL
        ├─── Drift
        ├─── Dipole
        ├─── Drift
