@@ -51,7 +51,7 @@ jobs:
           has_changed=$?
           echo $has_changed
       - name: Commit black changes
-        if: steps.black.outputs.exit-code == 1
+        if: $has_changed == 1
         run: |
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
