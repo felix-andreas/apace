@@ -29,7 +29,6 @@ jobs:
           pip install pytest
           pytest
 
-  # from https://github.com/marketplace/actions/autopep8
   lint:
     name: Lint and Autoformat
     needs: build
@@ -40,20 +39,21 @@ jobs:
       - uses: actions/checkout@master
         with:
           ref: ${{ github.ref }}
-      - name: Install Black Code Formatter
+      - name: Black Code Formatter
+        id: black
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
         run: |
           - pip install black
           - black --check .
-      - name: Check files with black
-        - uses: actions/setup-python@v1
+          - git diff --quiet && git diff --staged --quiet
+          - has_changed=$?
       - name: Commit black changes
-        if: steps.autopep8.outputs.exit-code == 2
+        if: steps.black.outputs.exit-code == 1
         run: |
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
           git remote set-url origin https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/${{ github.repository }}
-          git commit -am "Automated autopep8 fixes"
+          git commit -am "Automated Code Formatting using Black"
           git push
