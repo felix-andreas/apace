@@ -2,7 +2,7 @@ name: CI
 
 on: [push]
 
-#jobs:
+jobs:
 #  build:
 #    name: Build and Test
 #
