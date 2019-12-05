@@ -46,10 +46,10 @@ jobs:
       - name: Black Code Formatter
         id: black
         run: |
-          - pip install black
-          - black --check .
-          - git diff --quiet && git diff --staged --quiet
-          - has_changed=$?
+          pip install black
+          black .
+          git diff --quiet && git diff --staged --quiet
+          has_changed=$?
       - name: Commit black changes
         if: steps.black.outputs.exit-code == 1
         run: |
