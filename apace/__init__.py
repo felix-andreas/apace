@@ -6,7 +6,7 @@ from .classes import (
     Dipole,
     Quadrupole,
     Sextupole,
-    Octupole,
+   Octupole,
     Lattice,
 )
 from .io import load_lattice, save_lattice
