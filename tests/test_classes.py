@@ -30,8 +30,8 @@ def test_unique_names():
 def test_add_remove_objects():
     e1 = ap.Element('e1', length=1)
     e2 = ap.Element('e2', length=1)
-    cell = ap.Lattice('cell')
-    cell_2 = ap.Lattice('Main Lattice', [cell] * 2)
+    cell = ap.Lattice('Sub-Lattice')
+    cell_2 = ap.Lattice('Lattice', [cell] * 2)
 
     assert 0 == cell_2.length
 
