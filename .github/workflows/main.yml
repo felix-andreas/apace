@@ -50,7 +50,6 @@ jobs:
           git diff --quiet && git diff --staged --quiet
           has_changed=$?
           echo "::set-output name=has_changed::$has_changed"
-          echo $has_changed
       - name: Commit black changes
         if: steps.black.outputs.has_changed == 1
         run: |
