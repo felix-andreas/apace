@@ -49,9 +49,10 @@ jobs:
           black .
           git diff --quiet && git diff --staged --quiet
           has_changed=$?
+          echo "::set-output name=has_changed::$has_changed"
           echo $has_changed
       - name: Commit black changes
-        if: $has_changed == 1
+        if: ${{ steps.black.outputs.has_changed }} == 1
         run: |
           git config --global user.name 'Felix Andreas'
           git config --global user.email 'felix.andreas95@googlemail.com'
