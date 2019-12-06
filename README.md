@@ -21,7 +21,7 @@ pip install -U apace
 - Matplotlib
 
 
-## A Simple Example
+## Quick Start
 Import apace:
 ```python
 import apace as ap
