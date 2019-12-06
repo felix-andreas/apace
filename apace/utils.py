@@ -22,7 +22,7 @@ class Signal:
             callback(*args, **kwargs)
 
     def __str__(self):
-        return 'Signal'
+        return "Signal"
 
     __repr__ = __str__
 
@@ -59,7 +59,9 @@ class AmbiguousNameError(Exception):
 
 def flatten(iterable):
     for element in iterable:
-        if isinstance(element, collections.Iterable) and not isinstance(element, (str, bytes)):
+        if isinstance(element, collections.Iterable) and not isinstance(
+            element, (str, bytes)
+        ):
             yield from flatten(element)
         else:
             yield element

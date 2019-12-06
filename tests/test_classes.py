@@ -3,10 +3,10 @@ import pytest
 
 
 def test_length_changed():
-    drift = ap.Drift('Drift', length=1)
-    cell_1 = ap.Lattice('Lattice', [drift, drift])
-    cell_2 = ap.Lattice('Lattice', [cell_1, cell_1])
-    cell_3 = ap.Lattice('Lattice', [cell_2, cell_2])
+    drift = ap.Drift("Drift", length=1)
+    cell_1 = ap.Lattice("Lattice", [drift, drift])
+    cell_2 = ap.Lattice("Lattice", [cell_1, cell_1])
+    cell_3 = ap.Lattice("Lattice", [cell_2, cell_2])
     initial_length = cell_3.length
     for i in range(2, 10):
         drift.length += 1
@@ -14,24 +14,24 @@ def test_length_changed():
 
 
 def test_unique_names():
-    drift_1 = ap.Drift('Drift', length=1)
-    drift_2 = ap.Drift('Drift', length=2)
+    drift_1 = ap.Drift("Drift", length=1)
+    drift_2 = ap.Drift("Drift", length=2)
 
     with pytest.raises(ap.AmbiguousNameError):
-        ap.Lattice('Lattice', [drift_1, drift_2]).update_tree_properties()
+        ap.Lattice("Lattice", [drift_1, drift_2]).update_tree_properties()
 
-    cell_1 = ap.Lattice('Lattice')
-    cell_2 = ap.Lattice('Lattice')
+    cell_1 = ap.Lattice("Lattice")
+    cell_2 = ap.Lattice("Lattice")
 
     with pytest.raises(ap.AmbiguousNameError):
-        ap.Lattice('Lattice', [cell_1, cell_2]).update_tree_properties()
+        ap.Lattice("Lattice", [cell_1, cell_2]).update_tree_properties()
 
 
 def test_add_remove_objects():
-    e1 = ap.Element('e1', length=1)
-    e2 = ap.Element('e2', length=1)
-    cell = ap.Lattice('Sub-Lattice')
-    cell_2 = ap.Lattice('Lattice', [cell] * 2)
+    e1 = ap.Element("e1", length=1)
+    e2 = ap.Element("e2", length=1)
+    cell = ap.Lattice("Sub-Lattice")
+    cell_2 = ap.Lattice("Lattice", [cell] * 2)
 
     assert 0 == cell_2.length
 
