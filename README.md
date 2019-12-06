@@ -48,6 +48,14 @@ import matplotlib.pyplot as plt
 plt.plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
 ```
 
+## Links
+- Documentation: https://apace.readthedocs.io
+- API Reference: https://apace.readthedocs.io/en/stable/reference/apace/index.html
+- Examples: https://nbviewer.jupyter.org/github/andreasfelix/apace-examples/tree/master/
+- Releases: https://pypi.org/project/apace/
+- Code: https://https://github.com/andreasfelix/apace
+- Issue tracker: https://https://github.com/andreasfelix/apace/issues
+
 ## License
 [GNU General Public License v3.0](https://github.com/andreasfelix/apace/blob/master/LICENSE)
 
