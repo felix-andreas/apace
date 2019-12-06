@@ -3,7 +3,7 @@ from .classes import (
     Base,
     Element,
     Drift,
-    Dipole,
+  Dipole,
     Quadrupole,
     Sextupole,
     Octupole,
