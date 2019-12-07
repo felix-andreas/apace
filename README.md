@@ -21,7 +21,7 @@ pip install -U apace
 - Matplotlib
 
 
-## A Simple Example
+## Quick Start
 Import apace:
 ```python
 import apace as ap
@@ -47,6 +47,14 @@ Plot horizontal and vertical beta functions using matplotlib:
 import matplotlib.pyplot as plt
 plt.plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
 ```
+
+## Links
+- Documentation: https://apace.readthedocs.io
+- API Reference: https://apace.readthedocs.io/en/stable/reference/apace/index.html
+- Examples: https://nbviewer.jupyter.org/github/andreasfelix/apace-examples/tree/master/
+- Releases: https://pypi.org/project/apace/
+- Code: https://github.com/andreasfelix/apace
+- Issue tracker: https://github.com/andreasfelix/apace/issues
 
 ## License
 [GNU General Public License v3.0](https://github.com/andreasfelix/apace/blob/master/LICENSE)
