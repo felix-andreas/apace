@@ -9,18 +9,18 @@ TWO_PI = 2 * np.pi
 
 
 class Twiss:
-    """Calculate the Twiss parameter for a given cell.
+    """Calculate the Twiss parameter for a given lattice.
 
-    :param Cell cell: Cell to calculate the Twiss parameter for.
+    :param Lattice lattice: Lattice to calculate the Twiss parameter for.
     :param start_idx: Index from which the accumulated array is calculated.
                        This index is also used to calculated the initial twiss parameter
                        using the periodicity condition.
     :type start_idx: int, optional
     """
 
-    def __init__(self, cell, start_idx=0):
-        self.cell = cell
-        self.matrix_method = MatrixMethod(cell)
+    def __init__(self, lattice, start_idx=0):
+        self.lattice = lattice
+        self.matrix_method = MatrixMethod(lattice)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()
@@ -29,7 +29,9 @@ class Twiss:
         self._accumulated_array = np.empty(0)
         self._term_x = None
         self._term_y = None
-        self.one_turn_matrix_changed = Signal(self.start_idx_changed, self.matrix_method.transfer_matrices_changed)
+        self.one_turn_matrix_changed = Signal(
+            self.start_idx_changed, self.matrix_method.transfer_matrices_changed
+        )
         self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
         self._one_turn_matrix_needs_update = True
 
@@ -68,7 +70,9 @@ class Twiss:
     @start_idx.setter
     def start_idx(self, value):
         if value >= self.n_kicks:
-            raise ValueError(f'Start index {value} is too high! (Maximum {self.n_kicks})')
+            raise ValueError(
+                f"Start index {value} is too high! (Maximum {self.n_kicks})"
+            )
 
         self._start_idx = value
         self.start_idx_changed()
@@ -177,11 +181,27 @@ class Twiss:
         # eta_x_dds0 = (m[1, 0] * m[0, 5] + m[1, 5] * (1 - m[0, 0])) / (2 - m[0, 0] - m[1, 1])
         # eta_x0 = (m[0, 1] * eta_x_dds0 + m[0, 5]) / (1 - m[1, 1])
 
-        eta_x0, eta_x_dds0 = (m[0, 5] * (1 - m[1, 1]) + m[0, 1] * m[1, 5]) / (2 - m[0, 0] - m[1, 1]), \
-                             (m[1, 5] * (1 - m[0, 0]) + m[1, 0] * m[0, 5]) / (2 - m[0, 0] - m[1, 1])
+        eta_x0, eta_x_dds0 = (
+            (m[0, 5] * (1 - m[1, 1]) + m[0, 1] * m[1, 5]) / (2 - m[0, 0] - m[1, 1]),
+            (m[1, 5] * (1 - m[0, 0]) + m[1, 0] * m[0, 5]) / (2 - m[0, 0] - m[1, 1]),
+        )
 
-        self._initial_twiss[:] = (beta_x0, beta_y0, alpha_x0, alpha_y0, gamma_x0, gamma_y0, eta_x0, eta_x_dds0)
-        twiss_product(self.accumulated_array, self._initial_twiss, self._twiss_array, self.start_idx)
+        self._initial_twiss[:] = (
+            beta_x0,
+            beta_y0,
+            alpha_x0,
+            alpha_y0,
+            gamma_x0,
+            gamma_y0,
+            eta_x0,
+            eta_x_dds0,
+        )
+        twiss_product(
+            self.accumulated_array,
+            self._initial_twiss,
+            self._twiss_array,
+            self.start_idx,
+        )
 
         self._twiss_array_needs_update = False
 
@@ -268,7 +288,9 @@ class Twiss:
         self._psi_y = np.empty(size)
         beta_x_inverse = 1 / self.beta_x
         beta_y_inverse = 1 / self.beta_y
-        self._psi_x = integrate.cumtrapz(beta_x_inverse, self.s, initial=0)  # TODO: use faster integration!
+        self._psi_x = integrate.cumtrapz(
+            beta_x_inverse, self.s, initial=0
+        )  # TODO: use faster integration!
         self._psi_y = integrate.cumtrapz(beta_y_inverse, self.s, initial=0)
         self._tune_x = self._psi_x[-1] / TWO_PI
         self._tune_y = self._psi_y[-1] / TWO_PI
@@ -318,7 +340,7 @@ class Twiss:
         m = self.one_turn_matrix
         self._tune_x_fractional = np.arccos((m[0, 0] + m[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((m[2, 2] + m[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.cell.length
+        tmp = self.matrix_method.velocity / self.lattice.length
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False

@@ -22,7 +22,7 @@ class Signal:
             callback(*args, **kwargs)
 
     def __str__(self):
-        return 'Signal'
+        return "Signal"
 
     __repr__ = __str__
 
@@ -48,7 +48,7 @@ class Flag:
 
 
 class AmbiguousNameError(Exception):
-    """Raised if multiple elements or cells have the same name.
+    """Raised if multiple elements or lattices have the same name.
 
     :param str name: The ambiguous name.
     """
@@ -59,7 +59,9 @@ class AmbiguousNameError(Exception):
 
 def flatten(iterable):
     for element in iterable:
-        if isinstance(element, collections.Iterable) and not isinstance(element, (str, bytes)):
+        if isinstance(element, collections.Iterable) and not isinstance(
+            element, (str, bytes)
+        ):
             yield from flatten(element)
         else:
             yield element

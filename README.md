@@ -21,7 +21,7 @@ pip install -U apace
 - Matplotlib
 
 
-## A Simple Example
+## Quick Start
 Import apace:
 ```python
 import apace as ap
@@ -30,11 +30,11 @@ import apace as ap
 Create a ring consisting out of 8 FODO cells:
 ```python
 d1 = ap.Drift('D1', length=0.55)
-b1 = ap.Bend('B1', length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
-q1 = ap.Quad('Q1', length=0.2, k1=1.2)
-q2 = ap.Quad('Q2', length=0.4, k1=-1.2)
-fodo = ap.Cell('FODO', [q1, d1, b1, d1, q2, d1, b1, d1, q1])
-ring = ap.Cell('RING', [fodo] * 8)
+b1 = ap.Dipole('B1', length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
+q1 = ap.Quadrupole('Q1', length=0.2, k1=1.2)
+q2 = ap.Quadrupole('Q2', length=0.4, k1=-1.2)
+fodo_cell = ap.Lattice('FODO', [q1, d1, b1, d1, q2, d1, b1, d1, q1])
+fodo_ring = ap.Lattice('RING', [fodo_cell] * 8)
 ```
  
 Calculate the Twiss parameters:
@@ -47,6 +47,14 @@ Plot horizontal and vertical beta functions using matplotlib:
 import matplotlib.pyplot as plt
 plt.plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
 ```
+
+## Links
+- Documentation: https://apace.readthedocs.io
+- API Reference: https://apace.readthedocs.io/en/stable/reference/apace/index.html
+- Examples: https://nbviewer.jupyter.org/github/andreasfelix/apace-examples/tree/master/
+- Releases: https://pypi.org/project/apace/
+- Code: https://github.com/andreasfelix/apace
+- Issue tracker: https://github.com/andreasfelix/apace/issues
 
 ## License
 [GNU General Public License v3.0](https://github.com/andreasfelix/apace/blob/master/LICENSE)
