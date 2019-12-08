@@ -39,13 +39,13 @@ fodo_ring = ap.Lattice('RING', [fodo_cell] * 8)
  
 Calculate the Twiss parameters:
 ```python
-twiss = ap.Twiss(ring)
+twiss = ap.Twiss(fodo_ring)
 ```
 
 Plot horizontal and vertical beta functions using matplotlib:
 ```python
 import matplotlib.pyplot as plt
-plt.plot(twiss.s, twiss.beta_x, twiss.beta_y, twiss.eta_x)
+plt.plot(twiss.s, twiss.beta_x, twiss.s, twiss.beta_y)
 ```
 
 ## Links
