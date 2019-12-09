@@ -57,11 +57,11 @@ As you can see, the :class:`Quadrupole` object has by default also the :attr:`~B
 discuss in the next subsection.
 
 Lattice class
-==========
+=============
 The magnetic lattice of modern Particle accelerators is typically more complex than a single quadrupole. Therefore multiple elements can be arranged into a more complex structure using the :class:`Lattice` class.
 
 Creating a Double Dipole Achromat
--------------------------------
+---------------------------------
 
 As we already created a FODO structure in :ref:`quickstart`, let's create a
 `Double Dipole Achromat Lattice <https://wikipedia.org/wiki/Chasman%E2%80%93Green_lattice>`_ this time. In addition to
@@ -88,7 +88,7 @@ As the :code:`drift` space appears four times within the :code:`dba_cell` its le
 .. _parent-lattices:
 
 Parent lattices
-------------
+---------------
 
 You may have also noticed that length of the :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent lattices through the :attr:`~Base.parent_lattices` attribute and informs all parents whenever the length of an element changes.
 
@@ -284,8 +284,6 @@ apace lattice file for a simple fodo ring:
 
 .. literalinclude:: ../examples/lattices/fodo_ring.json
   :language: JSON
-
-
 
 
 Implementation Details

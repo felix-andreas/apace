@@ -54,6 +54,17 @@ autoapi_template_dir = "_templates/autoapi"
 # autoapi_include_summaries = True
 autoapi_generate_api_docs = True
 
+# sphinx-nbexamples
+extensions.append("sphinx_nbexamples")
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+process_examples = not on_rtd
+examples_dirs = ["../../axpace-examples"]
+example_gallery_config = dict(
+    urls="https://github.com/andreasfelix/apace-examples/blob/master",
+    pattern=".+.ipynb",
+)
+
+
 # Auto summary
 # extensions.append('sphinx.ext.autosummary')
 # autosummary_generate = True

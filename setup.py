@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-about = {}
+about = dict()
 with open("apace/__about__.py") as file:
     exec(file.read(), about)
 
