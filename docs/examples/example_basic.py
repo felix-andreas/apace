@@ -1,23 +1,23 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# 
+#
 # # Basic example
-# 
-# 
+#
+#
 # This example notebook demonstrates as a basic example how sphinx-nbexamples
 # works.
-# 
+#
 
 # You can edit the metadata of the notebook as shown in the screenshot below and include supplementary files, select an image for displaying it in the gallery or provide a code example.
-# 
+#
 
 # Otherwise you can do whatever you want. You can also include ipython magic commands, e.g `%matplotlib inline`
 
 # In[ ]:
 
 
-get_ipython().run_line_magic('matplotlib', 'inline')
+get_ipython().run_line_magic("matplotlib", "inline")
 
 
 # which then will be (as well as all the warnings) removed in the rendered html file of your example.
@@ -41,6 +41,5 @@ xx, yy = np.meshgrid(x, x)
 z = (np.sin(xx) + np.sin(yy)) ** 2
 
 plt.figure()
-plt.imshow(z, cmap='Greens')
+plt.imshow(z, cmap="Greens")
 plt.colorbar()
-
