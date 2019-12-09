@@ -56,8 +56,9 @@ autoapi_generate_api_docs = True
 
 # sphinx-nbexamples
 extensions.append("sphinx_nbexamples")
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-process_examples = not on_rtd
+# TODO: build examples on apace-examples CI
+# on_rtd = os.environ.get("READTHEDOCS", None) == "True"
+# process_examples = not on_rtd
 examples_dirs = ["../../axpace-examples"]
 example_gallery_config = dict(
     urls="https://github.com/andreasfelix/apace-examples/blob/master",
