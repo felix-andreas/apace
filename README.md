@@ -51,7 +51,7 @@ plt.plot(twiss.s, twiss.beta_x, twiss.s, twiss.beta_y)
 ## Links
 - Documentation: https://apace.readthedocs.io
 - API Reference: https://apace.readthedocs.io/en/stable/reference/apace/index.html
-- Examples: https://nbviewer.jupyter.org/github/andreasfelix/apace-examples/tree/master/
+- Examples: https://apace.readthedocs.io/en/docs/examples/index.html
 - Releases: https://pypi.org/project/apace/
 - Code: https://github.com/andreasfelix/apace
 - Issue tracker: https://github.com/andreasfelix/apace/issues
