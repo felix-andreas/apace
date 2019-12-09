@@ -56,7 +56,6 @@ autoapi_generate_api_docs = True
 
 # sphinx-nbexamples
 extensions.append("sphinx_nbexamples")
-# TODO: process script in CI of apace-examples
 on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 process_examples = not on_rtd
 examples_dirs = ["../../axpace-examples"]
