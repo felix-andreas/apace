@@ -57,11 +57,11 @@ As you can see, the :class:`Quadrupole` object has by default also the :attr:`~B
 discuss in the next subsection.
 
 Lattice class
-==========
+=============
 The magnetic lattice of modern Particle accelerators is typically more complex than a single quadrupole. Therefore multiple elements can be arranged into a more complex structure using the :class:`Lattice` class.
 
 Creating a Double Dipole Achromat
--------------------------------
+---------------------------------
 
 As we already created a FODO structure in :ref:`quickstart`, let's create a
 `Double Dipole Achromat Lattice <https://wikipedia.org/wiki/Chasman%E2%80%93Green_lattice>`_ this time. In addition to
@@ -73,7 +73,7 @@ Now we can create a DBA lattice::
 
    dba_cell = ap.Lattice('DBA_CELL', [drift, bend, drift, quad, drift, bend, drift])
 
-As you can see, it is possible for elements to occur multiple times within the same lattice. Elements can even be in different lattices at the same time. What is important to notice is, that all instances of the element (for example all instances :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
+As you can see, it is possible for elements to occur multiple times within the same lattice. Elements can even be in different lattices at the same time. What is important to note is, that elements which appear within a lattice multiple times (e.g. all instances of :code:`drift` within the :code:`dba_cell`) correspond to the same underlying object.
 
 You can easily check this by changing the length of the :code:`drift` and displaying the length of the :code:`dba_cell` before and afterwards::
 
@@ -88,7 +88,7 @@ As the :code:`drift` space appears four times within the :code:`dba_cell` its le
 .. _parent-lattices:
 
 Parent lattices
-------------
+---------------
 
 You may have also noticed that length of the :code:`dba_cell` was updated automatically without you having to call any update function. This works because apace keeps track of all parent lattices through the :attr:`~Base.parent_lattices` attribute and informs all parents whenever the length of an element changes.
 
@@ -165,7 +165,7 @@ As a nested structure is not always convenient to work with, there are three oth
 
    On the other hand, the :attr:`~Lattice.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Lattice.tree`::
 
-      >>> dba_ring.tree
+      >>> dba_ring.arrangement
       [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
@@ -192,7 +192,7 @@ As a nested structure is not always convenient to work with, there are three oth
 
 #. The :attr:`~Lattice.sub_lattices` attribute
 
-    Similar to the :attr:`~Lattice.elements` attribute but for lattices. Contains all lattices within a given lattice, including grandchilrden, great grandchildren, etc.
+    This attribute is equivalent to the :attr:`~Lattice.elements` attribute but for lattices. It contains all lattices within a given lattice, including grandchildren, great grandchildren, etc.
     The :attr:`~Lattice.sub_lattices` attribute should be empty for the :code:`dba_cell` as it does not contain any other lattices::
 
       >>> dba_cell.sub_lattices
@@ -284,8 +284,6 @@ apace lattice file for a simple fodo ring:
 
 .. literalinclude:: ../examples/lattices/fodo_ring.json
   :language: JSON
-
-
 
 
 Implementation Details

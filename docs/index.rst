@@ -16,6 +16,7 @@ libraries.
    install
    quickstart
    guide
+   examples/index
    cli
    reference/apace/index
 
