@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-#
+# 
 # # Create a necktie plot
-#
-#
+# 
+# 
 # This example notebook demonstrates as a basic example how sphinx-nbexamples
 # works.
-#
+# 
 
 # In[ ]:
 
@@ -41,7 +41,7 @@ stable = np.empty((n_steps, n_steps), dtype=bool)
 twiss = ap.Twiss(fodo_ring)
 
 for i, q1.k1 in enumerate(q1_values):
-    for j, q2.k1 in enumerate(q2_values):
+    for j, q2.k1  in enumerate(q2_values):
         stable[i, j] = twiss.stable
 
 
@@ -50,8 +50,8 @@ for i, q1.k1 in enumerate(q1_values):
 
 x, y = np.meshgrid(q1_values, -q2_values)
 CS = plt.contour(x, y, stable)
-plt.xlabel(f"{q1.name} k1 / m$^{{-1}}$")
-plt.ylabel(f"{q2.name} -k1 / m$^{{-1}}$")
+plt.xlabel(f'{q1.name} k1 / m$^{{-1}}$')
+plt.ylabel(f'{q2.name} -k1 / m$^{{-1}}$')
 plt.show()
 
 
@@ -62,3 +62,7 @@ plt.show()
 
 
 # In[ ]:
+
+
+
+

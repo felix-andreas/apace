@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # ### Compute and plot the Twiss parameter of a fodo lattice
-#
+# 
 # Create a fodo based ring
 
 # In[ ]:
@@ -29,7 +29,7 @@ print(
     f"Num of elements: {len(fodo_ring.arrangement)}",
     f"Lattice Length : {fodo_ring.length}",
     f"Cell Length    : {fodo_cell.length}",
-    sep="\n",
+    sep='\n'
 )
 
 
@@ -49,7 +49,7 @@ print(
     f"Vertical tune     : {twiss.tune_y:.3f}",
     f"Max beta x        : {np.max(twiss.beta_x):.3f}",
     f"Max beta y        : {np.max(twiss.beta_y):.3f}",
-    sep="\n",
+    sep='\n'
 )
 
 
@@ -62,3 +62,4 @@ from apace.plot import plot_lattice
 
 fig = plot_lattice(twiss, fodo_ring)
 fig.set_size_inches(16, 6)
+
