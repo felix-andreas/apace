@@ -22,7 +22,7 @@ setup(
     test_requires=["pytest"],
     setup_requires=["cffi>=1.0.0"],
     python_requires=">=3.6",
-    cffi_modules=["cffi_build/build_twiss_product.py:ffi_builder",],
+    cffi_modules=["lib/build.py:ffi_builder",],
     entry_points={"console_scripts": ["apace = apace.cli:main"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
