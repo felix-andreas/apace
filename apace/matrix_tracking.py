@@ -19,7 +19,9 @@ class MatrixTracking:
     :param int start_point: Point at which the particle tracking begins.
     """
 
-    def __init__(self, lattice, initial_distribution, turns=1, watch_points=None, start_point=0):
+    def __init__(
+        self, lattice, initial_distribution, turns=1, watch_points=None, start_point=0
+    ):
         self.lattice = lattice
         self.matrix_method = MatrixMethod(lattice)
         self._initial_distribution = initial_distribution
@@ -131,8 +133,8 @@ class MatrixTracking:
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
-            trajectories[1: n_kicks + 1] = np.dot(acc_array, initial_distribution)
-            orbit_position[0: n_kicks + 1] = self.matrix_method.s
+            trajectories[1 : n_kicks + 1] = np.dot(acc_array, initial_distribution)
+            orbit_position[0 : n_kicks + 1] = self.matrix_method.s
             for i in range(1, n_turns):
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
@@ -157,7 +159,7 @@ class MatrixTracking:
 
             for turn in range(1, n_turns):
                 idx = turn * n_watch_points
-                orbit_position[idx: idx + n_watch_points] = (
+                orbit_position[idx : idx + n_watch_points] = (
                     self.matrix_method.s[watch_points] + turn * self.lattice.length
                 )
                 for j in range(n_watch_points):
