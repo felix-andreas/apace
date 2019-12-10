@@ -1,7 +1,9 @@
+from collections import Iterable
+
 import numpy as np
 
-from .clib import accumulate_array
-from .matrix_method import MatrixMethod
+from .clib import accumulate_array, accumulate_array_partial
+from .matrix_method import MatrixMethod, MATRIX_SIZE
 from .utils import Signal
 
 
@@ -11,17 +13,20 @@ class MatrixTracking:
     :param Lattice lattice: Lattice which particles will be tracked through.
     :param np.ndarray initial_distribution: Initial particle distribution.
     :param int turns: Number of turns.
-    :param positions: List of positions to watch. If unset all particle trajectory
+    :param watch_points: List of watch points. If unset all particle trajectory
            will be saved for all positions.
-    :type positions: list, optional
+    :type watch_points: array-like, optional
+    :param int start_point: Point at which the particle tracking begins.
     """
 
-    def __init__(self, lattice, initial_distribution, turns=1, positions=None):
+    def __init__(self, lattice, initial_distribution, turns=1, watch_points=None, start_point=0):
         self.lattice = lattice
         self.matrix_method = MatrixMethod(lattice)
         self._initial_distribution = initial_distribution
-        self.turns = turns
-        self.positions = positions  # TODO: make sure it is list!
+        self.n_turns = turns
+        self.start_point = start_point
+
+        self.watch_points = watch_points
 
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
@@ -34,6 +39,20 @@ class MatrixTracking:
         )
 
     @property
+    def watch_points(self):
+        return self._watch_points
+
+    @watch_points.setter
+    def watch_points(self, value):
+        if value is None:
+            value = ()
+        elif not isinstance(value, Iterable):
+            raise ValueError("Watch points must be a Iterable or None!")
+
+        # TODO: needs to update trajectories
+        self._watch_points = np.array(value, dtype=np.int32)
+
+    @property
     def initial_distribution(self) -> np.ndarray:
         return self._initial_distribution
 
@@ -44,6 +63,7 @@ class MatrixTracking:
 
     @property
     def particle_trajectories(self) -> np.ndarray:
+        """Contains the 6D particle trajectories."""
         if self._particle_trajectories_needs_update:
             self.update_particle_trajectories()
 
@@ -81,13 +101,24 @@ class MatrixTracking:
         return self.particle_trajectories[:, 5, :]
 
     def update_particle_trajectories(self):
+        """Manually update the 6D particle trajectories"""
+
         n_kicks = self.matrix_method.n_kicks
-        turns = self.turns
-        position = self.positions
+        n_turns = self.n_turns
+        watch_points = self.watch_points
+        n_watch_points = len(watch_points)
+        watch_all = n_watch_points == 0
         initial_distribution = self.initial_distribution
         matrix_array = self.matrix_method.transfer_matrices
 
-        n = turns if position is not None else turns * n_kicks + 1
+        if any(point >= n_kicks for point in watch_points):
+            raise ValueError("Invalid watch points!")
+
+        if watch_all:
+            n = n_turns * n_kicks + 1
+        else:
+            n = n_turns * n_watch_points
+
         if self._orbit_position.size != n:
             self._orbit_position = np.empty(n)
             self._particle_trajectories = np.empty((n, *initial_distribution.shape))
@@ -96,27 +127,42 @@ class MatrixTracking:
         trajectories = self._particle_trajectories
 
         # TODO: implement in C
-        if position == 0:
-            acc_array = np.empty(matrix_array.shape)
-            accumulate_array(matrix_array, acc_array, 0)  # TODO: use partial method!
-            full_matrix = acc_array[-1]
-            trajectories[0] = initial_distribution
-            orbit_position[0] = 0
-            for i in range(1, turns):
-                trajectories[i] = np.dot(full_matrix, trajectories[i - 1])
-                orbit_position[i] = orbit_position[i - 1] + self.lattice.length
-        elif position is None:  # calc for all positions
+        if watch_all:
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
-            trajectories[1 : n_kicks + 1] = np.dot(acc_array, initial_distribution)
-            orbit_position[0 : n_kicks + 1] = self.matrix_method.s
-            for i in range(1, turns):
+            trajectories[1: n_kicks + 1] = np.dot(acc_array, initial_distribution)
+            orbit_position[0: n_kicks + 1] = self.matrix_method.s
+            for i in range(1, n_turns):
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
-            raise NotImplementedError  # TODO: change accumulated array for all positions
+            acc_array = np.empty((n_watch_points, MATRIX_SIZE, MATRIX_SIZE))
+            indices = np.empty((n_watch_points, 2), dtype=np.int32)
+            for i, point in enumerate(watch_points % n_kicks):
+                indices[i, 0] = point
+                indices[i - 1, 1] = point
+            print(indices)
+
+            accumulate_array_partial(matrix_array, acc_array, indices)
+            if watch_points[0] == 0:
+                trajectories[0] = initial_distribution
+            else:
+                raise NotImplementedError
+
+            orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
+            for i in range(1, n_watch_points):
+                trajectories[i] = np.dot(acc_array[i - 1], trajectories[i - 1])
+
+            for turn in range(1, n_turns):
+                idx = turn * n_watch_points
+                orbit_position[idx: idx + n_watch_points] = (
+                    self.matrix_method.s[watch_points] + turn * self.lattice.length
+                )
+                for j in range(n_watch_points):
+                    i = idx + j
+                    trajectories[i] = np.dot(acc_array[j - 1], trajectories[i - 1])
 
         self._particle_trajectories_needs_update = False
 

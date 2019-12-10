@@ -2,11 +2,12 @@ import os
 from cffi import FFI
 
 SOURCES = ("twiss_product_serial.c", "twiss_product_parallel.c", "accumulate_array.c")
-SRC_ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../lib")
+SRC_ROOT = os.path.dirname(os.path.abspath(__file__))
+print(SRC_ROOT)
 
 ffi_builder = FFI()
 ffi_builder.set_source(
-    "apace._clib._twiss_product",
+    "apace._clib",
     "".join(f'#include "{source}"\n' for source in SOURCES),
     include_dirs=[SRC_ROOT],
     extra_compile_args=[
@@ -45,8 +46,8 @@ void accumulate_array(
 
 void accumulate_array_partial(
         int n_indices,
-        int (*indices)[2],
         int n_kicks,
+        int (*indices)[2],
         double (*input_array)[6][6],
         double (*accumulated_array)[6][6]
 );
