@@ -15,4 +15,3 @@ def test_plot():
     draw_elements(lattice)
     draw_sub_lattices(lattice)
     fig.savefig("/tmp/out.pdf")
-
