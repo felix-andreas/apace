@@ -10,6 +10,7 @@ C_MAP = plt.cm.get_cmap("Set1")
 COLORS = {Drift: None, Dipole: "#ffc425", Quadrupole: "#d11141", Sextupole: "#00b159"}
 
 
+# TODO: docstring
 def draw_elements(
     lattice,
     ax=None,
@@ -62,6 +63,7 @@ def draw_elements(
         start = end
 
 
+# TODO: docstring
 def draw_sub_lattices(lattice, ax=None, min_size=0.05):
     if ax is None:
         ax = plt.gca()
@@ -83,6 +85,7 @@ def draw_sub_lattices(lattice, ax=None, min_size=0.05):
                 clip_on=True,
                 zorder=102,
             )
+    # TODO: draw grid
 
 
 def plot_twiss(
