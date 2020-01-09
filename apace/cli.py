@@ -11,7 +11,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from .__about__ import __version__
 from .io import read_lattice_file_json
 from .twiss import Twiss
-from .plot import plot_lattice
+from .plot import twiss_plot
 from .classes import Quadrupole
 
 
@@ -199,7 +199,7 @@ def plot_multiple(args):
         if args.output_path or args.show_plot:
             ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
             ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
-            fig = plot_lattice(
+            fig = twiss_plot(
                 twiss,
                 main_lattice,
                 ref_twiss=ref_twiss,
@@ -240,7 +240,7 @@ def plot_multi_knob_quads(args):
 
             ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
             ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
-            plot_lattice(
+            twiss_plot(
                 Twiss(lattice_out),
                 ref_twiss=ref_twiss,
                 sections=args.sections,
