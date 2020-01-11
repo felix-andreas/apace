@@ -1,5 +1,5 @@
 import apace as ap
-from apace.plot import plot_twiss, draw_elements, draw_sub_lattices
+from apace.plot import plot_twiss, draw_lattice
 import matplotlib.pyplot as plt
 
 import os
@@ -12,6 +12,6 @@ def test_plot():
     lattice = ap.load_lattice(file_path)
     twiss = ap.Twiss(lattice)
     fig, _ = plot_twiss(twiss)
-    draw_elements(lattice)
-    draw_sub_lattices(lattice)
-    fig.savefig("/tmp/out.pdf")
+    draw_lattice(lattice)
+    plt.tight_layout()
+    fig.savefig("/tmp/apace_test_plot.pdf")
