@@ -387,7 +387,7 @@ def floor_plan(lattice, ax=None, start_angle=0):
         ax = plt.gca()
 
     ax.set_aspect("equal")
-    current_angle=start_angle
+    current_angle = start_angle
 
     end = np.zeros(2)
     codes = [Path.MOVETO, Path.LINETO]
@@ -439,7 +439,7 @@ def floor_plan(lattice, ax=None, start_angle=0):
                     center,
                     width=diameter,
                     height=diameter,
-                    angle=-90+(angle * 180 / np.pi),
+                    angle=-90 + (angle * 180 / np.pi),
                     theta1=current_angle * 180 / np.pi,
                     theta2=(current_angle - angle) * 180 / np.pi,
                     color=color,
@@ -450,7 +450,10 @@ def floor_plan(lattice, ax=None, start_angle=0):
             for point in start, end:
                 ax.add_patch(
                     patches.PathPatch(
-                        Path((point, center), codes), color="gray", linestyle="--", linewidth=0.5
+                        Path((point, center), codes),
+                        color="gray",
+                        linestyle="--",
+                        linewidth=0.5,
                     )
                 )
 
