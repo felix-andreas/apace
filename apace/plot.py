@@ -1,8 +1,11 @@
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.gridspec as grid_spec
+from matplotlib.path import Path
 import numpy as np
 from enum import Enum
 from math import inf
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as grid_spec
 from collections.abc import Iterable
 from .classes import Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
 
@@ -14,10 +17,12 @@ class Color:
     YELLOW = "gold"
     ORANGE = "darkorange"
     MAGENTA = "darkmagenta"
+    WHITE = "white"
+    BLACK = "black"
 
 
 ELEMENT_COLOR = {
-    Drift: None,
+    Drift: Color.BLACK,
     Dipole: Color.YELLOW,
     Quadrupole: Color.RED,
     Sextupole: Color.GREEN,
@@ -375,3 +380,82 @@ def find_optimal_grid(N):
         rows, cols = cols, rows
 
     return (rows, cols) if cols >= rows else (cols, rows)
+
+
+def floor_plan(lattice, ax=None, start_angle=0):
+    if ax is None:
+        ax = plt.gca()
+
+    ax.set_aspect("equal")
+    current_angle=start_angle
+
+    end = np.zeros(2)
+    codes = [Path.MOVETO, Path.LINETO]
+    i = 0
+    for element in lattice.arrangement:
+        i += 1
+        color = ELEMENT_COLOR[type(element)]
+        start = end.copy()
+        length = element.length
+        line_width = 0.5 if isinstance(element, Drift) else 3
+        try:
+            angle = element.angle
+        except AttributeError:
+            angle = 0
+
+        if angle == 0:
+            end[0] += length * np.cos(current_angle)
+            end[1] += length * np.sin(current_angle)
+            line = patches.PathPatch(
+                Path((start, end), codes), color=color, linewidth=line_width
+            )
+        else:
+            tmp_angle = current_angle + np.pi / 2
+            radius = length / angle
+            tmp = radius * np.array([np.cos(tmp_angle), np.sin(tmp_angle)])
+            # if angle < 0:
+            #     tmp = - tmp
+            center = start + tmp
+
+            vec = radius * np.array([np.sin(angle), 1 - np.cos(angle)])
+            sin = np.sin(current_angle)
+            cos = np.cos(current_angle)
+            rot = np.array([[cos, -sin], [sin, cos]])
+            end += rot @ vec
+            diameter = 2 * radius
+            if angle > 0:
+                line = patches.Arc(
+                    center,
+                    width=diameter,
+                    height=diameter,
+                    angle=-90,
+                    theta1=current_angle * 180 / np.pi,
+                    theta2=(current_angle + angle) * 180 / np.pi,
+                    color=color,
+                    linewidth=line_width,
+                )
+            else:
+                line = patches.Arc(
+                    center,
+                    width=diameter,
+                    height=diameter,
+                    angle=-90+(angle * 180 / np.pi),
+                    theta1=current_angle * 180 / np.pi,
+                    theta2=(current_angle - angle) * 180 / np.pi,
+                    color=color,
+                    linewidth=line_width,
+                )
+            current_angle += angle
+
+            for point in start, end:
+                ax.add_patch(
+                    patches.PathPatch(
+                        Path((point, center), codes), color="gray", linestyle="--", linewidth=0.5
+                    )
+                )
+
+        ax.add_patch(line)
+
+    lim = lattice.length / 5
+    ax.set_xlim(-lim, lim)
+    ax.set_ylim(-2, 2 * lim)
