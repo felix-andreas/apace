@@ -6,7 +6,6 @@ import os
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
-file_path = "/home/felix/Git/andreasfelix/lattice-files/B2_StdUser_2019_05_07.json"
 lattice = ap.load_lattice(file_path)
 twiss = ap.Twiss(lattice)
 
@@ -19,6 +18,7 @@ def test_draw_lattice():
 
 
 def test_floor_plan():
-    floor_plan(lattice)
+    ax = floor_plan(lattice)
+    ax.invert_yaxis()
     plt.tight_layout()
     plt.savefig("/tmp/apace_test_floor_plan.pdf")
