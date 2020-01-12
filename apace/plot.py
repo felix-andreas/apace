@@ -173,7 +173,7 @@ def plot_twiss(
         linestyle=line_style,
         alpha=alpha,
         zorder=1,
-        label=f"$\\eta_x$/{100 / eta_x_scale:.0f}cm",
+        label=f"{eta_x_scale}$\\eta_x$/m",
     )
 
     if show_legend:
@@ -394,8 +394,8 @@ def floor_plan(
 
     start = np.zeros(2)
     end = np.zeros(2)
-    x_min = y_min = inf
-    x_max = y_max = -inf
+    x_min = y_min = 0
+    x_max = y_max = 0
     arrangement = lattice.arrangement
     arrangement_shifted = arrangement[1:] + arrangement[0:1]
     for element, next_element in zip(arrangement, arrangement_shifted):
@@ -403,6 +403,7 @@ def floor_plan(
         length = element.length
         line_width = 0.5 if isinstance(element, Drift) else 3
 
+        # TODO: refactor current angle
         angle = 0
         if isinstance(element, Dipole):
             angle = element.angle
@@ -474,6 +475,6 @@ def floor_plan(
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
     ax.axis('off')
-    plt.tight_layout()
+    # plt.tight_layout()
 
     return ax
