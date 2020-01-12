@@ -391,9 +391,9 @@ def floor_plan(lattice, ax=None, start_angle=0):
 
     end = np.zeros(2)
     codes = [Path.MOVETO, Path.LINETO]
-    i = 0
+    x_min = y_min = inf
+    x_max = y_max = -inf
     for element in lattice.arrangement:
-        i += 1
         color = ELEMENT_COLOR[type(element)]
         start = end.copy()
         length = element.length
@@ -413,8 +413,6 @@ def floor_plan(lattice, ax=None, start_angle=0):
             tmp_angle = current_angle + np.pi / 2
             radius = length / angle
             tmp = radius * np.array([np.cos(tmp_angle), np.sin(tmp_angle)])
-            # if angle < 0:
-            #     tmp = - tmp
             center = start + tmp
 
             vec = radius * np.array([np.sin(angle), 1 - np.cos(angle)])
@@ -423,42 +421,30 @@ def floor_plan(lattice, ax=None, start_angle=0):
             rot = np.array([[cos, -sin], [sin, cos]])
             end += rot @ vec
             diameter = 2 * radius
-            if angle > 0:
-                line = patches.Arc(
-                    center,
-                    width=diameter,
-                    height=diameter,
-                    angle=-90,
-                    theta1=current_angle * 180 / np.pi,
-                    theta2=(current_angle + angle) * 180 / np.pi,
-                    color=color,
-                    linewidth=line_width,
-                )
-            else:
-                line = patches.Arc(
-                    center,
-                    width=diameter,
-                    height=diameter,
-                    angle=-90 + (angle * 180 / np.pi),
-                    theta1=current_angle * 180 / np.pi,
-                    theta2=(current_angle - angle) * 180 / np.pi,
-                    color=color,
-                    linewidth=line_width,
-                )
+            arc_angle = -90
+            theta1 = current_angle * 180 / np.pi
+            theta2 = (current_angle + angle) * 180 / np.pi
+            if angle < 0:
+                theta1, theta2 = theta2, theta1
+
+            line = patches.Arc(
+                center,
+                width=diameter,
+                height=diameter,
+                angle=arc_angle,
+                theta1=theta1,
+                theta2=theta2,
+                color=color,
+                linewidth=line_width,
+            )
             current_angle += angle
 
-            for point in start, end:
-                ax.add_patch(
-                    patches.PathPatch(
-                        Path((point, center), codes),
-                        color="gray",
-                        linestyle="--",
-                        linewidth=0.5,
-                    )
-                )
-
+        x_min = min(x_min, end[0])
+        y_min = min(y_min, end[1])
+        x_max = max(x_max, end[0])
+        y_max = max(y_max, end[1])
         ax.add_patch(line)
 
-    lim = lattice.length / 5
-    ax.set_xlim(-lim, lim)
-    ax.set_ylim(-2, 2 * lim)
+    margin = 0.05 * ((x_max - x_min) + (y_max - y_min)) / 2
+    ax.set_xlim(x_min - margin, x_max + margin)
+    ax.set_ylim(y_min - margin, y_max + margin)
