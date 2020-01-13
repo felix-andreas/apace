@@ -3,7 +3,6 @@
 .idea
 .vscode
 
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -13,10 +12,6 @@ __pycache__/
 apace/**/*.so
 apace/**/*.o
 apace/**/*.c
-
-
-# ignore examples subdir
-examples
 
 # Distribution / packaging
 .Python
