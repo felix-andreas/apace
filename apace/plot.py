@@ -447,13 +447,12 @@ def floor_plan(
         x_max = max(x_max, end[0])
         y_max = max(y_max, end[1])
 
-        ax.add_patch(line) # TODO: currently splitted elements get drawn twice
+        ax.add_patch(line)  # TODO: currently splitted elements get drawn twice
         if element is next_element:
             continue
 
-
         if annotate_elements and not isinstance(element, Drift):
-            angle_center = (current_angle -angle /2 ) + np.pi / 2
+            angle_center = (current_angle - angle / 2) + np.pi / 2
             sign = -1 if isinstance(element, Quadrupole) else 1
             center = (start + end) / 2 + sign * 0.5 * np.array(
                 [np.cos(angle_center), np.sin(angle_center)]
@@ -474,7 +473,6 @@ def floor_plan(
     margin = 0.05 * max((x_max - x_min), (y_max - y_min))
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
-    ax.axis('off')
-    # plt.tight_layout()
+    ax.axis("off")
 
     return ax
