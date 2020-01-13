@@ -21,8 +21,8 @@ def test_unique_names():
     with pytest.raises(ap.AmbiguousNameError):
         ap.Lattice("Lattice", [drift_1, drift_2])
 
-    cell_1 = ap.Lattice("Lattice", [])
-    cell_2 = ap.Lattice("Lattice", [])
+    cell_1 = ap.Lattice("cell", [])
+    cell_2 = ap.Lattice("cell", [])
 
     with pytest.raises(ap.AmbiguousNameError):
         ap.Lattice("Lattice", [cell_1, cell_2])
