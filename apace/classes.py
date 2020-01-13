@@ -254,8 +254,8 @@ class Lattice(Base):
             obj.parent_lattices.add(self)
 
         # arrangement, positions, elements & sub_lattices are infered from self.tree
-        self._arrangement = []
-        self._positions = {}
+        self._arrangement = []  # TODO: is an np.array better here?
+        self._indices = {}
         self._elements = {}
         self._sub_lattices = {}
         self._update_tree_properties()
@@ -288,7 +288,6 @@ class Lattice(Base):
         """Length of the lattice."""
         if self._length_needs_update:
             self.update_length()
-
         return self._length
 
     def update_length(self):
@@ -317,10 +316,10 @@ class Lattice(Base):
         return self._arrangement
 
     @property
-    def positions(self) -> Dict[Element, List[float]]:
-        """A dict which contains the a `List` of positions for each element.
-           Can be thought of as inverse of arrangment"""
-        return self._positions
+    def indices(self) -> Dict[Element, List[float]]:
+        """A dict which contains the a `List` of indices for each element.
+           Can be thought of as inverse of arrangment."""
+        return self._indices
 
     @property
     def elements(self) -> Dict[str, Element]:
@@ -332,13 +331,13 @@ class Lattice(Base):
         """Contains all lattices within this lattice."""
         return self._sub_lattices
 
-    def _update_tree_properties(self, tree=None, pos=0):
+    def _update_tree_properties(self, tree=None, idx=0):
         """A recursive helper function to update the tree properties."""
         if tree is None:
             tree = self._tree
 
         arrangement = self._arrangement
-        positions = self._positions
+        indices = self._indices
         elements = self._elements
         sub_lattices = self._sub_lattices
         for obj in tree:
@@ -349,20 +348,22 @@ class Lattice(Base):
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
 
-                self._update_tree_properties(obj.tree, pos)
+                idx = self._update_tree_properties(obj.tree, idx)
             else:
                 arrangement.append(obj)
-                pos += 1
                 try:
-                    positions[obj].append(pos)
+                    indices[obj].append(idx)
                 except KeyError:
-                    positions[obj] = [pos]
+                    indices[obj] = [idx]
+
+                idx += 1
 
                 value = elements.get(obj.name)
                 if value is None:
                     elements[obj.name] = obj
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
+        return idx
 
     # TODO: improve !
     def print_tree(self):

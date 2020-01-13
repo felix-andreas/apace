@@ -21,8 +21,25 @@ def test_unique_names():
     with pytest.raises(ap.AmbiguousNameError):
         ap.Lattice("Lattice", [drift_1, drift_2])
 
-    cell_1 = ap.Lattice("Lattice", [])
-    cell_2 = ap.Lattice("Lattice", [])
+    cell_1 = ap.Lattice("cell", [])
+    cell_2 = ap.Lattice("cell", [])
 
     with pytest.raises(ap.AmbiguousNameError):
         ap.Lattice("Lattice", [cell_1, cell_2])
+
+
+def test_indices():
+    e0 = ap.Element("e0", length=1)
+    e1 = ap.Element("e1", length=1)
+    e2 = ap.Element("e2", length=1)
+    l0 = ap.Lattice("l0", (e0, e1, e2))
+    assert [0] == l0.indices[e0]
+    assert [1] == l0.indices[e1]
+    assert [2] == l0.indices[e2]
+
+    l1 = ap.Lattice("l1", (e0, l0, e1, l0, e2))
+    # e0, e0, e1, e2, e1, e0, e1, e2, e2
+    #  0,  1,  2,  3,  4,  5,  6,  7,  8
+    assert [0, 1, 5] == l1.indices[e0]
+    assert [2, 4, 6] == l1.indices[e1]
+    assert [3, 7, 8] == l1.indices[e2]
