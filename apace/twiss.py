@@ -348,6 +348,14 @@ class Twiss:
     def _on_tune_fractional_changed(self):
         self._tune_fractional_needs_update = True
 
+    def chromaticity_x(self) -> float:
+        """Natural Horizontal Chromaticity. Depends on `step_size`"""
+        pass
+
+    def chromaticity_y(self) -> float:
+        """Natural Vertical Chromaticity. Depends on `step_size`"""
+        pass
+
     def beta_x_int(self, positions) -> np.ndarray:
         """Linear interpolated :attr:`beta_x` for given orbit positions.
 
