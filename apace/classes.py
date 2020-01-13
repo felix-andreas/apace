@@ -1,7 +1,5 @@
-from typing import List, Set, Dict, Iterable  # noqa: F401
-
 import inspect
-import weakref  # only tree should contain strong ref
+from typing import List, Set, Dict, List, Iterable
 from .utils import Signal, AmbiguousNameError
 
 
@@ -30,32 +28,24 @@ class Base:
     def __repr__(self):
         return self.name
 
-    def __str__(self):  # TODO: update function
+    def __str__(self):  # TODO: improve !!
         attributes = []
         signals = []
-        for name, attr in self.__dict__.items():
-            if name[0] == "_":
+        for name, obj in self.__dict__.items():
+            if name.startswith("_"):
                 continue
 
-            if isinstance(attr, Signal):
-                signals.append((name, str(attr)))
+            if isinstance(obj, Signal):
+                signals.append((name, str(obj)))
             else:
-                if isinstance(attr, weakref.WeakSet):
-                    string = f'{", ".join(e.name for e in attr):}'
-                else:
-                    string = str(attr)
-
-                attributes.append((name, string))
+                attributes.append((name, str(obj)))
 
         properties = []
         for name in dir(self.__class__):
-            attr = getattr(self.__class__, name)
-            if isinstance(attr, property):
-                attr = attr.fget(self)
-                if isinstance(attr, weakref.WeakSet):
-                    string = ", ".join(e.name for e in attr)
-                else:
-                    string = str(attr)
+            obj = getattr(self.__class__, name)
+            if isinstance(obj, property):
+                obj = obj.fget(self)
+                string = str(obj)
                 properties.append((name, string))
 
         return "\n".join(
@@ -253,31 +243,26 @@ class Lattice(Base):
     """Defines the order of elements in the accelerator.
 
     :param str name: Name of the lattice.
-    :param List[Union[Element, Lattice] tree: Nested tree of elements and lattices.
+    :param Tuple[Union[Element, Lattice] tree: Nested tree of elements and lattices.
     :param str description: A brief description of the element.
     """
 
-    def __init__(self, name, tree=None, description=None):
+    def __init__(self, name, tree, description=None):
         super().__init__(name, description)
-        self._tree = list()  # has strong links to objects
-        self.tree_changed: Signal = Signal()
-        """Gets emitted when the tree of element and lattices changes."""
-        if tree:
-            self.add(tree, pos=len(self.tree))
+        self._tree = tree
+        for obj in set(tree):
+            obj.parent_lattices.add(self)
 
-        # tree properties: # TODO: tree properties should be weak reference
-        # just clear tree properties when update needed!
+        # arrangement, positions, elements & sub_lattices are infered from self.tree
         self._arrangement = []
+        self._positions = {}
         self._elements = {}
         self._sub_lattices = {}
-        self._tree_properties_needs_update = True
-        self.tree_properties_changed: Signal = Signal(self.tree_changed)
-        """Gets emitted when one of the attributes arrangement, element or lattices changes."""
-        self.tree_properties_changed.connect(self._on_tree_properties_changed)
+        self._update_tree_properties()
 
         self._length = 0
         self._length_needs_update = True
-        self.length_changed: Signal = Signal(self.tree_changed)
+        self.length_changed: Signal = Signal()
         """Gets emitted when the length of lattice changes."""
         self.length_changed.connect(self._on_length_changed)
 
@@ -291,7 +276,6 @@ class Lattice(Base):
                 return self.elements[key]
             except KeyError:
                 return self.sub_lattices[key]
-
         else:
             return self.arrangement[key]
 
@@ -304,6 +288,7 @@ class Lattice(Base):
         """Length of the lattice."""
         if self._length_needs_update:
             self.update_length()
+
         return self._length
 
     def update_length(self):
@@ -311,6 +296,7 @@ class Lattice(Base):
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
+    # TODO: move to base class
     def _on_length_changed(self):
         self._length_needs_update = True
         for lattice in self.parent_lattices:
@@ -323,111 +309,62 @@ class Lattice(Base):
     @property
     def tree(self) -> List[Base]:  # do not set tree manually
         """The tree of objects defines the physical order of elements withing this lattice."""
-
         return self._tree
-
-    def add(self, new_objects, pos=None):
-        """Add objects to the object tree of the lattice.
-
-        :param new_objects: Objects which get added to the :attr:`tree`.
-        :type new_objects: Base or Iterable[Base]
-        :param pos: The position within the :attr:`tree` at which the new objects are inserted.
-                    If pos is None, objects are appended to the end of the lattice.
-        :type pos: int, optional
-        """
-        if isinstance(new_objects, Base):
-            new_objects = [new_objects]
-
-        if pos is not None:
-            self._tree[pos:pos] = new_objects
-        else:
-            self._tree.extend(new_objects)
-
-        for obj in set(new_objects):
-            obj.parent_lattices.add(self)
-
-        self.tree_changed()
-
-    def remove(self, pos, num=1):
-        """Remove objects from the objects tree of the lattice.
-
-        :param int pos: Position from which the objects are removed.
-        :param num: Number of objects to remove.
-        :type num: int, optional
-        """
-        if pos < 0:
-            end = len(self._tree) + pos + num
-        else:
-            end = pos + num
-
-        removed_objects = self.tree[pos:end]
-        self._tree[pos:end] = []
-        for obj in set(removed_objects):
-            if obj not in self._tree:
-                obj.parent_lattices.remove(self)
-
-        self.tree_changed()
 
     @property
     def arrangement(self) -> List[Element]:
         """Defines the physical order of elements. Corresponds to flattened tree."""
-        if self._tree_properties_needs_update:
-            self.update_tree_properties()
-
         return self._arrangement
+
+    @property
+    def positions(self) -> Dict[Element, List[float]]:
+        """A dict which contains the a `List` of positions for each element.
+           Can be thought of as inverse of arrangment"""
+        return self._positions
 
     @property
     def elements(self) -> Dict[str, Element]:
         """Contains all elements within this lattice."""
-        if self._tree_properties_needs_update:
-            self.update_tree_properties()
-
         return self._elements
 
     @property
     def sub_lattices(self) -> Dict[str, "Lattice"]:  # TODO: Python 3.7 change type hint
         """Contains all lattices within this lattice."""
-        if self._tree_properties_needs_update:
-            self.update_tree_properties()
-
         return self._sub_lattices
 
-    def update_tree_properties(self):
-        """Manually update the arrangement, elements and sub_lattices properties."""
-        self._arrangement.clear()
-        self._elements.clear()
-        self._sub_lattices.clear()
-        self._update_tree_properties(self.tree)
-        self._tree_properties_needs_update = False
+    def _update_tree_properties(self, tree=None, pos=0):
+        """A recursive helper function to update the tree properties."""
+        if tree is None:
+            tree = self._tree
 
-    def _update_tree_properties(self, tree):
-        """A recursive helper function for update_tree_properties."""
-        lattice = self._arrangement
+        arrangement = self._arrangement
+        positions = self._positions
         elements = self._elements
-        lattices = self._sub_lattices
+        sub_lattices = self._sub_lattices
         for obj in tree:
-            # TODO: obj = weakref.proxy(x) # all references should be weak!
             if isinstance(obj, Lattice):
-                value = lattices.get(obj.name)
+                value = sub_lattices.get(obj.name)
                 if value is None:
-                    lattices[obj.name] = obj
+                    sub_lattices[obj.name] = obj
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
 
-                self._update_tree_properties(obj.tree)
+                self._update_tree_properties(obj.tree, pos)
             else:
-                lattice.append(obj)
+                arrangement.append(obj)
+                pos += 1
+                try:
+                    positions[obj].append(pos)
+                except KeyError:
+                    positions[obj] = [pos]
+
                 value = elements.get(obj.name)
                 if value is None:
                     elements[obj.name] = obj
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
 
-    def _on_tree_properties_changed(self):
-        self._tree_properties_needs_update = True
-        for lattice in self.parent_lattices:
-            lattice.tree_properties_changed()
-
+    # TODO: improve !
     def print_tree(self):
         """Print the tree of objects."""
         self.depth = 0
@@ -460,7 +397,7 @@ class Lattice(Base):
 
     @classmethod
     def from_dict(cls, data):
-        """Creates a new Lattice object from a latticeJSON compliant dictionary."""
+        """Creates a new `Lattice` object from a latticeJSON compliant dictionary."""
 
         objects = {}  # dictionary for all objects (elements + lattices)
         for name, attributes in data["elements"].items():
@@ -470,13 +407,11 @@ class Lattice(Base):
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
 
+        # TODO: make sure sub_lattices are loaded in correct order
         sub_lattices = data["sub_lattices"]
         for name, tree_names in sub_lattices.items():
-            objects[name] = Lattice(name=name)
-
-        for name, tree_names in sub_lattices.items():
             tree = [objects[name] for name in tree_names]
-            objects[name].add(tree)
+            objects[name] = Lattice(name, tree)
 
         return Lattice(
             name=data["name"],
@@ -485,7 +420,7 @@ class Lattice(Base):
         )
 
     def as_dict(self):
-        """Serializes the lattice object into a latticeJSON compliant dictionary."""
+        """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
         for element in self.elements.values():
             attributes = {
