@@ -254,7 +254,7 @@ class Lattice(Base):
             obj.parent_lattices.add(self)
 
         # arrangement, positions, elements & sub_lattices are infered from self.tree
-        self._arrangement = [] # TODO: is an np.array better here?
+        self._arrangement = []  # TODO: is an np.array better here?
         self._indices = {}
         self._elements = {}
         self._sub_lattices = {}

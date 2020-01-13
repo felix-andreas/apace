@@ -43,4 +43,3 @@ def test_indices():
     assert [0, 1, 5] == l1.indices[e0]
     assert [2, 4, 6] == l1.indices[e1]
     assert [3, 7, 8] == l1.indices[e2]
-
