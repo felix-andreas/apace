@@ -15,12 +15,16 @@ apace/**/*.o
 apace/**/*.c
 
 
+# ignore examples subdir
+examples
+
 # Distribution / packaging
 .Python
 build/
 dist/
 sdist/
 wheels/
+pip-wheel-metadata
 *.egg
 *.egg-info/
 
