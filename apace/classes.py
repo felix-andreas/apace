@@ -284,8 +284,8 @@ class Lattice(Base):
         self._k1_array = None
         self._k1_array_needs_update = True
         """Gets emitted when the `k1_array` changes."""
-        #TODO: more specific dependecy
-        self.k1_array_changed: Signal = Signal( self.element_changed)
+        # TODO: more specific dependecy
+        self.k1_array_changed: Signal = Signal(self.element_changed)
         self.k1_array_changed.connect(self._on_k1_array_changed)
 
     def __getitem__(self, key):
