@@ -65,4 +65,3 @@ def test_print_objects():
     print()
     print(FODO_RING.arrangement[0], end="\n\n")
     print(FODO_RING.arrangement[1], end="\n\n")
-    print(FODO_RING)
