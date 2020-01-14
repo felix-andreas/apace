@@ -58,4 +58,3 @@ def test_print_tree():
     nested3 = ap.Lattice("nested3", [nested2])
     nested4 = ap.Lattice("nested4", 2 * [nested3])
     nested4.print_tree()
-
