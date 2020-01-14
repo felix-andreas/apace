@@ -1,4 +1,5 @@
 import inspect
+import sys
 from typing import List, Set, Dict, List, Iterable
 import numpy as np
 from .utils import Signal, AmbiguousNameError
@@ -30,7 +31,7 @@ class Base:
         return self.name
 
     def __str__(self):  # TODO: improve !!
-        attributes = []
+        attributes = [("type", self.__class__.__name__)]
         signals = []
         for name, obj in self.__dict__.items():
             if name.startswith("_"):
@@ -42,15 +43,14 @@ class Base:
                 attributes.append((name, str(obj)))
 
         properties = []
-        for name in dir(self.__class__):
-            obj = getattr(self.__class__, name)
+        for name, obj in self.__class__.__dict__.items():
             if isinstance(obj, property):
                 obj = obj.fget(self)
                 string = str(obj)
                 properties.append((name, string))
 
         return "\n".join(
-            f"{name:14}: {string}" for name, string in attributes + properties + signals
+            f"{name:16}: {string}" for name, string in attributes + properties + signals
         )
 
 
@@ -383,6 +383,7 @@ class Lattice(Base):
                     raise AmbiguousNameError(obj.name)
         return idx
 
+
     @property
     def angle_array(self) -> np.ndarray:
         """Numpy array which contains the angle for each element."""
@@ -434,35 +435,22 @@ class Lattice(Base):
         self._k1_array_needs_update = True
 
     # TODO: improve !
-    def print_tree(self):
-        """Print the tree of objects."""
-        self.depth = 0
-        self.filler = ""
-        self.start = "│   "
-        print(f"{self.name}")
-        self._print_tree(self)
-        del self.depth
-        del self.filler
-        del self.start
 
-    def _print_tree(self, lattice):
-        length = len(lattice.tree)
-        for i, x in enumerate(lattice.tree):
-            is_last = i == length - 1
-            fill = "└───" if is_last else "├───"
-            print(f"{self.filler}{fill} {x.name}")
-            if is_last and self.depth == 0:
-                self.start = "    "
-            if isinstance(x, Lattice):
-                self.depth += 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * (
-                    "    " if is_last else "│   "
-                )
-                self._print_tree(x)
-                self.depth -= 1
-                self.filler = self.start * (self.depth > 0) + (self.depth - 1) * (
-                    "    " if is_last else "│   "
-                )
+    def print_tree(self):
+        """Print the lattice as tree of objects. (Similar to unix tree command)"""
+        print(self._tree_as_string(self))
+
+    @staticmethod
+    def _tree_as_string(obj, prefix=""):
+        string = obj.name + "\n"
+        if isinstance(obj, Lattice):
+            for node in obj.tree[:-1]:
+                string += f"{prefix}├─── "
+                string += Lattice._tree_as_string(node, prefix + "│   ")
+
+            string += f"{prefix}└─── "
+            string += Lattice._tree_as_string(obj.tree[-1], prefix + "    ")
+        return string
 
     @classmethod
     def from_dict(cls, data):
@@ -471,7 +459,6 @@ class Lattice(Base):
         objects = {}  # dictionary for all objects (elements + lattices)
         for name, attributes in data["elements"].items():
             type_ = attributes.pop("type")
-            import sys
 
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)

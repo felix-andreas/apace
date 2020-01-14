@@ -1,7 +1,12 @@
 import numpy as np
 from math import pi
+import os
 import pytest
 import apace as ap
+
+BASE_PATH = os.path.dirname(__file__)
+FILE_PATH = os.path.join(BASE_PATH, "data", "lattices", "fodo_ring.json")
+FODO_RING = ap.load_lattice(FILE_PATH)
 
 
 def test_length_changed():
@@ -47,6 +52,7 @@ def test_indices():
     assert [3, 7, 8] == l1.indices[e2]
 
 
+
 def test_attribute_arrays():
     angle = pi / 8
     k1 = 2
@@ -62,3 +68,20 @@ def test_attribute_arrays():
     quad.k1 = k1
     assert np.array_equal([angle, 0], lattice.angle_array)
     assert np.array_equal([0, k1], lattice.k1_array)
+
+def test_print_tree():
+    cell = FODO_RING.tree[0]
+    nested1 = ap.Lattice("nested1", [cell])
+    nested2 = ap.Lattice("nested2", [nested1])
+    nested3 = ap.Lattice("nested3", [nested2])
+    nested4 = ap.Lattice("nested4", 2 * [nested3])
+    print(cell)
+
+    nested4.print_tree()
+
+
+def test_print_objects():
+    print()
+    print(FODO_RING.arrangement[0], end="\n\n")
+    print(FODO_RING.arrangement[1], end="\n\n")
+
