@@ -1,5 +1,6 @@
 import apace as ap
-from apace.plot import plot_lattice
+from apace.plot import plot_twiss, draw_lattice
+import matplotlib.pyplot as plt
 
 import os
 
@@ -8,9 +9,9 @@ file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
 
 
 def test_plot():
-    line = ap.load_lattice(file_path)
-    twiss = ap.Twiss(line)
-
-    plot_lattice(
-        twiss, line, eta_x_scale=1, path=os.path.join(dir_name, "/tmp/out.pdf")
-    )
+    lattice = ap.load_lattice(file_path)
+    twiss = ap.Twiss(lattice)
+    plot_twiss(twiss)
+    draw_lattice(lattice)
+    plt.tight_layout()
+    plt.savefig("/tmp/apace_test_plot.pdf")
