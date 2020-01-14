@@ -1,4 +1,5 @@
 import inspect
+import sys
 from typing import List, Set, Dict, List, Iterable
 from .utils import Signal, AmbiguousNameError
 
@@ -41,8 +42,7 @@ class Base:
                 attributes.append((name, str(obj)))
 
         properties = []
-        for name in dir(self.__class__):
-            obj = getattr(self.__class__, name)
+        for name, obj in self.__class__.__dict__.items():
             if isinstance(obj, property):
                 obj = obj.fget(self)
                 string = str(obj)
@@ -388,7 +388,6 @@ class Lattice(Base):
         objects = {}  # dictionary for all objects (elements + lattices)
         for name, attributes in data["elements"].items():
             type_ = attributes.pop("type")
-            import sys
 
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
