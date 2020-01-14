@@ -28,7 +28,6 @@ class MatrixMethod:
         self.velocity = velocity
 
         self.changed_elements = set()
-        self.lattice.tree_changed.connect(self._on_tree_change)
         self.lattice.element_changed.connect(self._on_element_changed)
 
         self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
@@ -36,14 +35,12 @@ class MatrixMethod:
 
         self._element_indices = {}
         self._element_indices_needs_update = True
-        self.element_indices_changed = Signal(self.lattice.tree_changed)
+        self.element_indices_changed = Signal(self.element_n_kicks_changed)
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_kicks = 0
         self._n_kicks_needs_update = True
-        self.n_kicks_changed = Signal(
-            self.lattice.tree_changed, self.element_n_kicks_changed
-        )
+        self.n_kicks_changed = Signal(self.element_n_kicks_changed)
         self.n_kicks_changed.connect(self._on_n_kicks_changed)
 
         self._step_size = np.empty(0)
@@ -78,10 +75,6 @@ class MatrixMethod:
         )
 
         self._one_turn_matrix = np.empty(0)
-
-    def _on_tree_change(self):
-        self._transfer_matrices_needs_full_update = True
-        self.transfer_matrices_changed()
 
     def _on_element_changed(self, element):
         self.changed_elements.add(element)
@@ -142,7 +135,7 @@ class MatrixMethod:
 
     @property
     def step_size(self) -> np.ndarray:
-        """Same dimension as transfer_matrices. Contains the step_size for each point."""
+        """Contains the step_size for each point. Has length of `n_kicks`"""
         if self._step_size_needs_update:
             self.update_step_size()
 
@@ -166,7 +159,7 @@ class MatrixMethod:
 
     @property
     def s(self) -> np.ndarray:
-        """Same dimension as transfer_matrices. Contains the orbit position s for each point."""
+        """Contains the orbit position s for each point. Has length of `n_kicks + 1`."""
         if self._s_needs_update:
             self.update_s()
 
@@ -179,9 +172,7 @@ class MatrixMethod:
             self._s = np.empty(points)
             self._s[0] = 0
 
-        np.add.accumulate(
-            self.step_size, out=self._s[1:]
-        )  # s corresponds to the orbit position
+        np.add.accumulate(self.step_size, out=self._s[1:])
 
     def _on_s_changed(self):
         self._s_needs_update = True
