@@ -383,7 +383,6 @@ class Lattice(Base):
                     raise AmbiguousNameError(obj.name)
         return idx
 
-
     @property
     def angle_array(self) -> np.ndarray:
         """Numpy array which contains the angle for each element."""

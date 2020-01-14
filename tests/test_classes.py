@@ -52,7 +52,6 @@ def test_indices():
     assert [3, 7, 8] == l1.indices[e2]
 
 
-
 def test_attribute_arrays():
     angle = pi / 8
     k1 = 2
@@ -69,6 +68,7 @@ def test_attribute_arrays():
     assert np.array_equal([angle, 0], lattice.angle_array)
     assert np.array_equal([0, k1], lattice.k1_array)
 
+
 def test_print_tree():
     cell = FODO_RING.tree[0]
     nested1 = ap.Lattice("nested1", [cell])
@@ -84,4 +84,3 @@ def test_print_objects():
     print()
     print(FODO_RING.arrangement[0], end="\n\n")
     print(FODO_RING.arrangement[1], end="\n\n")
-
