@@ -1,5 +1,6 @@
 import inspect
 from typing import List, Set, Dict, List, Iterable
+import numpy as np
 from .utils import Signal, AmbiguousNameError
 
 
@@ -161,7 +162,7 @@ class Dipole(Element):
 
     @radius.setter
     def radius(self, value):
-        self.angle = value
+        self.angle = self.length / value
 
 
 class Quadrupole(Element):
@@ -243,7 +244,8 @@ class Lattice(Base):
     """Defines the order of elements in the accelerator.
 
     :param str name: Name of the lattice.
-    :param Tuple[Union[Element, Lattice] tree: Nested tree of elements and lattices.
+    :param tree: Nested tree of elements and lattices.
+    :type tree: Tuple[Union[Element, Lattice]]
     :param str description: A brief description of the element.
     """
 
@@ -266,9 +268,25 @@ class Lattice(Base):
         """Gets emitted when the length of lattice changes."""
         self.length_changed.connect(self._on_length_changed)
 
+        self.n_elements = len(self.arrangement)
+        """The number of elements within this lattice."""
+
         self.element_changed: Signal = Signal()
         """Gets emitted when an attribute of an element within this lattice changes."""
         self.element_changed.connect(self._on_element_changed)
+
+        self._angle_array = None
+        self._angle_array_needs_update = True
+        """Gets emitted when the `angle_array` changes."""
+        # TODO: more specific dependecy
+        self.angle_array_changed: Signal = Signal(self.element_changed)
+        self.angle_array_changed.connect(self._on_angle_array_changed)
+        self._k1_array = None
+        self._k1_array_needs_update = True
+        """Gets emitted when the `k1_array` changes."""
+        #TODO: more specific dependecy
+        self.k1_array_changed: Signal = Signal( self.element_changed)
+        self.k1_array_changed.connect(self._on_k1_array_changed)
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -364,6 +382,56 @@ class Lattice(Base):
                 elif obj is not value:
                     raise AmbiguousNameError(obj.name)
         return idx
+
+    @property
+    def angle_array(self) -> np.ndarray:
+        """Numpy array which contains the angle for each element."""
+        if self._angle_array_needs_update == True:
+            self.update_angle_array()
+        return self._angle_array
+
+    def update_angle_array(self):
+        """Manually update the `angle_array`"""
+        if self._angle_array is None:
+            self._angle_array = np.empty(self.n_elements)
+
+        for element in self.elements.values():
+            try:
+                angle = element.angle
+            except AttributeError:
+                angle = 0
+
+            self._angle_array[self.indices[element]] = angle
+
+        self._angle_array_needs_update = False
+
+    def _on_angle_array_changed(self, elements):
+        self._angle_array_needs_update = True
+
+    @property
+    def k1_array(self):
+        """Numpy array which contains the k1 for each element."""
+        if self._k1_array_needs_update == True:
+            self.update_k1_array()
+        return self._k1_array
+
+    def update_k1_array(self):
+        """Manually update the `k1_array`."""
+        if self._k1_array is None:
+            self._k1_array = np.empty(self.n_elements)
+
+        for element in self.elements.values():
+            try:
+                k1 = element.k1
+            except AttributeError:
+                k1 = 0
+
+            self._k1_array[self.indices[element]] = k1
+
+        self._k1_array_needs_update = False
+
+    def _on_k1_array_changed(self, element):
+        self._k1_array_needs_update = True
 
     # TODO: improve !
     def print_tree(self):

@@ -36,7 +36,7 @@ q2 = ap.Quadrupole('Q2', length=0.4, k1=-1.2)
 fodo_cell = ap.Lattice('FODO', [q1, d1, b1, d1, q2, d1, b1, d1, q1])
 fodo_ring = ap.Lattice('RING', [fodo_cell] * 8)
 ```
- 
+
 Calculate the Twiss parameters:
 ```python
 twiss = ap.Twiss(fodo_ring)

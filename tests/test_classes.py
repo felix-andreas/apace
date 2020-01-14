@@ -1,5 +1,7 @@
-import apace as ap
+import numpy as np
+from math import pi
 import pytest
+import apace as ap
 
 
 def test_length_changed():
@@ -29,9 +31,9 @@ def test_unique_names():
 
 
 def test_indices():
-    e0 = ap.Element("e0", length=1)
-    e1 = ap.Element("e1", length=1)
-    e2 = ap.Element("e2", length=1)
+    e0 = ap.Drift("e0", length=1)
+    e1 = ap.Drift("e1", length=1)
+    e2 = ap.Drift("e2", length=1)
     l0 = ap.Lattice("l0", (e0, e1, e2))
     assert [0] == l0.indices[e0]
     assert [1] == l0.indices[e1]
@@ -43,3 +45,20 @@ def test_indices():
     assert [0, 1, 5] == l1.indices[e0]
     assert [2, 4, 6] == l1.indices[e1]
     assert [3, 7, 8] == l1.indices[e2]
+
+
+def test_attribute_arrays():
+    angle = pi / 8
+    k1 = 2
+    dipole = ap.Dipole("d", length=2, angle=angle)
+    quad = ap.Quadrupole("q", length=1, k1=k1)
+    lattice = ap.Lattice("Lattice", (dipole, quad))
+    assert np.array_equal([angle, 0], lattice.angle_array)
+    assert np.array_equal([0, k1], lattice.k1_array)
+
+    angle = pi / 4
+    k1 = 4
+    dipole.angle = angle
+    quad.k1 = k1
+    assert np.array_equal([angle, 0], lattice.angle_array)
+    assert np.array_equal([0, k1], lattice.k1_array)
