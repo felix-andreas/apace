@@ -1,5 +1,10 @@
+import os
 import apace as ap
 import pytest
+
+BASE_PATH = os.path.dirname(__file__)
+FILE_PATH = os.path.join(BASE_PATH, "data", "lattices", "fodo_ring.json")
+FODO_RING = ap.load_lattice(FILE_PATH)
 
 
 def test_length_changed():
@@ -43,3 +48,20 @@ def test_indices():
     assert [0, 1, 5] == l1.indices[e0]
     assert [2, 4, 6] == l1.indices[e1]
     assert [3, 7, 8] == l1.indices[e2]
+
+
+def test_print_tree():
+    cell = FODO_RING.tree[0]
+    nested1 = ap.Lattice("nested1", [cell])
+    nested2 = ap.Lattice("nested2", [nested1])
+    nested3 = ap.Lattice("nested3", [nested2])
+    nested4 = ap.Lattice("nested4", 2 * [nested3])
+    print(cell)
+
+    nested4.print_tree()
+
+
+def test_print_objects():
+    print()
+    print(FODO_RING.arrangement[0], end="\n\n")
+    print(FODO_RING.arrangement[1], end="\n\n")
