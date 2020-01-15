@@ -1,6 +1,6 @@
 import inspect
 import sys
-from typing import List, Set, Dict, List, Iterable
+from typing import List, Dict, Set, Union
 from .utils import Signal, AmbiguousNameError
 
 
@@ -29,7 +29,7 @@ class Base:
     def __repr__(self):
         return self.name
 
-    def __str__(self):  # TODO: improve !!
+    def __str__(self):
         attributes = [("type", self.__class__.__name__)]
         signals = []
         for name, obj in self.__dict__.items():
@@ -253,12 +253,12 @@ class Lattice(Base):
         for obj in set(tree):
             obj.parent_lattices.add(self)
 
-        # arrangement, positions, elements & sub_lattices are infered from self.tree
+        self._objects = {}
+        self._elements = set()
+        self._sub_lattices = set()
         self._arrangement = []  # TODO: is an np.array better here?
         self._indices = {}
-        self._elements = {}
-        self._sub_lattices = {}
-        self._update_tree_properties()
+        self._init_tree_properties()
 
         self._length = 0
         self._length_needs_update = True
@@ -272,12 +272,11 @@ class Lattice(Base):
 
     def __getitem__(self, key):
         if isinstance(key, str):
-            try:
-                return self.elements[key]
-            except KeyError:
-                return self.sub_lattices[key]
-        else:
+            return self._objects[key]
+        elif isinstance(key, int) or isinstance(key, slice):
             return self.arrangement[key]
+        elif isinstance(key, Base):
+            return self.indices[Base]
 
     def __del__(self):
         for obj in self.tree:
@@ -311,6 +310,11 @@ class Lattice(Base):
         return self._tree
 
     @property
+    def objects(self) -> Dict[str, Union[Element, "Lattice"]]:
+        """A Mapping of object names to the given `Element` or `Lattice`."""
+        return self._objects
+
+    @property
     def arrangement(self) -> List[Element]:
         """Defines the physical order of elements. Corresponds to flattened tree."""
         return self._arrangement
@@ -322,17 +326,17 @@ class Lattice(Base):
         return self._indices
 
     @property
-    def elements(self) -> Dict[str, Element]:
+    def elements(self) -> Set[Element]:
         """Contains all elements within this lattice."""
         return self._elements
 
     @property
-    def sub_lattices(self) -> Dict[str, "Lattice"]:  # TODO: Python 3.7 change type hint
+    def sub_lattices(self) -> Set["Lattice"]:  # TODO: Python 3.7 change type hint
         """Contains all lattices within this lattice."""
         return self._sub_lattices
 
-    def _update_tree_properties(self, tree=None, idx=0):
-        """A recursive helper function to update the tree properties."""
+    def _init_tree_properties(self, tree=None, idx=0):
+        """A recursive helper function to initialize the tree properties."""
         if tree is None:
             tree = self._tree
 
@@ -340,16 +344,19 @@ class Lattice(Base):
         indices = self._indices
         elements = self._elements
         sub_lattices = self._sub_lattices
+        objects = self._objects
         for obj in tree:
-            if isinstance(obj, Lattice):
-                value = sub_lattices.get(obj.name)
-                if value is None:
-                    sub_lattices[obj.name] = obj
-                elif obj is not value:
-                    raise AmbiguousNameError(obj.name)
+            value = objects.get(obj.name)
+            if value is None:
+                objects[obj.name] = obj
+            elif obj is not value:
+                raise AmbiguousNameError(obj.name)
 
-                idx = self._update_tree_properties(obj.tree, idx)
+            if isinstance(obj, Lattice):
+                sub_lattices.add(obj)
+                idx = self._init_tree_properties(obj.tree, idx)
             else:
+                elements.add(obj)
                 arrangement.append(obj)
                 try:
                     indices[obj].append(idx)
@@ -357,12 +364,6 @@ class Lattice(Base):
                     indices[obj] = [idx]
 
                 idx += 1
-
-                value = elements.get(obj.name)
-                if value is None:
-                    elements[obj.name] = obj
-                elif obj is not value:
-                    raise AmbiguousNameError(obj.name)
         return idx
 
     def print_tree(self):
@@ -407,7 +408,7 @@ class Lattice(Base):
     def as_dict(self):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
-        for element in self.elements.values():
+        for element in self.elements:
             attributes = {
                 key: getattr(element, key)
                 for (key, value) in inspect.signature(
@@ -420,7 +421,7 @@ class Lattice(Base):
 
         sub_lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
-            for lattice in self.sub_lattices.values()
+            for lattice in self.sub_lattices
         }
 
         return dict(

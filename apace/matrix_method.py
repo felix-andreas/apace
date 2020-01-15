@@ -147,7 +147,7 @@ class MatrixMethod:
             self._step_size = np.empty(self.n_kicks)
             self._step_size[0] = 0
 
-        for element in self.lattice.elements.values():
+        for element in self.lattice.elements:
             self._step_size[
                 self.element_indices[element]
             ] = element.length / self.get_element_n_kicks(element)
@@ -191,7 +191,7 @@ class MatrixMethod:
             self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
 
         if self._transfer_matrices_needs_full_update:
-            elements = self.lattice.elements.values()
+            elements = self.lattice.elements
         else:
             elements = self.changed_elements
 
@@ -205,9 +205,9 @@ class MatrixMethod:
             velocity = self.velocity
             if velocity < C:
                 gamma = 1 / np.sqrt(1 - velocity ** 2 / C_SQUARED)
-                el_45 = step_size / gamma ** 2  # noqa: F841
+                el_45 = step_size / gamma ** 2
             else:
-                el_45 = 0  # noqa: F841
+                el_45 = 0
 
             if isinstance(element, Quadrupole) and element.k1:  # Quadrupole with k != 0
                 sqk = np.sqrt(np.absolute(element.k1))
