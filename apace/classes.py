@@ -34,6 +34,9 @@ class Base:
         properties = []
         signals = []
         for key in dir(self):
+            if key.startswith("_"):
+                continue
+
             obj = getattr(self, key)
             if isinstance(obj, property):
                 properties.append(key, str(obj))
