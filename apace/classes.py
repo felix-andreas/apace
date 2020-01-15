@@ -31,22 +31,19 @@ class Base:
 
     def __str__(self):
         attributes = [("type", self.__class__.__name__)]
+        properties = []
         signals = []
-        for name, obj in self.__dict__.items():
-            if name.startswith("_"):
+        for key in dir(self):
+            if key.startswith("_"):
                 continue
 
-            if isinstance(obj, Signal):
-                signals.append((name, str(obj)))
-            else:
-                attributes.append((name, str(obj)))
-
-        properties = []
-        for name, obj in self.__class__.__dict__.items():
+            obj = getattr(self, key)
             if isinstance(obj, property):
-                obj = obj.fget(self)
-                string = str(obj)
-                properties.append((name, string))
+                properties.append(key, str(obj))
+            elif isinstance(obj, Signal):
+                signals.append((key, str(obj)))
+            else:
+                attributes.append((key, str(obj)))
 
         return "\n".join(
             f"{name:16}: {string}" for name, string in attributes + properties + signals
