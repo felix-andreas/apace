@@ -82,12 +82,13 @@ class MatrixTracking:
 
     def update_particle_trajectories(self):
         n_kicks = self.matrix_method.n_kicks
+        n_points = self.matrix_method.n_points
         turns = self.turns
         position = self.positions
         initial_distribution = self.initial_distribution
         matrix_array = self.matrix_method.transfer_matrices
 
-        n = turns if position is not None else turns * n_kicks + 1
+        n = turns if position is not None else turns * n_points
         if self._orbit_position.size != n:
             self._orbit_position = np.empty(n)
             self._particle_trajectories = np.empty((n, *initial_distribution.shape))
@@ -109,10 +110,10 @@ class MatrixTracking:
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
-            trajectories[1 : n_kicks + 1] = np.dot(acc_array, initial_distribution)
-            orbit_position[0 : n_kicks + 1] = self.matrix_method.s
+            trajectories[1:n_points] = np.dot(acc_array, initial_distribution)
+            orbit_position[0:n_points] = self.matrix_method.s
             for i in range(1, turns):
-                idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
+                idx = slice(i * n_points, (i + 1) * n_points)
                 trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:

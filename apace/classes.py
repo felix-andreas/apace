@@ -157,7 +157,16 @@ class Dipole(Element):
 
     @radius.setter
     def radius(self, value):
-        self.angle = value
+        self.angle = self.length / value
+
+    @property
+    def k0(self) -> float:
+        """Geometric dipole strength or curvature of radius (m)."""
+        return self.angle / self.length
+
+    @k0.setter
+    def k0(self, value):
+        self.angle = value * self.length
 
 
 class Quadrupole(Element):
@@ -328,18 +337,13 @@ class Lattice(Base):
             lattice.element_changed(element, attribute)
 
     @property
-    def tree(self) -> List[Base]:  # do not set tree manually
-        """The tree of objects defines the physical order of elements withing this lattice."""
+    def tree(self) -> List[Base]:
+        """List of elements and sub-lattices in physical order."""
         return self._tree
 
     @property
-    def objects(self) -> Dict[str, Union[Element, "Lattice"]]:
-        """A Mapping of object names to the given `Element` or `Lattice`."""
-        return self._objects
-
-    @property
     def arrangement(self) -> List[Element]:
-        """Defines the physical order of elements. Corresponds to flattened tree."""
+        """List of elements in physical order. (Flattend :attr:`tree`)"""
         return self._arrangement
 
     @property
@@ -349,13 +353,18 @@ class Lattice(Base):
         return self._indices
 
     @property
+    def objects(self) -> Dict[str, Union[Element, "Lattice"]]:
+        """A Mapping from names to the given `Element` or `Lattice` object."""
+        return self._objects
+
+    @property
     def elements(self) -> Set[Element]:
-        """Contains all elements within this lattice."""
+        """Unordered set of all elements within this lattice."""
         return self._elements
 
     @property
     def sub_lattices(self) -> Set["Lattice"]:  # TODO: Python 3.7 change type hint
-        """Contains all lattices within this lattice."""
+        """Unordered set of all sub-lattices within this lattice."""
         return self._sub_lattices
 
     def print_tree(self):
@@ -401,12 +410,8 @@ class Lattice(Base):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
         for element in self.elements:
-            attributes = {
-                key: getattr(element, key)
-                for (key, value) in inspect.signature(
-                    element.__class__
-                ).parameters.items()
-            }
+            parameters = inspect.signature(element.__class__).parameters.items()
+            attributes = {key: getattr(element, key) for (key, value) in parameters}
             attributes.pop("name")
             elements_dict[element.name] = attributes
             elements_dict[element.name]["type"] = element.__class__.__name__
