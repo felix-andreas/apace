@@ -58,6 +58,8 @@ class MatrixMethod:
         self._transfer_matrices = np.empty(0)
         self._transfer_matrices_needs_full_update = True
         self.transfer_matrices_changed = Signal()
+        self._angle = np.empty(0)
+        self._k1 = np.empty(0)
 
         self._start_index = start_index
         self._start_position_changed = Signal()
@@ -76,7 +78,7 @@ class MatrixMethod:
 
         self._one_turn_matrix = np.empty(0)
 
-    def _on_element_changed(self, element):
+    def _on_element_changed(self, element, attribute):
         self.changed_elements.add(element)
         self.transfer_matrices_changed()
 
@@ -147,7 +149,7 @@ class MatrixMethod:
             self._step_size = np.empty(self.n_kicks)
             self._step_size[0] = 0
 
-        for element in self.lattice.elements.values():
+        for element in self.lattice.elements:
             self._step_size[
                 self.element_indices[element]
             ] = element.length / self.get_element_n_kicks(element)
@@ -189,9 +191,11 @@ class MatrixMethod:
         """Manually update the transfer_matrices."""
         if self._transfer_matrices.shape[0] != self.n_kicks:
             self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
+            self._angle = np.empty(self.n_kicks)
+            self._k1 = np.empty(self.n_kicks)
 
         if self._transfer_matrices_needs_full_update:
-            elements = self.lattice.elements.values()
+            elements = self.lattice.elements
         else:
             elements = self.changed_elements
 
@@ -205,18 +209,20 @@ class MatrixMethod:
             velocity = self.velocity
             if velocity < C:
                 gamma = 1 / np.sqrt(1 - velocity ** 2 / C_SQUARED)
-                el_45 = step_size / gamma ** 2  # noqa: F841
+                el_45 = step_size / gamma ** 2
             else:
-                el_45 = 0  # noqa: F841
+                el_45 = 0
 
-            if isinstance(element, Quadrupole) and element.k1:  # Quadrupole with k != 0
-                sqk = np.sqrt(np.absolute(element.k1))
+            if isinstance(element, Quadrupole) and element.k1:
+                angle = 0
+                k1 = element.k1
+                sqk = np.sqrt(np.absolute(k1))
                 om = sqk * step_size
                 sin = np.sin(om)
                 cos = np.cos(om)
                 sinh = np.sinh(om)
                 cosh = np.cosh(om)
-                if element.k1 > 0:  # k > horizontal focusing
+                if k1 > 0:  # k1 > horizontal focusing
                     matrix_array[pos] = [
                         [cos, 1 / sqk * sin, 0, 0, 0, 0],
                         [-sqk * sin, cos, 0, 0, 0, 0],
@@ -225,7 +231,7 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1],
                     ]
-                else:  # k < vertical focusing
+                else:  # k1 < vertical focusing
                     matrix_array[pos] = [
                         [cosh, 1 / sqk * sinh, 0, 0, 0, 0],
                         [sqk * sinh, cosh, 0, 0, 0, 0],
@@ -234,17 +240,17 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1],
                     ]
-            elif (
-                isinstance(element, Dipole) and element.angle
-            ):  # Dipole with angle != 0
+            elif isinstance(element, Dipole) and element.angle:
+                angle = element.angle
+                k1 = 0
                 phi = step_size / element.radius
                 sin = np.sin(phi)
                 cos = np.cos(phi)
                 radius = element.radius
-                kappa_x = 1 / radius
+                kappa_0x = 1 / radius
                 matrix_array[pos] = [
-                    [cos, element.radius * sin, 0, 0, 0, element.radius * (1 - cos)],
-                    [-kappa_x * sin, cos, 0, 0, 0, sin],
+                    [cos, radius * sin, 0, 0, 0, radius * (1 - cos)],
+                    [-kappa_0x * sin, cos, 0, 0, 0, sin],
                     [0, 0, 1, step_size, 0, 0],
                     [0, 0, 0, 1, 0, 0],
                     [-sin, (cos - 1) * radius, 0, 0, 1, (sin - phi) * radius],
@@ -252,7 +258,7 @@ class MatrixMethod:
                 ]
 
                 if element.e1:
-                    tan_r1 = np.tan(element.e1) / element.radius
+                    tan_r1 = np.tan(element.e1) / radius
                     matrix_edge_1 = IDENTITY.copy()
                     matrix_edge_1[1, 0], matrix_edge_1[3, 2] = tan_r1, -tan_r1
                     matrix_array[pos[::n_kicks]] = np.dot(
@@ -260,16 +266,21 @@ class MatrixMethod:
                     )
 
                 if element.e2:
-                    tan_r2 = np.tan(element.e2) / element.radius
+                    tan_r2 = np.tan(element.e2) / radius
                     matrix_edge_2 = IDENTITY.copy()
                     matrix_edge_2[1, 0], matrix_edge_2[3, 2] = tan_r2, -tan_r2
                     matrix_array[pos[n_kicks - 1 :: n_kicks]] = np.dot(
                         matrix_edge_2, matrix_array[pos[-1]]
                     )
             else:  # Drifts and remaining elements
+                angle = 0
+                k1 = 0
                 matrix = IDENTITY.copy()
                 matrix[0, 1] = matrix[2, 3] = step_size
                 matrix_array[pos] = matrix
+
+            self._angle[pos] = angle
+            self._k1[pos] = k1
 
         self.changed_elements.clear()
         self._transfer_matrices_needs_full_update = False
