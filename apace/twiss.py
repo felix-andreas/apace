@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import integrate
+from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, accumulate_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
@@ -23,39 +23,53 @@ class Twiss(MatrixMethod):
         self.lattice = lattice
 
         self._start_idx = start_idx
-        self.start_idx_changed = Signal()
+        self.start_idx_changed = Signal()  # TODO: is currently unused
+        """Gets emitted when the start index changes"""
 
+        self.one_turn_matrix_changed = Signal(
+            self.start_idx_changed, self.transfer_matrices_changed
+        )
+        """Gets emitted when the one turn matrix changes."""
+        self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
+        self._one_turn_matrix_needs_update = True
         self._one_turn_matrix = np.empty(0)
         self._accumulated_array = np.empty(0)
         self._term_x = None
         self._term_y = None
-        self.one_turn_matrix_changed = Signal(
-            self.start_idx_changed, self.transfer_matrices_changed
-        )
-        self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
-        self._one_turn_matrix_needs_update = True
 
-        self._initial_twiss = np.empty(8)
-        self._twiss_array = np.empty(0)
         self.twiss_array_changed = Signal(self.one_turn_matrix_changed)
+        """Gets emitted when the twiss functions change."""
         self.twiss_array_changed.connect(self._on_twiss_array_changed)
         self._twiss_array_needs_update = True
+        self._twiss_array = np.empty(0)
+        self._initial_twiss = np.empty(8)
 
-        self._tune_fractional_needs_update = True
+        self.psi_changed = Signal(self.twiss_array_changed)
+        """Gets emitted when the betatron phase changes."""
+        self.psi_changed.connect(self._on_psi_changed)
+        self._psi_needs_update = True
+        self._psi_x = np.empty(0)
+        self._psi_y = np.empty(0)
+        self._tune_x = None
+        self._tune_y = None
+
         self.tune_fractional_changed = Signal(self.one_turn_matrix_changed)
+        """Gets emitted when the fractional tune changes."""
         self.tune_fractional_changed.connect(self._on_tune_fractional_changed)
+        self._tune_fractional_needs_update = True
         self._tune_x_fractional = None
         self._tune_y_fractional = None
         self._tune_x_fractional_hz = None
         self._tune_y_fractional_hz = None
 
-        self._psi_needs_update = True
-        self.psi_changed = Signal(self.twiss_array_changed)
-        self.psi_changed.connect(self._on_psi_changed)
-        self._psi_x = np.empty(0)
-        self._psi_y = np.empty(0)
-        self._tune_x = None
-        self._tune_y = None
+        self.chromaticity_changed = Signal(
+            self.transfer_matrices_changed, self.twiss_array_changed
+        )
+        self.tune_fractional_changed.connect(self._on_chromaticity_changed)
+        """Gets emitted when the natural chormaticity changes."""
+        self._chromaticity_needs_update = True
+        self._chromaticity_x = None
+        self._chromaticity_y = None
 
     @property
     def start_idx(self) -> int:
@@ -78,7 +92,6 @@ class Twiss(MatrixMethod):
         """Contains accumulated transfer matrices."""
         if self._one_turn_matrix_needs_update:
             self.update_one_turn_matrix()
-
         return self._accumulated_array
 
     @property
@@ -86,7 +99,6 @@ class Twiss(MatrixMethod):
         """The transfer matrix for a full turn."""
         if self._one_turn_matrix_needs_update:
             self.update_one_turn_matrix()
-
         return self._one_turn_matrix
 
     @property
@@ -96,7 +108,6 @@ class Twiss(MatrixMethod):
         If :attr:`term_x` > 0, this means that there exists a periodic solution within the horizontal plane."""
         if self._one_turn_matrix_needs_update:
             self.update_one_turn_matrix()
-
         return self._term_x
 
     @property
@@ -144,7 +155,6 @@ class Twiss(MatrixMethod):
         """Array containing the initial twiss parameter."""
         if self._twiss_array_needs_update:
             self.update_twiss_array()
-
         return self._initial_twiss
 
     @property
@@ -152,7 +162,6 @@ class Twiss(MatrixMethod):
         """Contains the twiss parameter."""
         if self._twiss_array_needs_update:
             self.update_twiss_array()
-
         return self._twiss_array
 
     def update_twiss_array(self):
@@ -282,9 +291,9 @@ class Twiss(MatrixMethod):
         beta_x_inverse = 1 / self.beta_x
         beta_y_inverse = 1 / self.beta_y
         # TODO: use faster integration!
-        # TODO: question: is pos=0 weighted doubled because start/end are same point
-        self._psi_x = integrate.cumtrapz(beta_x_inverse, self.s, initial=0)
-        self._psi_y = integrate.cumtrapz(beta_y_inverse, self.s, initial=0)
+        # TODO: question: is pos=0 weighted doubled because start/end are same point?
+        self._psi_x = cumtrapz(beta_x_inverse, self.s, initial=0)
+        self._psi_y = cumtrapz(beta_y_inverse, self.s, initial=0)
         self._tune_x = self._psi_x[-1] / TWO_PI
         self._tune_y = self._psi_y[-1] / TWO_PI
         self._psi_needs_update = False
@@ -299,7 +308,6 @@ class Twiss(MatrixMethod):
         """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
-
         return self._tune_x_fractional
 
     @property
@@ -309,7 +317,6 @@ class Twiss(MatrixMethod):
         """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
-
         return self._tune_y_fractional
 
     @property
@@ -317,7 +324,6 @@ class Twiss(MatrixMethod):
         """Fractional part of the horizontal tune in Hz."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
-
         return self._tune_x_fractional_hz
 
     @property
@@ -325,7 +331,6 @@ class Twiss(MatrixMethod):
         """Fractional part of the vertical tune in Hz."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
-
         return self._tune_y_fractional_hz
 
     def update_fractional_tune(self):
@@ -340,6 +345,29 @@ class Twiss(MatrixMethod):
 
     def _on_tune_fractional_changed(self):
         self._tune_fractional_needs_update = True
+
+    @property
+    def chromaticity_x(self) -> float:
+        """Natural Horizontal Chromaticity. Depends on `step_size`"""
+        if self._chromaticity_needs_update:
+            self.update_chromaticity()
+        return self._chromaticity_x
+
+    @property
+    def chromaticity_y(self) -> float:
+        """Natural Vertical Chromaticity. Depends on `step_size`"""
+        if self._chromaticity_needs_update:
+            self.update_chromaticity()
+        return self._chromaticity_y
+
+    def update_chromaticity(self):
+        """Manually update the natural chromaticity."""
+        const = 1 / 4 / np.pi
+        self._chromaticity_x = -const * trapz(self.k1 * self.beta_x[1:], self.s[1:])
+        self._chromaticity_y = +const * trapz(self.k1 * self.beta_y[1:], self.s[1:])
+
+    def _on_chromaticity_changed(self):
+        self._chromaticity_needs_update = True
 
     def beta_x_int(self, positions) -> np.ndarray:
         """Linear interpolated :attr:`beta_x` for given orbit positions.

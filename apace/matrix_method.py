@@ -332,7 +332,6 @@ class MatrixMethod:
         """The accumulated transfer matrices starting from start_index."""
         if self._transfer_matrices_acc_needs_update:
             self.update_transfer_matrices_acc()
-
         return self._transfer_matrices_acc
 
     def update_transfer_matrices_acc(self):
