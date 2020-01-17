@@ -218,7 +218,6 @@ class MatrixMethod:
                 k1 = element.k1
                 sqk = np.sqrt(np.absolute(k1))
                 om = sqk * step_size
-                print(element.name, k1, sqk)
                 sin = np.sin(om)
                 cos = np.cos(om)
                 sinh = np.sinh(om)

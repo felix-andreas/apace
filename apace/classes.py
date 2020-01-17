@@ -358,37 +358,6 @@ class Lattice(Base):
         """Contains all lattices within this lattice."""
         return self._sub_lattices
 
-    def _init_tree_properties(self, tree=None, idx=0):
-        """A recursive helper function to initialize the tree properties."""
-        if tree is None:
-            tree = self._tree
-
-        arrangement = self._arrangement
-        indices = self._indices
-        elements = self._elements
-        sub_lattices = self._sub_lattices
-        objects = self._objects
-        for obj in tree:
-            value = objects.get(obj.name)
-            if value is None:
-                objects[obj.name] = obj
-            elif obj is not value:
-                raise AmbiguousNameError(obj.name)
-
-            if isinstance(obj, Lattice):
-                sub_lattices.add(obj)
-                idx = self._init_tree_properties(obj.tree, idx)
-            else:
-                elements.add(obj)
-                arrangement.append(obj)
-                try:
-                    indices[obj].append(idx)
-                except KeyError:
-                    indices[obj] = [idx]
-
-                idx += 1
-        return idx
-
     def print_tree(self):
         """Print the lattice as tree of objects. (Similar to unix tree command)"""
         print(self._tree_as_string(self))
