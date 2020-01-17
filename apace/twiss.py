@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.integrate import cumtrapz
+from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, accumulate_array
 from .matrix_method import MatrixMethod
 from .utils import Signal
@@ -346,12 +346,14 @@ class Twiss(MatrixMethod):
     def _on_tune_fractional_changed(self):
         self._tune_fractional_needs_update = True
 
+    @property
     def chromaticity_x(self) -> float:
         """Natural Horizontal Chromaticity. Depends on `step_size`"""
         if self._chromaticity_needs_update:
             self.update_chromaticity()
         return self._chromaticity_x
 
+    @property
     def chromaticity_y(self) -> float:
         """Natural Vertical Chromaticity. Depends on `step_size`"""
         if self._chromaticity_needs_update:
@@ -360,9 +362,9 @@ class Twiss(MatrixMethod):
 
     def update_chromaticity(self):
         """Manually update the natural chromaticity."""
-        const = -1 / 4 / np.pi
-        self._chromaticity_x = const * cumtrapz(self.k1 * self.beta_x[1:], self.s)
-        self._chromaticity_y = const * cumtrapz(self.k1 * self.beta_y[1:], self.s)
+        const = 1 / 4 / np.pi
+        self._chromaticity_x = -const * trapz(self.k1 * self.beta_x[1:], self.s[1:])
+        self._chromaticity_y = +const * trapz(self.k1 * self.beta_y[1:], self.s[1:])
 
     def _on_chromaticity_changed(self):
         self._chromaticity_needs_update = True

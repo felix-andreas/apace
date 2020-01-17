@@ -89,3 +89,11 @@ one_turn = np.array(
 def test_one_turn_matrix():  # ony true if one turn matrix is calculated from pos = 0
     twiss_idx_0 = ap.Twiss(ring, start_idx=0)
     assert np.allclose(one_turn, twiss_idx_0.one_turn_matrix)
+
+
+def test_chromaticity():
+    twiss = ap.Twiss(ring)
+    print()
+    print("chroma_x", twiss.chromaticity_x)
+    print("chroma_y", twiss.chromaticity_y)
+    # TODO: get reliable reference values
