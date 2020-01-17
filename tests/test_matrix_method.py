@@ -17,4 +17,3 @@ def test_angle_k1():
     assert np.all(q1.k1 == matrix_method.k1[q1_indices])
     assert np.all(0 == matrix_method.k1[b1_indices])
     assert np.all(0 == matrix_method.k0[q1_indices])
-
