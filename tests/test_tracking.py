@@ -13,19 +13,14 @@ def test_tune():
     n_particles = 10
     n_turns = 10000
 
-    initial_distribution = ap.create_particle_distribution(
+    dist = ap.create_particle_distribution(
         n_particles, x_dist="uniform", x_width=0.02, x_center=0.01
     )
-    matrix_tracking = ap.MatrixTracking(
-        fodo, initial_distribution, turns=n_turns, positions=0
-    )
+    matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, positions=0)
     period_time = fodo.length / 299_792_458
     freq = np.linspace(0.0, 1.0 / (2.0 * period_time), n_turns // 2)
-    fft_tracking = (
-        2.0
-        / n_turns
-        * np.abs(fft(matrix_tracking.particle_trajectories[:, 0, -1])[: n_turns // 2])
-    )
+    tmp = matrix_tracking.particle_trajectories[:, 0, -1]
+    fft_tracking = 2.0 / n_turns * np.abs(fft(tmp))[: n_turns // 2]
     tune_khz = freq[np.argmax(fft_tracking)] / 1e3
     tune_fractional = tune_khz * period_time * 1e3
     assert 643 == round(tune_khz)
@@ -42,12 +37,8 @@ def test_particle_trajectory():
     n_particles = 1
     n_turns = 1
 
-    initial_distribution = ap.create_particle_distribution(
-        n_particles, x_dist="uniform", x_center=0.01
-    )
-    matrix_tracking = ap.MatrixTracking(
-        fodo, initial_distribution, turns=n_turns, positions=None
-    )
+    dist = ap.create_particle_distribution(n_particles, x_dist="uniform", x_center=0.01)
+    matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, positions=None)
     twiss = ap.Twiss(fodo)
     x = matrix_tracking.x
     beta_x = twiss.beta_x
