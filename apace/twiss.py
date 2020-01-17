@@ -41,6 +41,14 @@ class Twiss:
         self.twiss_array_changed.connect(self._on_twiss_array_changed)
         self._twiss_array_needs_update = True
 
+        self._psi_needs_update = True
+        self.psi_changed = Signal(self.twiss_array_changed)
+        self.psi_changed.connect(self._on_psi_changed)
+        self._psi_x = np.empty(0)
+        self._psi_y = np.empty(0)
+        self._tune_x = None
+        self._tune_y = None
+
         self._tune_fractional_needs_update = True
         self.tune_fractional_changed = Signal(self.one_turn_matrix_changed)
         self.tune_fractional_changed.connect(self._on_tune_fractional_changed)
@@ -49,13 +57,9 @@ class Twiss:
         self._tune_x_fractional_hz = None
         self._tune_y_fractional_hz = None
 
-        self._psi_needs_update = True
-        self.psi_changed = Signal(self.twiss_array_changed)
-        self.psi_changed.connect(self._on_psi_changed)
-        self._psi_x = np.empty(0)
-        self._psi_y = np.empty(0)
-        self._tune_x = None
-        self._tune_y = None
+        self._chromaticity_x = np.empty(0)
+        self._chromaticity_y = np.empty(0)
+        self._chromaticity_changed = Signal(self.)
 
     @property
     def n_kicks(self):
@@ -291,7 +295,7 @@ class Twiss:
         beta_x_inverse = 1 / self.beta_x
         beta_y_inverse = 1 / self.beta_y
         # TODO: use faster integration!
-        # TODO: question: is pos=0 weighted doubled because start/end are same point
+        # TODO: question: is pos=0 weighted doubled because start/end are same point?
         self._psi_x = integrate.cumtrapz(beta_x_inverse, self.s, initial=0)
         self._psi_y = integrate.cumtrapz(beta_y_inverse, self.s, initial=0)
         self._tune_x = self._psi_x[-1] / TWO_PI
@@ -357,6 +361,9 @@ class Twiss:
     def chromaticity_y(self) -> float:
         """Natural Vertical Chromaticity. Depends on `step_size`"""
         pass
+
+    def update_chromaticity(self):
+        """Manually update the natural chromaticity."""
 
     def beta_x_int(self, positions) -> np.ndarray:
         """Linear interpolated :attr:`beta_x` for given orbit positions.
