@@ -39,6 +39,7 @@ class MatrixMethod:
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_kicks = 0
+        self._n_points = 0
         self._n_kicks_needs_update = True
         self.n_kicks_changed = Signal(self.element_n_kicks_changed)
         self.n_kicks_changed.connect(self._on_n_kicks_changed)
@@ -58,7 +59,7 @@ class MatrixMethod:
         self._transfer_matrices = np.empty(0)
         self._transfer_matrices_needs_full_update = True
         self.transfer_matrices_changed = Signal()
-        self._angle = np.empty(0)
+        self._k0 = np.empty(0)
         self._k1 = np.empty(0)
 
         self._start_index = start_index
@@ -87,23 +88,31 @@ class MatrixMethod:
         self.element_n_kicks_changed()
         raise NotImplementedError
 
-    def get_element_n_kicks(self, element) -> int:
+    def n_kicks_per_element(self, element) -> int:
         """Returns the number of kicks for a given element"""
         return self.element_n_kicks.get(element.__class__, N_KICKS_DEFAULT)
 
     @property
     def n_kicks(self) -> int:
-        """Returns the total number of kicks."""
+        """Total number of kicks. (:attr:`n_points` - 1)."""
         if self._n_kicks_needs_update:
             self.update_n_kicks()
 
         return self._n_kicks
 
+    @property
+    def n_points(self) -> int:
+        """Total number of points (:attr:`n_kicks` + 1)."""
+        if self._n_kicks_needs_update:
+            self.update_n_kicks()
+
+        return self._n_points
+
     def update_n_kicks(self):
         """Manually update the total number of kicks."""
-        self._n_kicks = sum(
-            self.get_element_n_kicks(element) for element in self.lattice.arrangement
-        )
+        n_kicks = sum(map(self.n_kicks_per_element, self.lattice.arrangement))
+        self._n_kicks = n_kicks
+        self._n_points = n_kicks + 1
         self._n_kicks_needs_update = False
 
     def _on_n_kicks_changed(self):
@@ -122,7 +131,7 @@ class MatrixMethod:
         self._element_indices.clear()
         start = 0
         for element in self.lattice.arrangement:
-            end = start + self.get_element_n_kicks(element)
+            end = start + self.n_kicks_per_element(element)
             tmp = list(range(start, end))
             try:
                 self._element_indices[element].extend(tmp)
@@ -150,9 +159,8 @@ class MatrixMethod:
             self._step_size[0] = 0
 
         for element in self.lattice.elements:
-            self._step_size[
-                self.element_indices[element]
-            ] = element.length / self.get_element_n_kicks(element)
+            n_kicks = self.n_kicks_per_element(element)
+            self._step_size[self.element_indices[element]] = element.length / n_kicks
 
         self._step_size_needs_update = False
 
@@ -181,17 +189,33 @@ class MatrixMethod:
 
     @property
     def transfer_matrices(self) -> np.ndarray:
-        """Array of transfer matrices. (6, 6, n_kicks)"""
+        """Array of transfer matrices with shape (6, 6, n_kicks)"""
         if self.changed_elements or self._transfer_matrices_needs_full_update:
             self.update_transfer_matrices()
 
         return self._transfer_matrices
 
+    @property
+    def k0(self) -> np.ndarray:
+        """Array of deflections angles with shape (n_kicks)."""
+        if self.changed_elements or self._transfer_matrices_needs_full_update:
+            self.update_transfer_matrices()
+
+        return self._k0
+
+    @property
+    def k1(self) -> np.ndarray:
+        """Array of geometric quadruole strenghts with shape (n_kicks)."""
+        if self.changed_elements or self._transfer_matrices_needs_full_update:
+            self.update_transfer_matrices()
+
+        return self._k1
+
     def update_transfer_matrices(self):
         """Manually update the transfer_matrices."""
         if self._transfer_matrices.shape[0] != self.n_kicks:
             self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
-            self._angle = np.empty(self.n_kicks)
+            self._k0 = np.empty(self.n_kicks)
             self._k1 = np.empty(self.n_kicks)
 
         if self._transfer_matrices_needs_full_update:
@@ -202,7 +226,7 @@ class MatrixMethod:
         matrix_array = self._transfer_matrices
         for element in elements:
             pos = self.element_indices[element]  # indices in matrix transfer_matrices
-            n_kicks = self.get_element_n_kicks(element)
+            n_kicks = self.n_kicks_per_element(element)
             step_size = element.length / n_kicks
 
             # TODO: change element 4,5 for velocity smaller than light
@@ -214,7 +238,7 @@ class MatrixMethod:
                 el_45 = 0
 
             if isinstance(element, Quadrupole) and element.k1:
-                angle = 0
+                k0 = 0
                 k1 = element.k1
                 sqk = np.sqrt(np.absolute(k1))
                 om = sqk * step_size
@@ -241,16 +265,15 @@ class MatrixMethod:
                         [0, 0, 0, 0, 0, 1],
                     ]
             elif isinstance(element, Dipole) and element.angle:
-                angle = element.angle
+                k0 = element.k0
                 k1 = 0
-                phi = step_size / element.radius
+                phi = element.angle / n_kicks
                 sin = np.sin(phi)
                 cos = np.cos(phi)
                 radius = element.radius
-                kappa_0x = 1 / radius
                 matrix_array[pos] = [
                     [cos, radius * sin, 0, 0, 0, radius * (1 - cos)],
-                    [-kappa_0x * sin, cos, 0, 0, 0, sin],
+                    [-k0 * sin, cos, 0, 0, 0, sin],
                     [0, 0, 1, step_size, 0, 0],
                     [0, 0, 0, 1, 0, 0],
                     [-sin, (cos - 1) * radius, 0, 0, 1, (sin - phi) * radius],
@@ -273,13 +296,13 @@ class MatrixMethod:
                         matrix_edge_2, matrix_array[pos[-1]]
                     )
             else:  # Drifts and remaining elements
-                angle = 0
+                k0 = 0
                 k1 = 0
                 matrix = IDENTITY.copy()
                 matrix[0, 1] = matrix[2, 3] = step_size
                 matrix_array[pos] = matrix
 
-            self._angle[pos] = angle
+            self._k0[pos] = k0
             self._k1[pos] = k1
 
         self.changed_elements.clear()
@@ -309,7 +332,6 @@ class MatrixMethod:
         """The accumulated transfer matrices starting from start_index."""
         if self._transfer_matrices_acc_needs_update:
             self.update_transfer_matrices_acc()
-
         return self._transfer_matrices_acc
 
     def update_transfer_matrices_acc(self):
