@@ -49,11 +49,11 @@ class Twiss:
         self._tune_x_fractional_hz = None
         self._tune_y_fractional_hz = None
 
-        self._betatron_phase_needs_update = True
-        self.betatron_phase_changed = Signal(self.twiss_array_changed)
-        self.betatron_phase_changed.connect(self._on_betatron_phase_changed)
-        self._psi_x = None
-        self._psi_y = None
+        self._psi_needs_update = True
+        self.psi_changed = Signal(self.twiss_array_changed)
+        self.psi_changed.connect(self._on_psi_changed)
+        self._psi_x = np.empty(0)
+        self._psi_y = np.empty(0)
         self._tune_x = None
         self._tune_y = None
 
@@ -259,48 +259,50 @@ class Twiss:
     @property
     def psi_x(self) -> np.ndarray:
         """Horizontal betatron phase."""
-        if self._betatron_phase_needs_update:
+        if self._psi_needs_update:
             self.update_betatron_phase()
         return self._psi_x
 
     @property
     def psi_y(self) -> np.ndarray:
         """Vertical betatron phase."""
-        if self._betatron_phase_needs_update:
+        if self._psi_needs_update:
             self.update_betatron_phase()
         return self._psi_y
 
     @property
     def tune_x(self) -> float:
         """Horizontal tune. Corresponds to psi_x[-1] / 2 pi. Strongly depends on the selected step size."""
-        if self._betatron_phase_needs_update:
+        if self._psi_needs_update:
             self.update_betatron_phase()
         return self._tune_x
 
     @property
     def tune_y(self) -> float:
         """Vertical tune. Corresponds to psi_y[-1] / 2 pi. Strongly depends on the selected step size."""
-        if self._betatron_phase_needs_update:
+        if self._psi_needs_update:
             self.update_betatron_phase()
         return self._tune_y
 
     def update_betatron_phase(self):
         """Manually update the betatron phase psi and the tune."""
         size = self.accumulated_array.shape[0]
-        self._psi_x = np.empty(size)  # TODO: do not always allocate new!
-        self._psi_y = np.empty(size)
+        if self._psi_x.shape[0] != size:
+            self._psi_x = np.empty(size)
+            self._psi_y = np.empty(size)
+
         beta_x_inverse = 1 / self.beta_x
         beta_y_inverse = 1 / self.beta_y
-        self._psi_x = integrate.cumtrapz(
-            beta_x_inverse, self.s, initial=0
-        )  # TODO: use faster integration!
+        # TODO: use faster integration!
+        # TODO: question: is pos=0 weighted doubled because start/end are same point
+        self._psi_x = integrate.cumtrapz(beta_x_inverse, self.s, initial=0)
         self._psi_y = integrate.cumtrapz(beta_y_inverse, self.s, initial=0)
         self._tune_x = self._psi_x[-1] / TWO_PI
         self._tune_y = self._psi_y[-1] / TWO_PI
-        self._betatron_phase_needs_update = False
+        self._psi_needs_update = False
 
-    def _on_betatron_phase_changed(self):
-        self._betatron_phase_needs_update = True
+    def _on_psi_changed(self):
+        self._psi_needs_update = True
 
     @property
     def tune_x_fractional(self) -> float:
