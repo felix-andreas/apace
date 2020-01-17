@@ -1,7 +1,7 @@
 import inspect
 import sys
 from typing import List, Dict, Set, Union
-from .utils import Signal, AmbiguousNameError
+from .utils import Signal, Attribute, AmbiguousNameError
 
 
 class Base:
@@ -45,9 +45,8 @@ class Base:
             else:
                 attributes.append((key, str(obj)))
 
-        return "\n".join(
-            f"{name:16}: {string}" for name, string in attributes + properties + signals
-        )
+        info = attributes + properties + signals
+        return "\n".join(f"{name:16}: {string}" for name, string in info)
 
 
 class Element(Base):
@@ -78,15 +77,15 @@ class Element(Base):
     def length(self, value):
         self._length = value
         self.length_changed()
+        self.value_changed(self, Attribute.LENGTH)
 
-    def _on_length_changed(self):
+    def _on_length_changed(self, *args):
         for lattice in self.parent_lattices:
             lattice.length_changed()
-            lattice.element_changed(self)
 
-    def _on_value_changed(self):
+    def _on_value_changed(self, element, attribute):
         for lattice in self.parent_lattices:
-            lattice.element_changed(self)
+            lattice.element_changed(element, attribute)
 
 
 class Drift(Element):
@@ -129,7 +128,7 @@ class Dipole(Element):
     @angle.setter
     def angle(self, value):
         self._angle = value
-        self.value_changed()
+        self.value_changed(self, Attribute.ANGLE)
 
     @property
     def e1(self) -> float:
@@ -139,7 +138,7 @@ class Dipole(Element):
     @e1.setter
     def e1(self, value):
         self._e1 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.E1)
 
     @property
     def e2(self) -> float:
@@ -149,7 +148,7 @@ class Dipole(Element):
     @e2.setter
     def e2(self, value):
         self._e2 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.E2)
 
     @property
     def radius(self) -> float:
@@ -183,7 +182,7 @@ class Quadrupole(Element):
     @k1.setter
     def k1(self, value):
         self._k1 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K1)
 
 
 class Sextupole(Element):
@@ -208,7 +207,7 @@ class Sextupole(Element):
     @k2.setter
     def k2(self, value):
         self._k2 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K2)
 
 
 class Octupole(Element):
@@ -233,7 +232,7 @@ class Octupole(Element):
     @k3.setter
     def k3(self, value):
         self._k3 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K3)
 
 
 class Lattice(Base):
@@ -253,9 +252,9 @@ class Lattice(Base):
         self._objects = {}
         self._elements = set()
         self._sub_lattices = set()
-        self._arrangement = []  # TODO: is an np.array better here?
+        self._arrangement = []
         self._indices = {}
-        self._init_tree_properties()
+        self._init_tree_properties(self.tree)
 
         self._length = 0
         self._length_needs_update = True
@@ -266,6 +265,34 @@ class Lattice(Base):
         self.element_changed: Signal = Signal()
         """Gets emitted when an attribute of an element within this lattice changes."""
         self.element_changed.connect(self._on_element_changed)
+
+    def _init_tree_properties(self, tree, idx=0):
+        """A recursive helper function to initialize the tree properties."""
+        arrangement = self._arrangement
+        indices = self._indices
+        elements = self._elements
+        sub_lattices = self._sub_lattices
+        objects = self._objects
+        for obj in tree:
+            value = objects.get(obj.name)
+            if value is None:
+                objects[obj.name] = obj
+            elif obj is not value:
+                raise AmbiguousNameError(obj.name)
+
+            if isinstance(obj, Lattice):
+                sub_lattices.add(obj)
+                idx = self._init_tree_properties(obj.tree, idx)
+            else:
+                elements.add(obj)
+                arrangement.append(obj)
+                try:
+                    indices[obj].append(idx)
+                except KeyError:
+                    indices[obj] = [idx]
+
+                idx += 1
+        return idx
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -291,15 +318,14 @@ class Lattice(Base):
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
-    # TODO: move to base class
     def _on_length_changed(self):
         self._length_needs_update = True
         for lattice in self.parent_lattices:
             lattice.length_changed()
 
-    def _on_element_changed(self, element):
+    def _on_element_changed(self, element, attribute):
         for lattice in self.parent_lattices:
-            lattice.element_changed(element)
+            lattice.element_changed(element, attribute)
 
     @property
     def tree(self) -> List[Base]:  # do not set tree manually
