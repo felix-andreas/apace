@@ -248,7 +248,8 @@ class Lattice(Base):
     """Defines the order of elements in the accelerator.
 
     :param str name: Name of the lattice.
-    :param Tuple[Union[Element, Lattice] tree: Nested tree of elements and lattices.
+    :param tree: Nested tree of elements and lattices.
+    :type tree: Tuple[Union[Element, Lattice]]
     :param str description: A brief description of the element.
     """
 
@@ -270,6 +271,9 @@ class Lattice(Base):
         self.length_changed: Signal = Signal()
         """Gets emitted when the length of lattice changes."""
         self.length_changed.connect(self._on_length_changed)
+
+        self.n_elements = len(self.arrangement)
+        """The number of elements within this lattice."""
 
         self.element_changed: Signal = Signal()
         """Gets emitted when an attribute of an element within this lattice changes."""
