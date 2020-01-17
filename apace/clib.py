@@ -1,5 +1,4 @@
-# noinspection PyUnresolvedReferences,PyProtectedMember
-from ._clib._twiss_product import ffi, lib
+from ._clib._twiss_product import ffi, lib  # noqa # pylint: disable=no-name-in-module
 import numpy as np
 
 
@@ -13,8 +12,8 @@ def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=Fa
     :param np.ndarray twiss_0: Initial twiss parameter.
     :param np.ndarray twiss_array: Array where the result of the calculation is stored.
     :param int from_idx: The index from which the matrices are accumulated.
-    :param bool parallel: Flag to utilize multiple cpu cores.
-           Parallel overhead can make slower for small lattices.
+    :param bool parallel: Flag to utilize multiple cpu cores. May be slower for smaller
+                          lattices due to parallel overhead. (Default=False)
     """
     n = twiss_array.shape[1]
     args = (
@@ -42,8 +41,10 @@ def accumulate_array(input_array, output_array, from_idx):
         B[2] = A[1] * A[0] * B[0]
         ...
 
-    :param np.ndarray input_array: Input array with n matrices. Shape = (n, size, size)
-    :param np.ndarray output_array: The array into which the result is stored. Shape : (n, size, size)
+    :param input_array: Input array with n matrices. (n, size, size)
+    :type input_array: nd.ndarray
+    :param output_array: The array into which the result is stored. (n, size, size)
+    :type output_array: nd.ndarray
     :param int from_idx: The index from which the matrices are accumulated.
     """
     n = input_array.shape[0]
@@ -68,8 +69,8 @@ def accumulate_array(input_array, output_array, from_idx):
 def accumulate_array_partial(input_array, output_array, indices):
     """ Returns the accumulated transfer matrices between given start and end values.
 
-    The final array has the shape (n, size, size) and contains the accumulated transfer matrices between
-    the given indices:
+    The final array has the shape (n, size, size) and contains the accumulated transfer
+    matrices between the given indices:
 
     B[0] = A[end_0] * A[end_0 - 1] * ... * A[start_0]
     B[1] = A[end_1] * A[end_1 - 1] * ... * A[start_1]
@@ -77,11 +78,13 @@ def accumulate_array_partial(input_array, output_array, indices):
 
     where start_i = indices[i, 0] and end_i = indices[i, 1]
 
-    :param np.ndarray input_array: Input array with n matrices. Shape = (n_kicks, size, size)
-    :param np.ndarray output_array: The array into which the result is stored. Shape : (n, size, size)
-    :param array-like indices: The indices from which and to the matrices are accumulated.
-                               Has shape (n, 2), where indices[:, 0] are the start and indices[:, 1] are
-                               the end values.
+    :param input_array: Input array with n matrices. (n_kicks, size, size)
+    :type input_array: np.ndarray
+    :param np.ndarray: The array into which the result is stored. (n, size, size)
+    :type output_array: np.ndarray
+    :param indices: The start and end indicies for the matrix accumulation, where
+                    indices[:, 0] are the start and indices[:, 1] are the end values.
+    :type indicies: array-like
     """
     n_kicks = input_array.shape[0]
     n_indices = indices.shape[0]

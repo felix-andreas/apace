@@ -8,7 +8,7 @@ CONST_C = 299_792_458
 TWO_PI = 2 * np.pi
 
 
-class Twiss:
+class Twiss(MatrixMethod):
     """Calculate the Twiss parameter for a given lattice.
 
     :param Lattice lattice: Lattice to calculate the Twiss parameter for.
@@ -19,8 +19,8 @@ class Twiss:
     """
 
     def __init__(self, lattice, start_idx=0):
+        super().__init__(lattice)
         self.lattice = lattice
-        self.matrix_method = MatrixMethod(lattice)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()
@@ -30,7 +30,7 @@ class Twiss:
         self._term_x = None
         self._term_y = None
         self.one_turn_matrix_changed = Signal(
-            self.start_idx_changed, self.matrix_method.transfer_matrices_changed
+            self.start_idx_changed, self.transfer_matrices_changed
         )
         self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
         self._one_turn_matrix_needs_update = True
@@ -60,10 +60,6 @@ class Twiss:
         self._chromaticity_x = np.empty(0)
         self._chromaticity_y = np.empty(0)
         self._chromaticity_changed = Signal(self.)
-
-    @property
-    def n_kicks(self):
-        return self.matrix_method.n_kicks
 
     @property
     def start_idx(self) -> int:
@@ -134,8 +130,8 @@ class Twiss:
 
     def update_one_turn_matrix(self):
         """Manually update the one turn matrix and the accumulated array."""
-        matrix_array = self.matrix_method.transfer_matrices
-        if self._accumulated_array.shape[0] != self.matrix_method.n_kicks:
+        matrix_array = self.transfer_matrices
+        if self._accumulated_array.shape[0] != self.n_kicks:
             self._accumulated_array = np.empty(matrix_array.shape)
 
         accumulate_array(matrix_array, self._accumulated_array, self.start_idx)
@@ -165,9 +161,9 @@ class Twiss:
 
     def update_twiss_array(self):
         """Manually update the twiss_array."""
-        size = self.matrix_method.n_kicks + 1
-        if self._twiss_array.shape[0] != size:
-            self._twiss_array = np.empty((8, size))
+        n_points = self.n_points
+        if self._twiss_array.shape[0] != n_points:
+            self._twiss_array = np.empty((8, n_points))
 
         if not self.stable:
             # warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
@@ -211,11 +207,6 @@ class Twiss:
 
     def _on_twiss_array_changed(self):
         self._twiss_array_needs_update = True
-
-    @property
-    def s(self) -> np.ndarray:
-        """Contains the position with regard to the orbit."""
-        return self.matrix_method.s
 
     @property
     def beta_x(self) -> np.ndarray:
@@ -346,7 +337,7 @@ class Twiss:
         m = self.one_turn_matrix
         self._tune_x_fractional = np.arccos((m[0, 0] + m[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((m[2, 2] + m[3, 3]) / 2) / TWO_PI
-        tmp = self.matrix_method.velocity / self.lattice.length
+        tmp = self.velocity / self.lattice.length
         self._tune_x_fractional_hz = self._tune_x_fractional * tmp
         self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False
