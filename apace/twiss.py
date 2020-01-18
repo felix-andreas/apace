@@ -62,6 +62,14 @@ class Twiss(MatrixMethod):
         self._tune_x_fractional_hz = None
         self._tune_y_fractional_hz = None
 
+        self.alpha_c_changed = Signal(
+            self.transfer_matrices_changed, self.twiss_array_changed
+        )
+        self.tune_fractional_changed.connect(self._on_alpha_c_changed)
+        """Gets emitted when the natural chormaticity changes."""
+        self._alpha_c_needs_update = True
+        self._alpha_c = None
+
         self.chromaticity_changed = Signal(
             self.transfer_matrices_changed, self.twiss_array_changed
         )
@@ -350,15 +358,30 @@ class Twiss(MatrixMethod):
         self._tune_fractional_needs_update = True
 
     @property
+    def alpha_c(self) -> float:
+        """Momentum Compaction Factor. Depends on `n_kicks`"""
+        if self._alpha_c_needs_update:
+            self.update_alpha_c()
+        return self._alpha_c
+
+    def update_alpha_c(self):
+        """Manually update the Momentum Compaction Factor."""
+        length = self.lattice.length
+        self._alpha_c = 1 / length * trapz(self.k0 * self.eta_x[1:], self.s[1:])
+
+    def _on_alpha_c_changed(self):
+        self._alpha_c_needs_update = True
+
+    @property
     def chromaticity_x(self) -> float:
-        """Natural Horizontal Chromaticity. Depends on `step_size`"""
+        """Natural Horizontal Chromaticity. Depends on `n_kicks`"""
         if self._chromaticity_needs_update:
             self.update_chromaticity()
         return self._chromaticity_x
 
     @property
     def chromaticity_y(self) -> float:
-        """Natural Vertical Chromaticity. Depends on `step_size`"""
+        """Natural Vertical Chromaticity. Depends on `n_kicks`"""
         if self._chromaticity_needs_update:
             self.update_chromaticity()
         return self._chromaticity_y
