@@ -31,6 +31,7 @@ class MatrixMethod:
         self.lattice.element_changed.connect(self._on_element_changed)
 
         self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
+        self.element_n_kicks = {Drift: 300, Dipole: 1000, Quadrupole: 500}
         self.element_n_kicks_changed = Signal()
 
         self._element_indices = {}
