@@ -359,7 +359,7 @@ class Twiss(MatrixMethod):
         """Momentum Compaction Factor. Depends on `n_kicks`"""
         if self._alpha_c_needs_update:
             self.update_alpha_c()
-        return self.alpha_c
+        return self._alpha_c
 
     def update_alpha_c(self):
         """Manually update the Momentum Compaction Factor."""

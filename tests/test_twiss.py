@@ -103,6 +103,6 @@ def test_chromaticity():
 def test_alpha_c():
     twiss = ap.Twiss(ring)
     print()
-    print("alpha_c", twiss.chromaticity_x)
+    print("alpha_c", twiss.alpha_c)
     # TODO: get reliable reference values
     # TODO: test if it changes when element changes
