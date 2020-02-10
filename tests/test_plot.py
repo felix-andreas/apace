@@ -11,14 +11,16 @@ twiss = ap.Twiss(lattice)
 
 
 def test_draw_lattice():
-    plot_twiss(twiss)
+    _, ax = plt.subplots()
+    plot_twiss(twiss, ax=ax)
     draw_lattice(lattice)
     plt.tight_layout()
     plt.savefig("/tmp/apace_test_draw_lattice.pdf")
 
 
 def test_floor_plan():
-    ax = floor_plan(lattice)
+    _, ax = plt.subplots()
+    ax = floor_plan(lattice, ax=ax)
     ax.invert_yaxis()
     plt.tight_layout()
     plt.savefig("/tmp/apace_test_floor_plan.pdf")
