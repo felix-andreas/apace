@@ -1,8 +1,11 @@
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+import matplotlib.gridspec as grid_spec
+from matplotlib.path import Path
 import numpy as np
 from enum import Enum
 from math import inf
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as grid_spec
 from collections.abc import Iterable
 from .classes import Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
 
@@ -14,10 +17,12 @@ class Color:
     YELLOW = "gold"
     ORANGE = "darkorange"
     MAGENTA = "darkmagenta"
+    WHITE = "white"
+    BLACK = "black"
 
 
 ELEMENT_COLOR = {
-    Drift: None,
+    Drift: Color.BLACK,
     Dipole: Color.YELLOW,
     Quadrupole: Color.RED,
     Sextupole: Color.GREEN,
@@ -58,7 +63,7 @@ def draw_lattice(
 
     y_min, y_max = ax.get_ylim()
     y_span = y_max - y_min
-    rec_height = y_span / 32
+    rect_height = y_span / 32
 
     if draw_elements:
         start = end = 0
@@ -74,9 +79,9 @@ def draw_lattice(
 
             rec_length = min(end, x_max) - max(start, x_min)
             rectangle = plt.Rectangle(
-                (start if start > x_min else x_min, y_max - rec_height / 2),
+                (start if start > x_min else x_min, y_max - rect_height / 2),
                 rec_length,
-                rec_height,
+                rect_height,
                 fc=ELEMENT_COLOR[type(element)],
                 clip_on=False,
                 zorder=10,
@@ -89,7 +94,7 @@ def draw_lattice(
                 )
                 ax.annotate(
                     element.name,
-                    xy=((start + end) / 2, y_max + sign * 0.75 * rec_height),
+                    xy=((start + end) / 2, y_max + sign * 0.75 * rect_height),
                     fontsize=FONT_SIZE,
                     ha="center",
                     va=va,
@@ -107,7 +112,7 @@ def draw_lattice(
         ax.grid(axis="x", linestyle="--")
 
     if annotate_sub_lattices:
-        y0 = y_max - 3 * rec_height
+        y0 = y_max - 3 * rect_height
         end = 0
         for obj in lattice.tree:
             end += obj.length
@@ -168,7 +173,7 @@ def plot_twiss(
         linestyle=line_style,
         alpha=alpha,
         zorder=1,
-        label=f"$\\eta_x$/{100 / eta_x_scale:.0f}cm",
+        label=f"{eta_x_scale}$\\eta_x$/m",
     )
 
     if show_legend:
@@ -375,3 +380,99 @@ def find_optimal_grid(N):
         rows, cols = cols, rows
 
     return (rows, cols) if cols >= rows else (cols, rows)
+
+
+def floor_plan(
+    lattice, ax=None, start_angle=0, annotate_elements=True, direction="clockwise"
+):
+    if ax is None:
+        ax = plt.gca()
+
+    ax.set_aspect("equal")
+    codes = [Path.MOVETO, Path.LINETO]
+    current_angle = start_angle
+
+    start = np.zeros(2)
+    end = np.zeros(2)
+    x_min = y_min = 0
+    x_max = y_max = 0
+    arrangement = lattice.arrangement
+    arrangement_shifted = arrangement[1:] + arrangement[0:1]
+    for element, next_element in zip(arrangement, arrangement_shifted):
+        color = ELEMENT_COLOR[type(element)]
+        length = element.length
+        line_width = 0.5 if isinstance(element, Drift) else 3
+
+        # TODO: refactor current angle
+        angle = 0
+        if isinstance(element, Dipole):
+            angle = element.angle
+            radius = length / angle
+            vec = radius * np.array([np.sin(angle), 1 - np.cos(angle)])
+            sin = np.sin(current_angle)
+            cos = np.cos(current_angle)
+            rot = np.array([[cos, -sin], [sin, cos]])
+            end += rot @ vec
+
+            angle_center = current_angle + np.pi / 2
+            center = start + radius * np.array(
+                [np.cos(angle_center), np.sin(angle_center)]
+            )
+            diameter = 2 * radius
+            arc_angle = -90
+            theta1 = current_angle * 180 / np.pi
+            theta2 = (current_angle + angle) * 180 / np.pi
+            if angle < 0:
+                theta1, theta2 = theta2, theta1
+
+            line = patches.Arc(
+                center,
+                width=diameter,
+                height=diameter,
+                angle=arc_angle,
+                theta1=theta1,
+                theta2=theta2,
+                color=color,
+                linewidth=line_width,
+            )
+            current_angle += angle
+        else:
+            end += length * np.array([np.cos(current_angle), np.sin(current_angle)])
+            line = patches.PathPatch(
+                Path((start, end), codes), color=color, linewidth=line_width
+            )
+
+        x_min = min(x_min, end[0])
+        y_min = min(y_min, end[1])
+        x_max = max(x_max, end[0])
+        y_max = max(y_max, end[1])
+
+        ax.add_patch(line)  # TODO: currently splitted elements get drawn twice
+        if element is next_element:
+            continue
+
+        if annotate_elements and not isinstance(element, Drift):
+            angle_center = (current_angle - angle / 2) + np.pi / 2
+            sign = -1 if isinstance(element, Quadrupole) else 1
+            center = (start + end) / 2 + sign * 0.5 * np.array(
+                [np.cos(angle_center), np.sin(angle_center)]
+            )
+            ax.annotate(
+                element.name,
+                xy=center,
+                fontsize=6,
+                ha="center",
+                va="center",
+                # rotation=(current_angle * 180 / np.pi -90) % 180,
+                annotation_clip=False,
+                zorder=11,
+            )
+
+        start = end.copy()
+
+    margin = 0.05 * max((x_max - x_min), (y_max - y_min))
+    ax.set_xlim(x_min - margin, x_max + margin)
+    ax.set_ylim(y_min - margin, y_max + margin)
+    ax.axis("off")
+
+    return ax
