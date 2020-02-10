@@ -6,7 +6,6 @@ from matplotlib.path import Path
 import numpy as np
 from enum import Enum
 from math import inf
-import itertools
 from collections.abc import Iterable
 from .classes import Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
 
