@@ -10,7 +10,6 @@ lattice = ap.load_lattice(file_path)
 twiss = ap.Twiss(lattice)
 
 
-
 def test_draw_lattice():
     plot_twiss(twiss)
     draw_lattice(lattice)
