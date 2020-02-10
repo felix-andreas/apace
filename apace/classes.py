@@ -1,4 +1,5 @@
 import inspect
+import latticejson
 import sys
 from typing import List, Dict, Set, Union
 from .utils import Signal, Attribute, AmbiguousNameError
@@ -388,7 +389,18 @@ class Lattice(Base):
         return string
 
     @classmethod
-    def from_dict(cls, data):
+    def from_file(cls, location, file_format=None) -> "Lattice":
+        """Creates a new `Lattice` from file at `location` (path or url).
+        :param location: path-like or url-like string which locates the lattice file
+        :type location: Union[AnyStr, Path]
+        :param file_format str: File format of the lattice file
+        :type file_format: str, optional (use file extension)
+        :rtype Lattice
+        """
+        return cls.from_dict(latticejson.load(location, file_format))
+
+    @classmethod
+    def from_dict(cls, data) -> "Lattice":
         """Creates a new `Lattice` object from a latticeJSON compliant dictionary."""
 
         objects = {}  # dictionary for all objects (elements + lattices)
