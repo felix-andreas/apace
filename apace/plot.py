@@ -358,7 +358,7 @@ def twiss_plot(
                 n_x_ticks=None,
             )
 
-    fig.suptitle(lattice.name)
+    fig.suptitle(lattice.name if lattice is not None else "")
     fig.tight_layout()
     fig.subplots_adjust(top=0.93)
     # annotate_info(lattice, twiss)
