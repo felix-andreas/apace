@@ -43,7 +43,7 @@ def test_save_lattice():
     fodo = ap.load_lattice(FILE_PATH)
     path = "/tmp/tmp_lattice.json"
     ap.save_lattice(fodo, path)
-    lattice = ap.load_lattice(path)
-    assert fodo.length == lattice.length
-    assert len(fodo.elements) == len(lattice.elements)
-    assert len(fodo.sub_lattices) == len(lattice.sub_lattices)
+    fodo_reload = ap.load_lattice(path)
+    assert fodo.length == fodo_reload.length
+    assert len(fodo.elements) == len(fodo_reload.elements)
+    assert len(fodo.sub_lattices) == len(fodo_reload.sub_lattices)
