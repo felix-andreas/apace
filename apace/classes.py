@@ -310,7 +310,7 @@ class Lattice(Base):
     def __getitem__(self, key):
         if isinstance(key, str):
             return self._objects[key]
-        elif isinstance(key, int) or isinstance(key, slice):
+        elif isinstance(key, (int, slice)):
             return self.arrangement[key]
         elif isinstance(key, Base):
             return self.indices[Base]
@@ -391,10 +391,8 @@ class Lattice(Base):
     def from_dict(cls, data):
         """Creates a new `Lattice` object from a latticeJSON compliant dictionary."""
 
-        objects = {}  # dictionary for all objects (elements + lattices)
-        for name, attributes in data["elements"].items():
-            type_ = attributes.pop("type")
-
+        objects = {}  # dict containing all elements + lattices
+        for name, (type_, attributes) in data["elements"].items():
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
 
@@ -404,7 +402,7 @@ class Lattice(Base):
             tree = [objects[name] for name in tree_names]
             objects[name] = Lattice(name, tree)
 
-        return Lattice(
+        return cls(
             name=data["name"],
             tree=[objects[name] for name in data["lattice"]],
             description=data.get("description", ""),
@@ -414,11 +412,11 @@ class Lattice(Base):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
         for element in self.elements:
-            parameters = inspect.signature(element.__class__).parameters.items()
+            type_ = type(element)
+            parameters = inspect.signature(type_).parameters.items()
             attributes = {key: getattr(element, key) for (key, value) in parameters}
-            attributes.pop("name")
-            elements_dict[element.name] = attributes
-            elements_dict[element.name]["type"] = element.__class__.__name__
+            name = attributes.pop("name")
+            elements_dict[name] = [type_.__name__, attributes]
 
         sub_lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
