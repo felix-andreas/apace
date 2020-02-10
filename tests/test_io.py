@@ -39,7 +39,7 @@ def test_attributes():
     assert 48 == fodo.length
 
 
-def test_save_lattice():
+def test_serialize_lattice():
     fodo = ap.Lattice.from_file(FILE_PATH)
     fodo_reload = ap.Lattice.from_dict(fodo.as_dict())
     assert fodo.length == fodo_reload.length
