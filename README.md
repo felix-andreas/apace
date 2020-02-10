@@ -3,12 +3,13 @@
 [![PyPI](https://img.shields.io/pypi/v/apace.svg)](https://pypi.org/project/apace/)
 [![CI](https://github.com/andreasfelix/apace/workflows/CI/badge.svg)](https://github.com/andreasfelix/apace/actions?query=workflow%3ACI)
 [![Docs](https://readthedocs.org/projects/apace/badge/?version=latest)](https://apace.readthedocs.io)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://github.com/andreasfelix/apace/blob/master/LICENSE)
 
 **apace** is yet **a**nother **p**article **a**ccelerator **c**od**e** designed for the optimization of beam optics. It is available as Python package and aims to provide a convenient and straightforward API to make use of Python's numerous scientific libraries.
 
 
 ## Installing
-Install and update using pip or pipenv:
+Install and update using pip:
 
 ```sh
 pip install -U apace
