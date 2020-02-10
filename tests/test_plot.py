@@ -9,7 +9,7 @@ file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
 
 
 def test_plot():
-    lattice = ap.load_lattice(file_path)
+    lattice = ap.Lattice.from_file(file_path)
     twiss = ap.Twiss(lattice)
     plot_twiss(twiss)
     draw_lattice(lattice)

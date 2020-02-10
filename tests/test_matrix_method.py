@@ -7,7 +7,7 @@ FILE_PATH = os.path.join(BASE_PATH, "data", "lattices", "fodo_ring.json")
 
 
 def test_angle_k1():
-    lattice = ap.load_lattice(FILE_PATH)
+    lattice = ap.Lattice.from_file(FILE_PATH)
     b1 = lattice["B1"]
     q1 = lattice["Q1"]
     matrix_method = ap.MatrixMethod(lattice)

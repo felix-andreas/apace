@@ -4,7 +4,7 @@ import pytest
 
 BASE_PATH = os.path.dirname(__file__)
 FILE_PATH = os.path.join(BASE_PATH, "data", "lattices", "fodo_ring.json")
-FODO_RING = ap.load_lattice(FILE_PATH)
+FODO_RING = ap.Lattice.from_file(FILE_PATH)
 
 
 def test_length_changed():
