@@ -179,7 +179,10 @@ class Twiss(MatrixMethod):
             self._twiss_array = np.empty((8, n_points))
 
         if not self.stable:
-            # warnings.warn(f"Horizontal plane stability: {twiss.stable_x}\nVertical plane stability{twiss.stable_y}")
+            print(
+                f"Horizontal plane stability: {self.stable_x}\n"
+                f"Vertical plane stability: {self.stable_y}"
+            )
             return
 
         m = self.one_turn_matrix
