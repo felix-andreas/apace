@@ -178,7 +178,7 @@ class Twiss(MatrixMethod):
         if self._twiss_array.shape[0] != n_points:
             self._twiss_array = np.empty((8, n_points))
 
-        if not self.stable:
+        if not self.stable:  # TODO: replace with warning
             print(
                 f"Horizontal plane stability: {self.stable_x}\n"
                 f"Vertical plane stability: {self.stable_y}"

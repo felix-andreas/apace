@@ -9,7 +9,7 @@ FILE_PATH = os.path.join(BASE_PATH, "data", "lattices", "fodo_ring.json")
 # TODO: fix linter/mypy erros
 # https://stackoverflow.com/questions/59187502/mypy-dict-containing-instances-of-different-subclasses
 def test_attributes():
-    fodo = ap.load_lattice(FILE_PATH)
+    fodo = ap.Lattice.from_file(FILE_PATH)
     d1 = fodo["D1"]
     assert isinstance(d1, ap.Drift)
     assert 0.55 == fodo["D1"].length
@@ -39,11 +39,9 @@ def test_attributes():
     assert 48 == fodo.length
 
 
-def test_save_lattice():
-    fodo = ap.load_lattice(FILE_PATH)
-    path = "/tmp/tmp_lattice.json"
-    ap.save_lattice(fodo, path)
-    fodo_reload = ap.load_lattice(path)
+def test_serialize_lattice():
+    fodo = ap.Lattice.from_file(FILE_PATH)
+    fodo_reload = ap.Lattice.from_dict(fodo.as_dict())
     assert fodo.length == fodo_reload.length
     assert len(fodo.elements) == len(fodo_reload.elements)
     assert len(fodo.sub_lattices) == len(fodo_reload.sub_lattices)

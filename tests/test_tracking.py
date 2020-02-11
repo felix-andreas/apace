@@ -3,7 +3,7 @@ import os
 
 dir_name = os.path.dirname(__file__)
 file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
-fodo = ap.load_lattice(file_path)
+fodo = ap.Lattice.from_file(file_path)
 
 
 def test_tune():
