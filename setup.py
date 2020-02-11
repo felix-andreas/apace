@@ -19,7 +19,7 @@ setup(
     packages=find_packages(),
     package_data={"data": ["data"],},
     install_requires=[
-        "latticejson>=0.0.3",
+        "latticejson>=0.0.4",
         "numpy",
         "scipy",
         "matplotlib",

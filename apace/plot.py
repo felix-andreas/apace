@@ -209,11 +209,13 @@ def _twiss_plot_section(
     if y_max is None:
         y_max = ax.get_ylim()[1]
 
-    draw_lattice(twiss.lattice, ax, x_min, x_max, annotate_elements=annotate_elements)
     ax.set_xlim((x_min, x_max))
     ax.set_ylim((y_min, y_max))
+    draw_lattice(twiss.lattice, ax, x_min, x_max, annotate_elements=annotate_elements)
 
 
+# TODO: make sub_class of figure
+# add attribute which defines which twiss parameters are plotted
 def twiss_plot(
     twiss,
     main=True,
@@ -278,7 +280,7 @@ def twiss_plot(
                 n_x_ticks=None,
             )
 
-    fig.suptitle(twiss.lattice.name)
+    fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)
     fig.tight_layout()
     # fig.subplots_adjust(top=0.93)
     if path:
