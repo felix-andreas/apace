@@ -9,10 +9,9 @@ import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 
 from .__about__ import __version__
-from .io import read_lattice_file_json
 from .twiss import Twiss
 from .plot import twiss_plot
-from .classes import Quadrupole
+from .classes import Lattice, Quadrupole
 
 
 def main():
@@ -64,9 +63,6 @@ def main():
     parser_plot.add_argument(
         "-m", "--multi_knob", type=str, help="Multi-knob (Assumes plot)"
     )
-
-    parser_lattice = subparsers.add_parser("convert", help="convert lattice files.")
-    parser_lattice.set_defaults(func=convert_lattice)
 
     args = parser.parse_args()
 
@@ -171,7 +167,7 @@ def plot_multiple(args):
 
     figs = []
     for file_path in lattice_files:
-        main_lattice = read_lattice_file_json(file_path)
+        main_lattice = Lattice.from_file(file_path)
         twiss = Twiss(main_lattice)
 
         if args.verbose:
@@ -197,7 +193,7 @@ def plot_multiple(args):
             print_twiss_array(twiss.s[mask], twiss.twiss_array.T[mask].T)
 
         if args.output_path or args.show_plot:
-            ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
+            ref_main_lattice = Lattice.from_file(ref_path) if ref_path else None
             ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
             fig = twiss_plot(
                 twiss,
@@ -219,16 +215,17 @@ def plot_multiple(args):
 
 
 def plot_multi_knob_quads(args):
-    lattice1 = read_lattice_file_json(args.path[0])
-    lattice2 = read_lattice_file_json(args.multi_knob)
-    lattice_out = read_lattice_file_json(args.path[0])
+    lattice1 = Lattice.from_file(args.path[0])
+    lattice2 = Lattice.from_file(args.multi_knob)
+    lattice_out = Lattice.from_file(args.path[0])
     ref_path = os.path.abspath(args.ref_lattice_path) if args.ref_lattice_path else None
 
-    if lattice1.elements.keys() != lattice2.elements.keys():
+    if lattice1.objects.keys() != lattice2.objects.keys():
         raise Exception("The lattices have not the same magnets!")
     diff_magnets = {}
-    for name in lattice1.elements.keys():
-        e1, e2 = lattice1.elements[name], lattice2.elements[name]
+    for e1 in lattice1.elements:
+        name = e1.name
+        e2 = lattice2[name]
         if isinstance(e1, Quadrupole) and e1.k1 != e2.k1:
             diff_magnets[name] = (e1.k1, e2.k1)
 
@@ -236,9 +233,9 @@ def plot_multi_knob_quads(args):
         for i in np.linspace(0, 1, 11):
             lattice_out.name = f"{lattice1.name} vs {lattice2.name} | {i:.2f}"
             for element, values in diff_magnets.items():
-                lattice_out.elements[element].k1 = values[0] * i + (1 - i) * values[1]
+                lattice_out[element].k1 = values[0] * i + (1 - i) * values[1]
 
-            ref_main_lattice = read_lattice_file_json(ref_path) if ref_path else None
+            ref_main_lattice = Lattice.from_file(ref_path) if ref_path else None
             ref_twiss = Twiss(ref_main_lattice) if ref_main_lattice else None
             twiss_plot(
                 Twiss(lattice_out),
@@ -248,10 +245,6 @@ def plot_multi_knob_quads(args):
                 y_max=args.y_max,
             )
             pdf.savefig()
-
-
-def convert_lattice(args):
-    return NotImplemented
 
 
 if __name__ == "__main__":
