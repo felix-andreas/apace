@@ -11,6 +11,6 @@ from .classes import (
 )
 from .twiss import Twiss
 from .matrix_tracking import MatrixTracking
-from .distributions import create_particle_distribution
+from .distributions import distribution
 from .matrix_method import MatrixMethod
 from .utils import Signal, AmbiguousNameError
