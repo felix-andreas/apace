@@ -7,4 +7,3 @@ def test_twiss():
     result = runner.invoke(cli, ["twiss"])
     assert result.exit_code == 0
     assert result.output == "Test\n"
-
