@@ -14,10 +14,9 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.insert(0, os.path.abspath("../apace"))
 sys.path.insert(0, os.path.abspath(".."))
 # noinspection PyUnresolvedReferences
-from __about__ import __title__, __version__, __author__  # noqa: E402
+from apace.__about__ import __title__, __version__, __author__  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 # https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
@@ -39,9 +38,6 @@ release = __version__
 # ones.
 extensions = []
 
-# AutoDoc
-# extensions = ['sphinx.ext.autodoc']
-
 # AutoAPI
 extensions.append("autoapi.extension")
 autoapi_dirs = [os.path.join("..", __title__)]
@@ -54,24 +50,6 @@ autoapi_template_dir = "_templates/autoapi"
 # autoapi_include_summaries = True
 autoapi_generate_api_docs = True
 
-# sphinx-nbexamples
-extensions.append("sphinx_nbexamples")
-# TODO: build examples on apace-examples CI
-# on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-# process_examples = not on_rtd
-examples_dirs = ["../../axpace-examples"]
-example_gallery_config = dict(
-    urls="https://github.com/andreasfelix/apace-examples/blob/master",
-    pattern=".+.ipynb",
-)
-
-
-# Auto summary
-# extensions.append('sphinx.ext.autosummary')
-# autosummary_generate = True
-# autosummary_generate_overwrite = True
-# autosummary_imported_members=True
-
 # Markdown support
 # extensions.append('m2r')
 extensions.append("recommonmark")
@@ -79,6 +57,15 @@ extensions.append("recommonmark")
 
 # Auto section label
 # extensions.append('sphinx.ext.autosectionlabel')
+
+# Sphinx-gallery
+extensions.append("sphinx_gallery.gen_gallery")
+sphinx_gallery_conf = {
+    "examples_dirs": "../examples",  # path to your example scripts
+    "gallery_dirs": "examples",  # path to where to save gallery generated output
+    "backreferences_dir": False,
+    "filename_pattern": "/",  # plot all Python files
+}
 
 # Intersphinx
 extensions.append("sphinx.ext.intersphinx")
