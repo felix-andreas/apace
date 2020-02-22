@@ -5,18 +5,29 @@ Tune Measurement
 Get tune from Fourier-Transform of transversal particle oscillation at fixed position
 """
 
+import numpy as np
+from scipy.fftpack import fft
+import apace as ap
+import matplotlib.pyplot as plt
+from math import sqrt
+
 #%%
 # Load FODO lattice from file
+
+fodo = ap.Lattice.from_file("../data/lattices/fodo_ring.json")
+
+#%%
+# Create particle distribution
 
 n_particles = 5
 n_turns = 20
 position = 0
-particles = ap.create_particle_distribution(
-    n_particles, x_dist="uniform", x_width=0.02, x_center=0.01
-)
+particles = ap.distribution(n_particles, x_dist="uniform", x_width=0.02, x_center=0.01)
+
 matrix_tracking = ap.MatrixTracking(fodo, particles, turns=n_turns, positions=0)
 tracking_data = matrix_tracking.particle_trajectories
 
+#%%
 # Plot x-x' phase space
 plt.subplot(2, 2, 1)
 

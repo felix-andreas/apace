@@ -4,19 +4,13 @@ from pathlib import Path
 import apace as ap
 
 BASE_PATH = Path(__file__).resolve().parent
-DATA_PATH = BASE_PATH / "data"
-LATTICE_PATH = DATA_PATH / "lattices"
+LATTICE_PATH = BASE_PATH / "../data/lattices"
 FODO_RING_JSON = json.loads((LATTICE_PATH / "fodo_ring.json").read_text())
 
 
 @pytest.fixture
 def base_path():
     return BASE_PATH
-
-
-@pytest.fixture
-def data_path():
-    return DATA_PATH
 
 
 @pytest.fixture
