@@ -32,6 +32,7 @@ def test_particle_trajectory(fodo_ring):
 
     dist = ap.distribution(n_particles, x_dist="uniform", x_center=0.01)
     matrix_tracking = ap.MatrixTracking(fodo_ring, dist, turns=n_turns, positions=None)
+    twiss = ap.Twiss(fodo)
     x = matrix_tracking.x
     beta_x = twiss.beta_x
     psi_x = twiss.psi_x
