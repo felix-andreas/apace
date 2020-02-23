@@ -65,9 +65,9 @@ plt.plot(
     matrix_tracking_all_positions.x[:, -1],
     linewidth=0.5,
 )
-# plt.plot(matrix_tracking.orbit_position, matrix_tracking.x[:, -1], "rx")
-# plt.xlabel("orbit position / s")
-# plt.ylabel("horizontal offset for all positions / m")
+plt.plot(matrix_tracking.orbit_position, matrix_tracking.x[:, -1], "rx")
+plt.xlabel("orbit position / s")
+plt.ylabel("horizontal offset for all positions / m")
 
 
 plt.gcf().set_size_inches(16, 8)
