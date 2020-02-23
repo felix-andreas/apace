@@ -10,7 +10,8 @@ Q2 = ap.Quadrupole("Q2", length=0.4, k1=-1.2)
 fodo = ap.Lattice("fodo-lattice", [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.Lattice("fodo-ring", [fodo] * 8)
 
-twiss = ap.Twiss(ring)  # a different start_idx should make no difference!
+twiss = ap.Twiss(ring)
+# a different start_idx should make no difference!
 twiss.start_idx = randrange(twiss.n_kicks)
 
 

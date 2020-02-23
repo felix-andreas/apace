@@ -1,12 +1,7 @@
 import apace as ap
-import os
-
-dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
-fodo = ap.Lattice.from_file(file_path)
 
 
-def test_tune():
+def test_tune(fodo_ring):
     import numpy as np
     from scipy.fftpack import fft
 
@@ -14,8 +9,8 @@ def test_tune():
     n_turns = 10000
 
     dist = ap.distribution(n_particles, x_dist="uniform", x_width=0.02, x_center=0.01)
-    matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, positions=0)
-    period_time = fodo.length / 299_792_458
+    matrix_tracking = ap.MatrixTracking(fodo_ring, dist, turns=n_turns, positions=0)
+    period_time = fodo_ring.length / 299_792_458
     freq = np.linspace(0.0, 1.0 / (2.0 * period_time), n_turns // 2)
     tmp = matrix_tracking.particle_trajectories[:, 0, -1]
     fft_tracking = 2.0 / n_turns * np.abs(fft(tmp))[: n_turns // 2]
@@ -25,7 +20,7 @@ def test_tune():
     assert 0.8970 == round(1 - tune_fractional, 4)
 
 
-def test_particle_trajectory():
+def test_particle_trajectory(fodo_ring):
     """Compare particle trajectory from matrix tracking x(s) with particle trajectory
     from beta functions x(s) = sqrt(beta_x * e) * cos(psi_x + psi_x0).
     """
@@ -36,8 +31,8 @@ def test_particle_trajectory():
     n_turns = 1
 
     dist = ap.distribution(n_particles, x_dist="uniform", x_center=0.01)
-    matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, positions=None)
-    twiss = ap.Twiss(fodo)
+    matrix_tracking = ap.MatrixTracking(fodo_ring, dist, turns=n_turns, positions=None)
+    twiss = ap.Twiss(fodo_ring)
     x = matrix_tracking.x
     beta_x = twiss.beta_x
     psi_x = twiss.psi_x
