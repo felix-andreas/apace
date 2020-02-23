@@ -21,7 +21,7 @@ class MatrixTracking:
         self.matrix_method = MatrixMethod(lattice)
         self._initial_distribution = initial_distribution
         self.turns = turns
-        self.positions = positions  # TODO: make sure it is list!
+        self.positions = positions  # TODO: make sure it is a list!
 
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
@@ -46,14 +46,12 @@ class MatrixTracking:
     def particle_trajectories(self) -> np.ndarray:
         if self._particle_trajectories_needs_update:
             self.update_particle_trajectories()
-
         return self._particle_trajectories
 
     @property
     def orbit_position(self) -> np.ndarray:
         if self._particle_trajectories_needs_update:
             self.update_particle_trajectories()
-
         return self._orbit_position
 
     @property
