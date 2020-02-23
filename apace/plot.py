@@ -88,13 +88,14 @@ def draw_lattice(
             )
             ax.add_patch(rectangle)
 
-            if annotate_elements:
+            center = (start + end) / 2
+            if annotate_elements and x_min < center < x_max:
                 sign, va = (
                     (1, "bottom") if isinstance(element, Quadrupole) else (-1, "top")
                 )
                 ax.annotate(
                     element.name,
-                    xy=((start + end) / 2, y_max + sign * 0.75 * rect_height),
+                    xy=(center, y_max + sign * 0.75 * rect_height),
                     fontsize=FONT_SIZE,
                     ha="center",
                     va=va,
