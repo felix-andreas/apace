@@ -209,9 +209,9 @@ be altered when needed.
 
 Load and Save Lattice Files
 ---------------------------
-lattices can also be imported from a lattice file. This can be done using the :func:`load_lattice` function::
+lattices can also be imported from a lattice file. This can be done using the :func:`Lattice.from_file` method::
 
-   lattice = ap.load_lattice('/path/to/file')
+   lattice = ap.Lattice.from_file('/path/to/file')
 
 Individual elements and sub-lattices can be accessed through the :attr:`~Lattice.elements` and :attr:`~Lattice.sub_lattices`, respectively::
 
@@ -220,7 +220,7 @@ Individual elements and sub-lattices can be accessed through the :attr:`~Lattice
 
 A given lattice can be saved to a lattice file using the :func:`save_lattice` function::
 
-   ap.load_lattice(lattice, '/path/to/file')
+   ap.Lattice.from_file(lattice, '/path/to/file')
 
 The Twiss class
 ===============

@@ -1,7 +1,8 @@
 import inspect
+import latticejson
 import sys
-from typing import List, Set, Dict, List, Iterable
-from .utils import Signal, AmbiguousNameError
+from typing import List, Dict, Set, Union
+from .utils import Signal, Attribute, AmbiguousNameError
 
 
 class Base:
@@ -29,28 +30,24 @@ class Base:
     def __repr__(self):
         return self.name
 
-    def __str__(self):  # TODO: improve !!
+    def __str__(self):
         attributes = [("type", self.__class__.__name__)]
+        properties = []
         signals = []
-        for name, obj in self.__dict__.items():
-            if name.startswith("_"):
+        for key in dir(self):
+            if key.startswith("_"):
                 continue
 
-            if isinstance(obj, Signal):
-                signals.append((name, str(obj)))
-            else:
-                attributes.append((name, str(obj)))
-
-        properties = []
-        for name, obj in self.__class__.__dict__.items():
+            obj = getattr(self, key)
             if isinstance(obj, property):
-                obj = obj.fget(self)
-                string = str(obj)
-                properties.append((name, string))
+                properties.append(key, str(obj))
+            elif isinstance(obj, Signal):
+                signals.append((key, str(obj)))
+            else:
+                attributes.append((key, str(obj)))
 
-        return "\n".join(
-            f"{name:16}: {string}" for name, string in attributes + properties + signals
-        )
+        info = attributes + properties + signals
+        return "\n".join(f"{name:16}: {string}" for name, string in info)
 
 
 class Element(Base):
@@ -81,15 +78,15 @@ class Element(Base):
     def length(self, value):
         self._length = value
         self.length_changed()
+        self.value_changed(self, Attribute.LENGTH)
 
-    def _on_length_changed(self):
+    def _on_length_changed(self, *args):
         for lattice in self.parent_lattices:
             lattice.length_changed()
-            lattice.element_changed(self)
 
-    def _on_value_changed(self):
+    def _on_value_changed(self, element, attribute):
         for lattice in self.parent_lattices:
-            lattice.element_changed(self)
+            lattice.element_changed(element, attribute)
 
 
 class Drift(Element):
@@ -132,7 +129,7 @@ class Dipole(Element):
     @angle.setter
     def angle(self, value):
         self._angle = value
-        self.value_changed()
+        self.value_changed(self, Attribute.ANGLE)
 
     @property
     def e1(self) -> float:
@@ -142,7 +139,7 @@ class Dipole(Element):
     @e1.setter
     def e1(self, value):
         self._e1 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.E1)
 
     @property
     def e2(self) -> float:
@@ -152,7 +149,7 @@ class Dipole(Element):
     @e2.setter
     def e2(self, value):
         self._e2 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.E2)
 
     @property
     def radius(self) -> float:
@@ -161,7 +158,16 @@ class Dipole(Element):
 
     @radius.setter
     def radius(self, value):
-        self.angle = value
+        self.angle = self.length / value
+
+    @property
+    def k0(self) -> float:
+        """Geometric dipole strength or curvature of radius (m)."""
+        return self.angle / self.length
+
+    @k0.setter
+    def k0(self, value):
+        self.angle = value * self.length
 
 
 class Quadrupole(Element):
@@ -186,7 +192,7 @@ class Quadrupole(Element):
     @k1.setter
     def k1(self, value):
         self._k1 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K1)
 
 
 class Sextupole(Element):
@@ -211,7 +217,7 @@ class Sextupole(Element):
     @k2.setter
     def k2(self, value):
         self._k2 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K2)
 
 
 class Octupole(Element):
@@ -236,14 +242,15 @@ class Octupole(Element):
     @k3.setter
     def k3(self, value):
         self._k3 = value
-        self.value_changed()
+        self.value_changed(self, Attribute.K3)
 
 
 class Lattice(Base):
     """Defines the order of elements in the accelerator.
 
     :param str name: Name of the lattice.
-    :param Tuple[Union[Element, Lattice] tree: Nested tree of elements and lattices.
+    :param tree: Nested tree of elements and lattices.
+    :type tree: Tuple[Union[Element, Lattice]]
     :param str description: A brief description of the element.
     """
 
@@ -253,12 +260,12 @@ class Lattice(Base):
         for obj in set(tree):
             obj.parent_lattices.add(self)
 
-        # arrangement, positions, elements & sub_lattices are infered from self.tree
-        self._arrangement = []  # TODO: is an np.array better here?
+        self._objects = {}
+        self._elements = set()
+        self._sub_lattices = set()
+        self._arrangement = []
         self._indices = {}
-        self._elements = {}
-        self._sub_lattices = {}
-        self._update_tree_properties()
+        self._init_tree_properties(self.tree)
 
         self._length = 0
         self._length_needs_update = True
@@ -266,18 +273,48 @@ class Lattice(Base):
         """Gets emitted when the length of lattice changes."""
         self.length_changed.connect(self._on_length_changed)
 
+        self.n_elements = len(self.arrangement)
+        """The number of elements within this lattice."""
+
         self.element_changed: Signal = Signal()
         """Gets emitted when an attribute of an element within this lattice changes."""
         self.element_changed.connect(self._on_element_changed)
 
+    def _init_tree_properties(self, tree, idx=0):
+        """A recursive helper function to initialize the tree properties."""
+        arrangement = self._arrangement
+        indices = self._indices
+        elements = self._elements
+        sub_lattices = self._sub_lattices
+        objects = self._objects
+        for obj in tree:
+            value = objects.get(obj.name)
+            if value is None:
+                objects[obj.name] = obj
+            elif obj is not value:
+                raise AmbiguousNameError(obj.name)
+
+            if isinstance(obj, Lattice):
+                sub_lattices.add(obj)
+                idx = self._init_tree_properties(obj.tree, idx)
+            else:
+                elements.add(obj)
+                arrangement.append(obj)
+                try:
+                    indices[obj].append(idx)
+                except KeyError:
+                    indices[obj] = [idx]
+
+                idx += 1
+        return idx
+
     def __getitem__(self, key):
         if isinstance(key, str):
-            try:
-                return self.elements[key]
-            except KeyError:
-                return self.sub_lattices[key]
-        else:
+            return self._objects[key]
+        elif isinstance(key, (int, slice)):
             return self.arrangement[key]
+        elif isinstance(key, Base):
+            return self.indices[Base]
 
     def __del__(self):
         for obj in self.tree:
@@ -295,24 +332,23 @@ class Lattice(Base):
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
-    # TODO: move to base class
     def _on_length_changed(self):
         self._length_needs_update = True
         for lattice in self.parent_lattices:
             lattice.length_changed()
 
-    def _on_element_changed(self, element):
+    def _on_element_changed(self, element, attribute):
         for lattice in self.parent_lattices:
-            lattice.element_changed(element)
+            lattice.element_changed(element, attribute)
 
     @property
-    def tree(self) -> List[Base]:  # do not set tree manually
-        """The tree of objects defines the physical order of elements withing this lattice."""
+    def tree(self) -> List[Base]:
+        """List of elements and sub-lattices in physical order."""
         return self._tree
 
     @property
     def arrangement(self) -> List[Element]:
-        """Defines the physical order of elements. Corresponds to flattened tree."""
+        """List of elements in physical order. (Flattend :attr:`tree`)"""
         return self._arrangement
 
     @property
@@ -322,48 +358,19 @@ class Lattice(Base):
         return self._indices
 
     @property
-    def elements(self) -> Dict[str, Element]:
-        """Contains all elements within this lattice."""
+    def objects(self) -> Dict[str, Union[Element, "Lattice"]]:
+        """A Mapping from names to the given `Element` or `Lattice` object."""
+        return self._objects
+
+    @property
+    def elements(self) -> Set[Element]:
+        """Unordered set of all elements within this lattice."""
         return self._elements
 
     @property
-    def sub_lattices(self) -> Dict[str, "Lattice"]:  # TODO: Python 3.7 change type hint
-        """Contains all lattices within this lattice."""
+    def sub_lattices(self) -> Set["Lattice"]:  # TODO: Python 3.7 change type hint
+        """Unordered set of all sub-lattices within this lattice."""
         return self._sub_lattices
-
-    def _update_tree_properties(self, tree=None, idx=0):
-        """A recursive helper function to update the tree properties."""
-        if tree is None:
-            tree = self._tree
-
-        arrangement = self._arrangement
-        indices = self._indices
-        elements = self._elements
-        sub_lattices = self._sub_lattices
-        for obj in tree:
-            if isinstance(obj, Lattice):
-                value = sub_lattices.get(obj.name)
-                if value is None:
-                    sub_lattices[obj.name] = obj
-                elif obj is not value:
-                    raise AmbiguousNameError(obj.name)
-
-                idx = self._update_tree_properties(obj.tree, idx)
-            else:
-                arrangement.append(obj)
-                try:
-                    indices[obj].append(idx)
-                except KeyError:
-                    indices[obj] = [idx]
-
-                idx += 1
-
-                value = elements.get(obj.name)
-                if value is None:
-                    elements[obj.name] = obj
-                elif obj is not value:
-                    raise AmbiguousNameError(obj.name)
-        return idx
 
     def print_tree(self):
         """Print the lattice as tree of objects. (Similar to unix tree command)"""
@@ -382,13 +389,22 @@ class Lattice(Base):
         return string
 
     @classmethod
-    def from_dict(cls, data):
+    def from_file(cls, location, file_format=None) -> "Lattice":
+        """Creates a new `Lattice` from file at `location` (path or url).
+        :param location: path-like or url-like string which locates the lattice file
+        :type location: Union[AnyStr, Path]
+        :param file_format str: File format of the lattice file
+        :type file_format: str, optional (use file extension)
+        :rtype Lattice
+        """
+        return cls.from_dict(latticejson.load(location, file_format))
+
+    @classmethod
+    def from_dict(cls, data) -> "Lattice":
         """Creates a new `Lattice` object from a latticeJSON compliant dictionary."""
 
-        objects = {}  # dictionary for all objects (elements + lattices)
-        for name, attributes in data["elements"].items():
-            type_ = attributes.pop("type")
-
+        objects = {}  # dict containing all elements + lattices
+        for name, (type_, attributes) in data["elements"].items():
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
 
@@ -398,7 +414,7 @@ class Lattice(Base):
             tree = [objects[name] for name in tree_names]
             objects[name] = Lattice(name, tree)
 
-        return Lattice(
+        return cls(
             name=data["name"],
             tree=[objects[name] for name in data["lattice"]],
             description=data.get("description", ""),
@@ -407,20 +423,16 @@ class Lattice(Base):
     def as_dict(self):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
-        for element in self.elements.values():
-            attributes = {
-                key: getattr(element, key)
-                for (key, value) in inspect.signature(
-                    element.__class__
-                ).parameters.items()
-            }
-            attributes.pop("name")
-            elements_dict[element.name] = attributes
-            elements_dict[element.name]["type"] = element.__class__.__name__
+        for element in self.elements:
+            type_ = type(element)
+            parameters = inspect.signature(type_).parameters.items()
+            attributes = {key: getattr(element, key) for (key, value) in parameters}
+            name = attributes.pop("name")
+            elements_dict[name] = [type_.__name__, attributes]
 
         sub_lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
-            for lattice in self.sub_lattices.values()
+            for lattice in self.sub_lattices
         }
 
         return dict(

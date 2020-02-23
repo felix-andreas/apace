@@ -1,4 +1,4 @@
-import collections
+from enum import Enum, auto
 
 
 class Signal:
@@ -47,6 +47,16 @@ class Flag:
         self.value = value
 
 
+class Attribute(Enum):
+    LENGTH = auto()
+    ANGLE = auto()
+    K1 = auto()
+    K2 = auto()
+    K3 = auto()
+    E1 = auto()
+    E2 = auto()
+
+
 class AmbiguousNameError(Exception):
     """Raised if multiple elements or lattices have the same name.
 
@@ -55,123 +65,3 @@ class AmbiguousNameError(Exception):
 
     def __init__(self, name):
         super().__init__(f'The name "{name}" is ambiguous. Names must be unique!')
-
-
-def flatten(iterable):
-    for element in iterable:
-        if isinstance(element, collections.Iterable) and not isinstance(
-            element, (str, bytes)
-        ):
-            yield from flatten(element)
-        else:
-            yield element
-
-
-class AttrDict(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__dict__ = self
-
-
-class Structure:
-    pass
-
-
-# TODO: remove if weaklist not needed!
-# based on https://github.com/apieum/weakreflist/blob/master/weakreflist/weakreflist.py
-# modified
-# from weakref import ref, ReferenceType # noqa: E402
-# import sys # noqa: ignore=E402
-#
-#
-# def is_slice(index):
-#     return isinstance(index, slice)
-#
-#
-# class WeakList(list):
-#
-#     def __init__(self, items=list()):
-#         list.__init__(self, self._refs(items))
-#
-#     def value(self, item):
-#         return item() if isinstance(item, ReferenceType) else item
-#
-#     def ref(self, item):
-#         try:
-#             item = ref(item, self.remove_all)
-#         finally:
-#             return item
-#
-#     def __contains__(self, item):
-#         return list.__contains__(self, self.ref(item))
-#
-#     def __getitem__(self, index):
-#         items = list.__getitem__(self, index)
-#         return type(self)(self._values(items)) if is_slice(index) else self.value(items)
-#
-#     def __setitem__(self, index, item):
-#         items = self._refs(item) if is_slice(index) else self.ref(item)
-#         return list.__setitem__(self, index, items)
-#
-#     def __iter__(self):
-#         return iter(self[index] for index in range(len(self)))
-#
-#     def __reversed__(self):
-#         reversed_self = type(self)(self)
-#         reversed_self.reverse()
-#         return reversed_self
-#
-#     # modified
-#     def clear(self):
-#         del self[:]
-#
-#     def append(self, item):
-#         list.append(self, self.ref(item))
-#
-#     def remove(self, item):
-#         return list.remove(self, self.ref(item))
-#
-#     def remove_all(self, item):
-#         item = self.ref(item)
-#         while list.__contains__(self, item):
-#             list.remove(self, item)
-#
-#     def index(self, item):
-#         return list.index(self, self.ref(item))
-#
-#     def count(self, item):
-#         return list.count(self, self.ref(item))
-#
-#     def pop(self, index=-1):
-#         return self.value(list.pop(self, self.ref(index)))
-#
-#     def insert(self, index, item):
-#         return list.insert(self, index, self.ref(item))
-#
-#     def extend(self, items):
-#         return list.extend(self, self._refs(items))
-#
-#     def __iadd__(self, other):
-#         return list.__iadd__(self, self._refs(other))
-#
-#     def _refs(self, items):
-#         return map(self.ref, items)
-#
-#     def _values(self, items):
-#         return map(self.value, items)
-#
-#     def _sort_key(self, key=None):
-#         return self.value if key is None else lambda item: key(self.value(item))
-#
-#     if sys.version_info < (3,):
-#         def sort(self, cmp=None, key=None, reverse=False):
-#             return list.sort(self, cmp=cmp, key=self._sort_key(key), reverse=reverse)
-#
-#         def __setslice__(self, lower_bound, upper_bound, items):
-#             return self.__setitem__(slice(lower_bound, upper_bound), items)
-#
-#         def __getslice__(self, lower_bound, upper_bound):
-#             return self.__getitem__(slice(lower_bound, upper_bound))
-#     else:
-#         def sort(self, key=None, reverse=False):
-#             return list.sort(self, key=self._sort_key(key), reverse=reverse)

@@ -10,7 +10,8 @@ Q2 = ap.Quadrupole("Q2", length=0.4, k1=-1.2)
 fodo = ap.Lattice("fodo-lattice", [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
 ring = ap.Lattice("fodo-ring", [fodo] * 8)
 
-twiss = ap.Twiss(ring)  # a different start_idx should make no difference!
+twiss = ap.Twiss(ring)
+# a different start_idx should make no difference!
 twiss.start_idx = randrange(twiss.n_kicks)
 
 
@@ -89,3 +90,20 @@ one_turn = np.array(
 def test_one_turn_matrix():  # ony true if one turn matrix is calculated from pos = 0
     twiss_idx_0 = ap.Twiss(ring, start_idx=0)
     assert np.allclose(one_turn, twiss_idx_0.one_turn_matrix)
+
+
+def test_chromaticity():
+    twiss = ap.Twiss(ring)
+    print()
+    print("chroma_x", twiss.chromaticity_x)
+    print("chroma_y", twiss.chromaticity_y)
+    # TODO: get reliable reference values
+    # TODO: test if it changes when element changes
+
+
+def test_alpha_c():
+    twiss = ap.Twiss(ring)
+    print()
+    print("alpha_c", twiss.alpha_c)
+    # TODO: get reliable reference values
+    # TODO: test if it changes when element changes
