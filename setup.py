@@ -1,11 +1,11 @@
+from typing import Dict
+from pathlib import Path
 from setuptools import setup, find_packages
 
-about = {}
-with open("apace/__about__.py") as file:
-    exec(file.read(), about)
-
-with open("README.md") as file:
-    readme = file.read()
+base_path = Path(__file__).resolve().parent
+about: Dict[str, str] = {}
+exec((base_path / "apace/__about__.py").read_text(), about)
+readme = (base_path / "README.md").read_text()
 
 setup(
     name=about["__title__"],
@@ -18,12 +18,18 @@ setup(
     license=about["__license__"],
     packages=find_packages(),
     package_data={"data": ["data"],},
-    install_requires=["latticejson", "numpy", "scipy", "matplotlib", "cffi>=1.0.0"],
+    install_requires=[
+        "latticejson>=0.0.4",
+        "numpy",
+        "scipy",
+        "matplotlib",
+        "click>=7.0",
+        "cffi>=1.0.0",
+    ],
     test_requires=["pytest"],
-    setup_requires=["cffi>=1.0.0"],
     python_requires=">=3.6",
     cffi_modules=["lib/build.py:ffi_builder",],
-    entry_points={"console_scripts": ["apace = apace.cli:main"]},
+    entry_points={"console_scripts": ["apace=apace.cli:cli"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Science/Research",

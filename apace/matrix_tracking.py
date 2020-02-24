@@ -80,32 +80,32 @@ class MatrixTracking:
 
     @property
     def x(self) -> np.ndarray:
-        return self.particle_trajectories[:, 0, :]
+        return self.particle_trajectories[:, 0]
 
     @property
     def x_dds(self) -> np.ndarray:
-        return self.particle_trajectories[:, 1, :]
+        return self.particle_trajectories[:, 1]
 
     @property
     def y(self) -> np.ndarray:
-        return self.particle_trajectories[:, 2, :]
+        return self.particle_trajectories[:, 2]
 
     @property
     def y_dds(self) -> np.ndarray:
-        return self.particle_trajectories[:, 3, :]
+        return self.particle_trajectories[:, 3]
 
     @property
-    def long(self) -> np.ndarray:
-        return self.particle_trajectories[:, 4, :]
+    def lon(self) -> np.ndarray:
+        return self.particle_trajectories[:, 4]
 
     @property
     def delta(self) -> np.ndarray:
-        return self.particle_trajectories[:, 5, :]
+        return self.particle_trajectories[:, 5]
 
     def update_particle_trajectories(self):
         """Manually update the 6D particle trajectories"""
-
         n_kicks = self.matrix_method.n_kicks
+        n_points = self.matrix_method.n_points
         n_turns = self.n_turns
         watch_points = self.watch_points
         n_watch_points = len(watch_points)
@@ -133,11 +133,11 @@ class MatrixTracking:
             acc_array = np.empty(matrix_array.shape)
             accumulate_array(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
-            trajectories[1 : n_kicks + 1] = np.dot(acc_array, initial_distribution)
-            orbit_position[0 : n_kicks + 1] = self.matrix_method.s
+            np.dot(acc_array, initial_distribution, out=trajectories[1:n_points])
+            orbit_position[0:n_points] = self.matrix_method.s
             for i in range(1, n_turns):
                 idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
-                trajectories[idx] = np.dot(acc_array, trajectories[i * n_kicks])
+                np.dot(acc_array, trajectories[i * n_kicks], out=trajectories[idx])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
             acc_array = np.empty((n_watch_points, MATRIX_SIZE, MATRIX_SIZE))
@@ -155,7 +155,7 @@ class MatrixTracking:
 
             orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
             for i in range(1, n_watch_points):
-                trajectories[i] = np.dot(acc_array[i - 1], trajectories[i - 1])
+                np.dot(acc_array[i - 1], trajectories[i - 1], out=trajectories[i])
 
             for turn in range(1, n_turns):
                 idx = turn * n_watch_points
@@ -164,7 +164,7 @@ class MatrixTracking:
                 )
                 for j in range(n_watch_points):
                     i = idx + j
-                    trajectories[i] = np.dot(acc_array[j - 1], trajectories[i - 1])
+                    np.dot(acc_array[j - 1], trajectories[i - 1], out=trajectories[i])
 
         self._particle_trajectories_needs_update = False
 

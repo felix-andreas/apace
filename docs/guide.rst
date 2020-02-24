@@ -201,24 +201,17 @@ As a nested structure is not always convenient to work with, there are three oth
 Adding and Removing Objects
 ---------------------------
 
-The :attr:`~Lattice.tree` of objects can also be altered after the lattice was created. Use :meth:`Lattice.add` to add objects to the tree::
-
-   >>> dba_cell.add(drift)
-   >>> dba_cell.tree
-   [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift]
-
-Remove objects from the :attr:`~Lattice.tree` with :meth:`Lattice.remove`::
-
-   >>> dba_cell.remove(-1)
-   >>> dba_cell.tree
-   [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
-
+As adding and removing objects from the :attr:`~Lattice.tree` significantly increased the
+code complextetiy, it was decided that :attr:`~Lattice.tree` cannont be altered after the
+:class:`Lattice` was created. If you needed to add/remove an object just create a new
+:class:`Lattice` object or initially add an :class:`Element` with length zero, which can
+be altered when needed.
 
 Load and Save Lattice Files
 ---------------------------
-lattices can also be imported from a lattice file. This can be done using the :func:`load_lattice` function::
+lattices can also be imported from a lattice file. This can be done using the :func:`Lattice.from_file` method::
 
-   lattice = ap.load_lattice('/path/to/file')
+   lattice = ap.Lattice.from_file('/path/to/file')
 
 Individual elements and sub-lattices can be accessed through the :attr:`~Lattice.elements` and :attr:`~Lattice.sub_lattices`, respectively::
 
@@ -227,7 +220,7 @@ Individual elements and sub-lattices can be accessed through the :attr:`~Lattice
 
 A given lattice can be saved to a lattice file using the :func:`save_lattice` function::
 
-   ap.load_lattice(lattice, '/path/to/file')
+   ap.Lattice.from_file(lattice, '/path/to/file')
 
 The Twiss class
 ===============

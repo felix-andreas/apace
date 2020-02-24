@@ -1,16 +1,20 @@
 import apace as ap
-from apace.plot import plot_lattice
-
-import os
-
-dir_name = os.path.dirname(__file__)
-file_path = os.path.join(dir_name, "data", "lattices", "fodo_ring.json")
+from apace.plot import plot_twiss, draw_lattice, floor_plan
+import matplotlib.pyplot as plt
 
 
-def test_plot():
-    line = ap.load_lattice(file_path)
-    twiss = ap.Twiss(line)
+def test_draw_lattice(fodo_ring, tmp_path):
+    twiss = ap.Twiss(fodo_ring)
+    _, ax = plt.subplots()
+    plot_twiss(twiss, ax=ax)
+    draw_lattice(fodo_ring)
+    plt.tight_layout()
+    plt.savefig(tmp_path / "test_draw_lattice.pdf")
 
-    plot_lattice(
-        twiss, line, eta_x_scale=1, path=os.path.join(dir_name, "/tmp/out.pdf")
-    )
+
+def test_floor_plan(fodo_ring, tmp_path):
+    _, ax = plt.subplots()
+    ax = floor_plan(fodo_ring, ax=ax)
+    ax.invert_yaxis()
+    plt.tight_layout()
+    plt.savefig(tmp_path / "apace_test_floor_plan.pdf")

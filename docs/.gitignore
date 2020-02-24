@@ -2,3 +2,4 @@ _build
 generated
 src
 examples
+auto_examples

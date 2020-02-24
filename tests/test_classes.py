@@ -4,12 +4,13 @@ import pytest
 
 def test_length_changed():
     drift = ap.Drift("Drift", length=1)
-    cell_1 = ap.Lattice("Lattice", [drift, drift])
-    cell_2 = ap.Lattice("Lattice", [cell_1, cell_1])
-    cell_3 = ap.Lattice("Lattice", [cell_2, cell_2])
+    cell_1 = ap.Lattice("Cell1", [drift, drift])
+    cell_2 = ap.Lattice("Cell2", [cell_1, cell_1])
+    cell_3 = ap.Lattice("Cell3", [cell_2, cell_2])
     initial_length = cell_3.length
     for i in range(2, 10):
         drift.length += 1
+        print("TEST:", drift.length, cell_3.length)
         assert i * initial_length == cell_3.length
 
 
@@ -18,43 +19,41 @@ def test_unique_names():
     drift_2 = ap.Drift("Drift", length=2)
 
     with pytest.raises(ap.AmbiguousNameError):
-        ap.Lattice("Lattice", [drift_1, drift_2]).update_tree_properties()
+        ap.Lattice("Lattice", [drift_1, drift_2])
 
-    cell_1 = ap.Lattice("Lattice")
-    cell_2 = ap.Lattice("Lattice")
+    cell_1 = ap.Lattice("cell", [])
+    cell_2 = ap.Lattice("cell", [])
 
     with pytest.raises(ap.AmbiguousNameError):
-        ap.Lattice("Lattice", [cell_1, cell_2]).update_tree_properties()
+        ap.Lattice("Lattice", [cell_1, cell_2])
 
 
-def test_add_remove_objects():
+def test_indices():
+    e0 = ap.Element("e0", length=1)
     e1 = ap.Element("e1", length=1)
     e2 = ap.Element("e2", length=1)
-    cell = ap.Lattice("Sub-Lattice")
-    cell_2 = ap.Lattice("Lattice", [cell] * 2)
+    l0 = ap.Lattice("l0", (e0, e1, e2))
+    assert [0] == l0.indices[e0]
+    assert [1] == l0.indices[e1]
+    assert [2] == l0.indices[e2]
 
-    assert 0 == cell_2.length
+    l1 = ap.Lattice("l1", (e0, l0, e1, l0, e2))
+    # e0, e0, e1, e2, e1, e0, e1, e2, e2
+    #  0,  1,  2,  3,  4,  5,  6,  7,  8
+    assert [0, 1, 5] == l1.indices[e0]
+    assert [2, 4, 6] == l1.indices[e1]
+    assert [3, 7, 8] == l1.indices[e2]
 
-    cell.add(e1)
-    assert [e1] == cell.tree
-    assert 2 == cell_2.length
 
-    cell.add(e2, pos=-1)
-    assert [e2, e1] == cell.tree
-    assert 4 == cell_2.length
+def test_print_tree(fodo_ring):
+    nested1 = ap.Lattice("nested1", [fodo_ring])
+    nested2 = ap.Lattice("nested2", [nested1])
+    nested3 = ap.Lattice("nested3", [nested2])
+    nested4 = ap.Lattice("nested4", 2 * [nested3])
+    nested4.print_tree()
 
-    cell.add([e1, e2], pos=0)  # add list
-    assert [e1, e2, e2, e1] == cell.tree
-    assert 8 == cell_2.length
 
-    cell.add((e1,), pos=-2)  # add tuple
-    assert [e1, e2, e1, e2, e1] == cell.tree
-    assert 10 == cell_2.length
-
-    cell.remove(2)
-    assert [e1, e2, e2, e1] == cell.tree
-    assert 8 == cell_2.length
-
-    cell.remove(-3, 2)
-    assert [e1, e1] == cell.tree
-    assert 4 == cell_2.length
+def test_print_objects(fodo_ring):
+    print()
+    print(fodo_ring.arrangement[0], end="\n\n")
+    print(fodo_ring.arrangement[1], end="\n\n")

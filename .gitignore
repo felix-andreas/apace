@@ -3,7 +3,6 @@
 .idea
 .vscode
 
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -14,13 +13,13 @@ apace/**/*.so
 apace/**/*.o
 apace/**/*.c
 
-
 # Distribution / packaging
 .Python
 build/
 dist/
 sdist/
 wheels/
+pip-wheel-metadata
 *.egg
 *.egg-info/
 
