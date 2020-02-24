@@ -3,7 +3,6 @@ from cffi import FFI
 
 SOURCES = ("twiss_product_serial.c", "twiss_product_parallel.c", "accumulate_array.c")
 SRC_ROOT = os.path.dirname(os.path.abspath(__file__))
-print(SRC_ROOT)
 
 ffi_builder = FFI()
 ffi_builder.set_source(
