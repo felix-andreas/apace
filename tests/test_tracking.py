@@ -41,5 +41,5 @@ def test_particle_trajectory(fodo_ring):
     idx_test = np.random.randint(0, x.shape[0], 10)
     emittance_sqrt = x[0, 0] / (sqrt(beta_x[0]) * cos(psi_x[0]))
     assert np.allclose(
-        x[idx_test, 0], emittance_sqrt * sqrt(beta_x[0]) * cos(psi_x[0]), atol=1
+        x[idx_test, 0], emittance_sqrt * sqrt(beta_x[0]) * cos(psi_x[0]), atol=0.01
     )

@@ -147,7 +147,7 @@ class MatrixTracking:
                     raise Exception(f"Invalid watch point {point}.")
 
                 ranges[i, 0] = point
-                ranges[i - 1, 1] = point - 1
+                ranges[i - 1, 1] = point
 
             matrix_product_ranges(matrix_array, acc_array, ranges)
             if watch_points == [0]:
@@ -165,7 +165,6 @@ class MatrixTracking:
                 for j in range(n_watch_points):
                     i = idx + j
                     np.dot(acc_array[j - 1], trajectories[i - 1], out=trajectories[i])
-            breakpoint()
 
         self._particle_trajectories_needs_update = False
 

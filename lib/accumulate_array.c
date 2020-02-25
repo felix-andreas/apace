@@ -57,17 +57,12 @@ void matrix_product_ranges(
             }
         }
 
-        if (end < start) {
-            end += n_matrices;
-        }
-
-        for (int m = start + 1; m < end; m++) {
-            int pos = m < n_matrices ? m : m - n_matrices;
+        for (int m = start + 1; m != end; m = (m + 1) % n_matrices) {
             double tmp[6][6] = {{0}};
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {
                     for (int k = 0; k < 6; k++) {
-                        tmp[i][j] += matrices[pos][i][k] * accumulated[l][k][j];
+                        tmp[i][j] += matrices[m][i][k] * accumulated[l][k][j];
                     }
                 }
             }
