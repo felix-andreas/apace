@@ -36,12 +36,12 @@ twiss = ap.Twiss(fodo_ring)
 
 print(
     f"Twiss parameter of {fodo_ring.name}",
-    f"Stable in x-plane : {twiss.stable_x}",
-    f"Stable in y-plane : {twiss.stable_y}",
-    f"Horizontal tune   : {twiss.tune_x:.3f}",
-    f"Vertical tune     : {twiss.tune_y:.3f}",
-    f"Max beta x        : {np.max(twiss.beta_x):.3f}",
-    f"Max beta y        : {np.max(twiss.beta_y):.3f}",
+    f"Stable in x-plane: {twiss.stable_x}",
+    f"Stable in y-plane: {twiss.stable_y}",
+    f"Horizontal tune  : {twiss.tune_x:.3f}",
+    f"Vertical tune    : {twiss.tune_y:.3f}",
+    f"Max beta x       : {np.max(twiss.beta_x):.3f}",
+    f"Max beta y       : {np.max(twiss.beta_y):.3f}",
     sep="\n",
 )
 

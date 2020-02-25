@@ -25,9 +25,9 @@ class MatrixTracking:
         self.lattice = lattice
         self.matrix_method = MatrixMethod(lattice)
         self._initial_distribution = initial_distribution
+
         self.n_turns = turns
         self.start_point = start_point
-
         self.watch_points = watch_points
 
         self._orbit_position = np.empty(0)
@@ -68,14 +68,12 @@ class MatrixTracking:
         """Contains the 6D particle trajectories."""
         if self._particle_trajectories_needs_update:
             self.update_particle_trajectories()
-
         return self._particle_trajectories
 
     @property
     def orbit_position(self) -> np.ndarray:
         if self._particle_trajectories_needs_update:
             self.update_particle_trajectories()
-
         return self._orbit_position
 
     @property
