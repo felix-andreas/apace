@@ -1,5 +1,5 @@
-from ._clib import ffi, lib
 import numpy as np
+from ._clib import ffi, lib
 
 
 def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=False):
@@ -26,8 +26,8 @@ def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=Fa
     func(*args)
 
 
-def accumulate_array(input_array, output_array, from_idx):
-    """ Accumulated an array of matrices to a given index.
+def matrix_product_accumulated(input_array, output_array, from_idx):
+    """Perform accumulated matrix product on array of matrices.
 
     The input matrices A[0], A[2], ... of the input array (A)
     are accumulated into the output array (B) as follows:
@@ -57,11 +57,11 @@ def accumulate_array(input_array, output_array, from_idx):
         ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
-    lib.accumulate_array(*args)
+    lib.matrix_product_accumulated(*args)
 
 
-def accumulate_array_partial(input_array, output_array, ranges):
-    """ Returns the accumulated transfer matrices between given start and end values.
+def matrix_product_ranges(input_array, output_array, ranges):
+    """Perform matrix product on array of matrices for given ranges.
 
     The final array has the shape (n, size, size) and contains the accumulated transfer
     matrices between the given indices:
@@ -77,11 +77,11 @@ def accumulate_array_partial(input_array, output_array, ranges):
     :param np.ndarray: The array into which the result is stored. (n, size, size)
     :type output_array: np.ndarray
     :param ranges: The start and end indicies for the matrix accumulation, where
-                    indices[:, 0] are the start and indices[:, 1] are the end values.
+                    ranges[:, 0] are the start and ranges[:, 1] are the end values.
     :type ranges: array-like
     """
     n_kicks = input_array.shape[0]
-    n_indices = ranges.shape[0]
+    n_ranges = ranges.shape[0]
     if ranges.shape[1] != 2:
         raise ValueError("The argument indices has the wrong shape! (Expected (n, 2))")
 
@@ -89,14 +89,14 @@ def accumulate_array_partial(input_array, output_array, ranges):
         ranges = np.array(ranges, dtype=np.int32)
 
     args = (
-        n_indices,
+        n_ranges,
         n_kicks,
         ffi.cast("int    (*)[2]   ", ffi.from_buffer(ranges)),
         ffi.cast("double (*)[6][6]", ffi.from_buffer(input_array)),
         ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
-    lib.accumulate_array_partial(*args)
+    lib.matrix_product_ranges(*args)
 
 
 def multiple_dot_products(A, B, out):

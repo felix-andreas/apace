@@ -1,8 +1,8 @@
-from collections import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 
-from .clib import accumulate_array, accumulate_array_partial
+from .clib import matrix_product_accumulated, matrix_product_ranges
 from .matrix_method import MatrixMethod, MATRIX_SIZE
 from .utils import Signal
 
@@ -14,7 +14,7 @@ class MatrixTracking:
     :param np.ndarray initial_distribution: Initial particle distribution.
     :param int turns: Number of turns.
     :param watch_points: List of watch points. If unset all particle trajectory
-           will be saved for all positions.
+           will be saved for all positions. Indices correspont to ``orbit_positions``.
     :type watch_points: array-like, optional
     :param int start_point: Point at which the particle tracking begins.
     """
@@ -52,7 +52,7 @@ class MatrixTracking:
             raise ValueError("Watch points must be a Iterable or None!")
 
         # TODO: needs to update trajectories
-        self._watch_points = np.array(value, dtype=np.int32)
+        self._watch_points = np.sort(np.array(value, dtype=np.int32))
 
     @property
     def initial_distribution(self) -> np.ndarray:
@@ -131,7 +131,7 @@ class MatrixTracking:
         # TODO: implement in C
         if watch_all:
             acc_array = np.empty(matrix_array.shape)
-            accumulate_array(matrix_array, acc_array, 0)
+            matrix_product_accumulated(matrix_array, acc_array, 0)
             trajectories[0] = initial_distribution
             np.dot(acc_array, initial_distribution, out=trajectories[1:n_points])
             orbit_position[0:n_points] = self.matrix_method.s
@@ -141,21 +141,21 @@ class MatrixTracking:
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
             acc_array = np.empty((n_watch_points, MATRIX_SIZE, MATRIX_SIZE))
-            indices = np.empty((n_watch_points, 2), dtype=np.int32)
-            for i, point in enumerate(watch_points % n_kicks):
-                indices[i, 0] = point
-                indices[i - 1, 1] = point
-            print(indices)
+            ranges = np.empty((n_watch_points, 2), dtype=np.int32)
+            for i, point in enumerate(watch_points):
+                if point >= n_kicks:
+                    raise Exception(f"Invalid watch point {point}.")
 
-            accumulate_array_partial(matrix_array, acc_array, indices)
-            if watch_points[0] == 0:
+                ranges[i, 0] = point
+                ranges[i - 1, 1] = point - 1
+
+            matrix_product_ranges(matrix_array, acc_array, ranges)
+            if watch_points == [0]:
                 trajectories[0] = initial_distribution
+                orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
             else:
+                # TODO: implemented for arbitrary watch points
                 raise NotImplementedError
-
-            orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
-            for i in range(1, n_watch_points):
-                np.dot(acc_array[i - 1], trajectories[i - 1], out=trajectories[i])
 
             for turn in range(1, n_turns):
                 idx = turn * n_watch_points
@@ -165,6 +165,7 @@ class MatrixTracking:
                 for j in range(n_watch_points):
                     i = idx + j
                     np.dot(acc_array[j - 1], trajectories[i - 1], out=trajectories[i])
+            breakpoint()
 
         self._particle_trajectories_needs_update = False
 

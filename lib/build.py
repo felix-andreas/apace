@@ -36,19 +36,19 @@ void twiss_product_parallel (
         double (*twiss_array)[] // shape (8, n)
 );
 
-void accumulate_array(
-        int n,
-        int from_idx,
-        double (*input_array)[6][6],
-        double (*accumulated_array)[6][6]
+void matrix_product_accumulated(
+    int n,
+    int start_idx,
+    double (*matrices)[6][6],
+    double (*accumulated)[6][6]
 );
 
-void accumulate_array_partial(
-        int n_indices,
-        int n_kicks,
-        int (*indices)[2],
-        double (*input_array)[6][6],
-        double (*accumulated_array)[6][6]
+void matrix_product_ranges(
+    int n_ranges,
+    int n_matrices,
+    int (*ranges)[2],
+    double (*matrices)[6][6],
+    double (*accumulated)[6][6]
 );
 """
 
