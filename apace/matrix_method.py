@@ -3,7 +3,7 @@ from .classes import Element, Drift, Dipole, Quadrupole
 from .utils import Signal
 from typing import List, Dict
 
-from .clib import accumulate_array
+from .clib import matrix_product_accumulated
 
 MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
@@ -335,7 +335,7 @@ class MatrixMethod:
         return self._transfer_matrices_acc
 
     def update_transfer_matrices_acc(self):
-        accumulate_array(
+        matrix_product_accumulated(
             self.transfer_matrices, self.transfer_matrices_acc, self.start_index
         )
 

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import trapz, cumtrapz
-from .clib import twiss_product, accumulate_array
+from .clib import twiss_product, matrix_product_accumulated
 from .matrix_method import MatrixMethod
 from .utils import Signal
 
@@ -149,7 +149,9 @@ class Twiss(MatrixMethod):
         if self._accumulated_array.shape[0] != self.n_kicks:
             self._accumulated_array = np.empty(matrix_array.shape)
 
-        accumulate_array(matrix_array, self._accumulated_array, self.start_idx)
+        matrix_product_accumulated(
+            matrix_array, self._accumulated_array, self.start_idx
+        )
         self._one_turn_matrix = m = self._accumulated_array[self.start_idx - 1]
         self._term_x = 2 - m[0, 0] ** 2 - 2 * m[0, 1] * m[1, 0] - m[1, 1] ** 2
         self._term_y = 2 - m[2, 2] ** 2 - 2 * m[2, 3] * m[3, 2] - m[3, 3] ** 2
