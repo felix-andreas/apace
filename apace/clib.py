@@ -82,8 +82,11 @@ def matrix_product_ranges(input_array, output_array, ranges):
     """
     n_kicks = input_array.shape[0]
     n_ranges = ranges.shape[0]
-    if ranges.shape[1] != 2:
+    if ranges.ndim != 2 or ranges.shape[1] != 2:
         raise ValueError("The argument indices has the wrong shape! (Expected (n, 2))")
+
+    if np.any((0 > ranges) | (ranges[:, 0] >= n_kicks) | ranges[:, 1] > n_kicks):
+        raise ValueError(f"Ranges must be within [0, {n_kicks}].")
 
     if not isinstance(ranges, np.ndarray) or ranges.dtype != np.int32:
         ranges = np.array(ranges, dtype=np.int32)

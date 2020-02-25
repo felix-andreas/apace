@@ -39,6 +39,14 @@ void matrix_product_accumulated(
     }
 }
 
+int max(int x, int y) {
+    return (x > y ) ? x : y;
+}
+
+int min(int x, int y) {
+    return (x > y ) ? y : x;
+}
+
 // perform matrix product on array of matrices for given ranges
 void matrix_product_ranges(
     int n_ranges,
@@ -57,7 +65,9 @@ void matrix_product_ranges(
             }
         }
 
-        for (int m = start + 1; m != end; m = (m + 1) % n_matrices) {
+        int n_steps = end > start ? end - start : end - start + n_matrices;
+        for (int _m = 1 ; _m < n_steps ; _m++) {
+            int m = (start + _m) % n_matrices;
             double tmp[6][6] = {{0}};
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {

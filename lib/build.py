@@ -21,19 +21,19 @@ ffi_builder.set_source(
 
 header = """\
 void twiss_product_serial (
-        int n,
-        int from_idx,
-        double (*matrix_array)[6][6], // shape (6, 6, n - 1)
-        double *B0,
-        double (*twiss_array)[] // shape (8, n)
+    int n,
+    int from_idx,
+    double (*matrices)[6][6], // shape (n-1, 6, 6)
+    double *B0,
+    double (*twiss)[n] // shape (8, n)
 );
 
 void twiss_product_parallel (
-        int n,
-        int from_idx,
-        double (*matrix_array)[6][6], // shape (6, 6, n - 1)
-        double *B0,
-        double (*twiss_array)[] // shape (8, n)
+    int n,
+    int from_idx,
+    double (*matrices)[6][6], // shape (n -1, 6, 6)
+    double *B0,
+    double (*twiss)[n] // shape (8, n)
 );
 
 void matrix_product_accumulated(

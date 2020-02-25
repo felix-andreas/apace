@@ -111,9 +111,9 @@ class MatrixTracking:
         n_watch_points = len(watch_points)
         watch_all = n_watch_points == 0
         initial_distribution = self.initial_distribution
-        matrix_array = self.matrix_method.transfer_matrices
+        matrices = self.matrix_method.transfer_matrices
 
-        if any(point >= n_kicks for point in watch_points):
+        if any(0 > point > n_kicks for point in watch_points):
             raise ValueError("Invalid watch points!")
 
         if watch_all:
@@ -130,8 +130,8 @@ class MatrixTracking:
 
         # TODO: implement in C
         if watch_all:
-            acc_array = np.empty(matrix_array.shape)
-            matrix_product_accumulated(matrix_array, acc_array, 0)
+            acc_array = np.empty(matrices.shape)
+            matrix_product_accumulated(matrices, acc_array, 0)
             trajectories[0] = initial_distribution
             np.dot(acc_array, initial_distribution, out=trajectories[1:n_points])
             orbit_position[0:n_points] = self.matrix_method.s
@@ -140,22 +140,29 @@ class MatrixTracking:
                 np.dot(acc_array, trajectories[i * n_kicks], out=trajectories[idx])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
+            if watch_points[0] == 0:
+                trajectories[0] = initial_distribution
+            else:
+                to_first_point = np.empty((1, *initial_distribution.shape))
+                matrix_product_ranges(
+                    matrices,
+                    to_first_point,
+                    np.array([[0, watch_points[0]]], dtype=np.int32),
+                )
+                trajectories[0] = np.dot(to_first_point, initial_distribution)
+
+            orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
             acc_array = np.empty((n_watch_points, MATRIX_SIZE, MATRIX_SIZE))
             ranges = np.empty((n_watch_points, 2), dtype=np.int32)
             for i, point in enumerate(watch_points):
-                if point >= n_kicks:
-                    raise Exception(f"Invalid watch point {point}.")
+                # for multiple turns start and end_point must be the same!
+                if point == n_kicks:
+                    point = 0
 
                 ranges[i, 0] = point
                 ranges[i - 1, 1] = point
 
-            matrix_product_ranges(matrix_array, acc_array, ranges)
-            if watch_points == [0]:
-                trajectories[0] = initial_distribution
-                orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
-            else:
-                # TODO: implemented for arbitrary watch points
-                raise NotImplementedError
+            matrix_product_ranges(matrices, acc_array, ranges)
 
             for turn in range(1, n_turns):
                 idx = turn * n_watch_points
