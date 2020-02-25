@@ -1,9 +1,7 @@
-from ._clib._twiss_product import ffi, lib  # noqa # pylint: disable=no-name-in-module
 import numpy as np
+from ._clib import ffi, lib
 
 
-# from pyprofilers import profile_by_line
-# @profile_by_line(exit=1)
 def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=False):
     """Calculates the Twiss product of the transfer matrices and the initial
     Twiss parameters twiss_0 into the twiss_array:
@@ -28,10 +26,8 @@ def twiss_product(transfer_matrices, twiss_0, twiss_array, from_idx, parallel=Fa
     func(*args)
 
 
-# from pyprofilers import profile_by_line
-# @profile_by_line(exit=1)
-def accumulate_array(input_array, output_array, from_idx):
-    """ Accumulated an array of matrices to a given index.
+def matrix_product_accumulated(input_array, output_array, from_idx):
+    """Perform accumulated matrix product on array of matrices.
 
     The input matrices A[0], A[2], ... of the input array (A)
     are accumulated into the output array (B) as follows:
@@ -61,13 +57,11 @@ def accumulate_array(input_array, output_array, from_idx):
         ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
-    lib.accumulate_array(*args)
+    lib.matrix_product_accumulated(*args)
 
 
-# from pyprofilers import profile_by_line
-# @profile_by_line(exit=1)
-def accumulate_array_partial(input_array, output_array, indices):
-    """ Returns the accumulated transfer matrices between given start and end values.
+def matrix_product_ranges(input_array, output_array, ranges):
+    """Perform matrix product on array of matrices for given ranges.
 
     The final array has the shape (n, size, size) and contains the accumulated transfer
     matrices between the given indices:
@@ -82,27 +76,30 @@ def accumulate_array_partial(input_array, output_array, indices):
     :type input_array: np.ndarray
     :param np.ndarray: The array into which the result is stored. (n, size, size)
     :type output_array: np.ndarray
-    :param indices: The start and end indicies for the matrix accumulation, where
-                    indices[:, 0] are the start and indices[:, 1] are the end values.
-    :type indicies: array-like
+    :param ranges: The start and end indicies for the matrix accumulation, where
+                    ranges[:, 0] are the start and ranges[:, 1] are the end values.
+    :type ranges: array-like
     """
     n_kicks = input_array.shape[0]
-    n_indices = indices.shape[0]
-    if indices.shape[1] != 2:
+    n_ranges = ranges.shape[0]
+    if ranges.ndim != 2 or ranges.shape[1] != 2:
         raise ValueError("The argument indices has the wrong shape! (Expected (n, 2))")
 
-    if not isinstance(indices, np.ndarray):
-        indices = np.array(indices)
+    if np.any((0 > ranges) | (ranges[:, 0] >= n_kicks) | ranges[:, 1] > n_kicks):
+        raise ValueError(f"Ranges must be within [0, {n_kicks}].")
+
+    if not isinstance(ranges, np.ndarray) or ranges.dtype != np.int32:
+        ranges = np.array(ranges, dtype=np.int32)
 
     args = (
-        n_indices,
-        ffi.cast("double (*)[2]", ffi.from_buffer(indices)),
+        n_ranges,
         n_kicks,
+        ffi.cast("int    (*)[2]   ", ffi.from_buffer(ranges)),
         ffi.cast("double (*)[6][6]", ffi.from_buffer(input_array)),
         ffi.cast("double (*)[6][6]", ffi.from_buffer(output_array)),
     )
 
-    lib.accumulate_array(*args)
+    lib.matrix_product_ranges(*args)
 
 
 def multiple_dot_products(A, B, out):
