@@ -3,6 +3,12 @@ Tune Measurement
 ================
 
 Get tune from Fourier-Transform of transversal particle oscillation at fixed position
+
+**Lattice file:**
+
+.. literalinclude:: ../../data/lattices/fodo_ring.json
+   :language: json
+
 """
 
 #%%
@@ -18,8 +24,7 @@ from math import sqrt
 #%%
 # Load FODO lattice from file
 
-path = Path(__file__).resolve().parent / "../data/lattices/fodo_ring.json"
-fodo = ap.Lattice.from_file(path)
+fodo = ap.Lattice.from_file("../data/lattices/fodo_ring.json")
 
 #%%
 # Create particle distribution
@@ -73,4 +78,3 @@ plt.ylabel("horizontal offset for all positions / m")
 
 
 plt.gcf().set_size_inches(16, 8)
-plt.show()

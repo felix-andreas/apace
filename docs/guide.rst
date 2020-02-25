@@ -275,7 +275,7 @@ apace tries to get the best out of both worlds and uses a JSON based lattice fil
 
 apace lattice file for a simple fodo ring:
 
-.. literalinclude:: ../examples/lattices/fodo_ring.json
+.. literalinclude:: ../data/lattices/fodo_ring.json
   :language: JSON
 
 
