@@ -4,32 +4,33 @@
 #include <stdio.h>
 #endif
 
-void accumulate_array(
-        int n,
-        int from_idx,
-        double (*input_array)[6][6],
-        double (*accumulated_array)[6][6]
+// perform accumulated matrix product on array of matrices
+void matrix_product_accumulated(
+    int n,
+    int start_idx,
+    double (*matrices)[6][6],
+    double (*accumulated)[6][6]
 ) {
     for (int i = 0; i < 6; i++) {
         for (int j = 0; j < 6; j++) {
-            accumulated_array[from_idx][i][j] = input_array[from_idx][i][j];
+            accumulated[start_idx][i][j] = matrices[start_idx][i][j];
         }
     }
 
-    for (int pos = from_idx + 1, pos_1 = from_idx;; pos++) {
+    for (int pos = start_idx + 1, pos_1 = start_idx;; pos++) {
         if (pos >= n) {
             pos = 0;
         }
 
-        if (pos == from_idx){
+        if (pos == start_idx) {
             break;
         }
 
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
-                accumulated_array[pos][i][j] = 0.0;
+                accumulated[pos][i][j] = 0.0;
                 for (int k = 0; k < 6; k++) {
-                    accumulated_array[pos][i][j] += input_array[pos][i][k] * accumulated_array[pos_1][k][j];
+                    accumulated[pos][i][j] += matrices[pos][i][k] * accumulated[pos_1][k][j];
                 }
             }
         }
@@ -38,37 +39,41 @@ void accumulate_array(
     }
 }
 
-
-void accumulate_array_partial(
-        int n_indices,
-        int (*indices)[2],
-        int n_kicks,
-        double (*input_array)[6][6],
-        double (*accumulated_array)[6][6]
+// perform matrix product on array of matrices for given ranges
+void matrix_product_ranges(
+    int n_ranges,
+    int n_matrices,
+    int (*ranges)[2],
+    double (*matrices)[6][6],
+    double (*accumulated)[6][6]
 ) {
-    for (int l = 0; l < n_indices; l++) {
-        int start = indices[l][0];
-        int end = indices[l][1];
+    for (int l = 0; l < n_ranges; l++) {
+        int start = ranges[l][0];
+        int end = ranges[l][1];
+
         for (int i = 0; i < 6; i++) {
             for (int j = 0; j < 6; j++) {
-                accumulated_array[l][i][j] = input_array[start][i][j];
+                accumulated[l][i][j] = matrices[start][i][j];
             }
         }
 
-        if (end < start) {
-            end += n_kicks;
-        }
-
-        for (int m = start + 1; m < end; m++) {
-            int pos = m < n_kicks ? m : m - n_kicks;
+        int n_steps = end > start ? end - start : end - start + n_matrices;
+        for (int _m = 1 ; _m < n_steps ; _m++) {
+            int m = (start + _m) % n_matrices;
+            double tmp[6][6] = {{0}};
             for (int i = 0; i < 6; i++) {
                 for (int j = 0; j < 6; j++) {
                     for (int k = 0; k < 6; k++) {
-                        accumulated_array[l][i][j] += input_array[pos][i][k] * accumulated_array[l][k][j];
+                        tmp[i][j] += matrices[m][i][k] * accumulated[l][k][j];
                     }
+                }
+            }
+
+            for (int i = 0; i < 6; i++) {
+                for (int j = 0; j < 6; j++) {
+                    accumulated[l][i][j] = tmp[i][j];
                 }
             }
         }
     }
 }
-
