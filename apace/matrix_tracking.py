@@ -30,7 +30,6 @@ class MatrixTracking:
         self.start_point = start_point
         self.watch_points = watch_points
 
-
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
