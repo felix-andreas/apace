@@ -25,7 +25,7 @@ void twiss_product_serial (
     int from_idx,
     double (*matrices)[6][6], // shape (n-1, 6, 6)
     double *B0,
-    double (*twiss)[n] // shape (8, n)
+    double (*twiss)[] // shape (8, n)
 );
 
 void twiss_product_parallel (
@@ -33,7 +33,7 @@ void twiss_product_parallel (
     int from_idx,
     double (*matrices)[6][6], // shape (n -1, 6, 6)
     double *B0,
-    double (*twiss)[n] // shape (8, n)
+    double (*twiss)[] // shape (8, n)
 );
 
 void matrix_product_accumulated(

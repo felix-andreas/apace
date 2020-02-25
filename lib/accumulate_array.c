@@ -39,14 +39,6 @@ void matrix_product_accumulated(
     }
 }
 
-int max(int x, int y) {
-    return (x > y ) ? x : y;
-}
-
-int min(int x, int y) {
-    return (x > y ) ? y : x;
-}
-
 // perform matrix product on array of matrices for given ranges
 void matrix_product_ranges(
     int n_ranges,
