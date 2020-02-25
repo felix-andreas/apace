@@ -24,7 +24,6 @@ def test_particle_trajectory(fodo_ring):
     """Compare particle trajectory from matrix tracking x(s) with particle trajectory
     from beta functions x(s) = sqrt(beta_x * e) * cos(psi_x + psi_x0).
     """
-    from math import sqrt, cos
     import numpy as np
 
     n_particles = 1
@@ -39,7 +38,8 @@ def test_particle_trajectory(fodo_ring):
 
     np.random.seed(0)
     idx_test = np.random.randint(0, x.shape[0], 10)
-    emittance_sqrt = x[0, 0] / (sqrt(beta_x[0]) * cos(psi_x[0]))
+    emittance_sqrt = x[0, 0] / (np.sqrt(beta_x[0]) * np.cos(psi_x[0]))
     assert np.allclose(
-        x[idx_test, 0], emittance_sqrt * sqrt(beta_x[0]) * cos(psi_x[0]), atol=0.01
+        x[idx_test, 0],
+        emittance_sqrt * np.sqrt(beta_x[idx_test]) * np.cos(psi_x[idx_test]),
     )
