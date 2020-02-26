@@ -1,4 +1,5 @@
 import math
+import itertools
 import numpy as np
 from .classes import Drift, Dipole, Quadrupole, Sextupole
 
@@ -8,7 +9,7 @@ def runge_kutta_4(y0, t, h, element):
     k2 = h * y_prime(y0 + k1 / 2, t + h / 2, element)
     k3 = h * y_prime(y0 + k2 / 2, t + h / 2, element)
     k4 = h * y_prime(y0 + k3, t + h, element)
-    return t + h, y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6
+    return y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6, t + h
 
 
 def y_prime(y, t, element):
@@ -37,27 +38,39 @@ def y_prime(y, t, element):
     return out
 
 
-# TODO: this is still experimental and not well tested!!!
+# TODO: this is still experimental and is not well tested!!!
 class Tracking:
     def __init__(self, lattice):
         self.lattice = lattice
 
-    def track(self, initial_distribution, step_size=0.01):
-        n_steps = math.ceil(self.lattice.length / step_size) + 10
+    def track(self, initial_distribution, step_size_max=0.01, n_turns=1, watchers=None):
         n_particles = initial_distribution.shape[1]
-        s = np.empty(n_steps)
-        s[0] = 0
-        trajectory = np.empty((n_steps, 6, n_particles))
-        trajectory[0] = initial_distribution
+        if watchers is None:
+            watchers = np.linspace(0, self.lattice.length)
 
-        end = 0
-        i = 0
-        for element in self.lattice.arrangement:
-            end += element.length
-            while s[i] < end:
-                step_size_arg = min(step_size, end - s[0])
-                s[i + 1], trajectory[i + 1] = runge_kutta_4(
-                    trajectory[i], s[i], step_size_arg, element
-                )
-                i += 1
-        return s[: i + 1], trajectory[: i + 1]
+        n_watchers = len(watchers)
+        n_steps = n_watchers * n_turns
+        s = np.empty(n_steps)
+        trajectory = np.empty((n_steps, 6, n_particles))
+        watchers_cycle = enumerate(itertools.cycle(watchers))
+
+        dist = initial_distribution
+        i, watcher = next(watchers_cycle)
+
+        for turn in range(n_turns):
+            pos = end = 0
+            for element in self.lattice:
+                end += element.length
+                while pos < end:
+                    watcher_dist = watcher - pos
+                    element_dist = end - pos
+                    step_size = min(watcher_dist, element_dist, step_size_max)
+                    dist, pos = runge_kutta_4(dist, pos, step_size, element)
+                    if watcher <= pos:
+                        if watcher == pos:
+                            trajectory[i] = dist
+                            s[i] = pos + turn * self.lattice.length
+
+                        i, watcher = next(watchers_cycle)
+
+        return s, trajectory
