@@ -2,8 +2,10 @@ import math
 import itertools
 import numpy as np
 from .classes import Drift, Dipole, Quadrupole, Sextupole
+from pyprofilers import profile_by_line, simple_timer
 
 
+# @profile_by_line
 def runge_kutta_4(y0, t, h, element):
     k1 = h * y_prime(y0, t, element)
     k2 = h * y_prime(y0 + k1 / 2, t + h / 2, element)
@@ -12,10 +14,12 @@ def runge_kutta_4(y0, t, h, element):
     return y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6, t + h
 
 
+@profile_by_line
 def y_prime(y, t, element):
     out = np.zeros(y.shape)
-    out[0] = np.copy(y[1])
-    out[2] = np.copy(y[3])
+    # TODO: is a copy needed here?
+    out[0] = y[1]
+    out[2] = y[3]
     if isinstance(element, Drift):
         out[1] = 0
         out[3] = 0
@@ -52,13 +56,13 @@ class Tracking:
         n_steps = n_watchers * n_turns
         s = np.empty(n_steps)
         trajectory = np.empty((n_steps, 6, n_particles))
-        watchers_cycle = enumerate(itertools.cycle(watchers))
 
         dist = initial_distribution
-        i, watcher = next(watchers_cycle)
 
         for turn in range(n_turns):
             pos = end = 0
+            watchers_iter = enumerate(iter(watchers))
+            i, watcher = next(watchers_iter)
             for element in self.lattice:
                 end += element.length
                 while pos < end:
@@ -68,9 +72,10 @@ class Tracking:
                     dist, pos = runge_kutta_4(dist, pos, step_size, element)
                     if watcher <= pos:
                         if watcher == pos:
-                            trajectory[i] = dist
-                            s[i] = pos + turn * self.lattice.length
+                            j = turn * n_watchers + i
+                            trajectory[j] = dist
+                            s[j] = pos + turn * self.lattice.length
 
-                        i, watcher = next(watchers_cycle)
+                        i, watcher = next(watchers_iter, (None, math.inf))
 
         return s, trajectory
