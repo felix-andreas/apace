@@ -6,16 +6,16 @@ from pyprofilers import profile_by_line, simple_timer
 
 
 # @profile_by_line
-def runge_kutta_4(y0, t, h, element):
-    k1 = h * y_prime(y0, t, element)
-    k2 = h * y_prime(y0 + k1 / 2, t + h / 2, element)
-    k3 = h * y_prime(y0 + k2 / 2, t + h / 2, element)
-    k4 = h * y_prime(y0 + k3, t + h, element)
-    return y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6, t + h
+def runge_kutta_4(t, y0, h, element):
+    k1 = h * y_prime(t, y0, element)
+    k2 = h * y_prime(t + h / 2, y0 + k1 / 2, element)
+    k3 = h * y_prime(t + h / 2, y0 + k2 / 2, element)
+    k4 = h * y_prime(t + h, y0 + k3, element)
+    return t + h, y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
 
-@profile_by_line
-def y_prime(y, t, element):
+# @profile_by_line
+def y_prime(t, y, element):
     out = np.zeros(y.shape)
     # TODO: is a copy needed here?
     out[0] = y[1]
@@ -47,7 +47,7 @@ class Tracking:
     def __init__(self, lattice):
         self.lattice = lattice
 
-    def track(self, initial_distribution, step_size_max=0.01, n_turns=1, watchers=None):
+    def track(self, initial_distribution, max_step=0.01, n_turns=1, watchers=None):
         n_particles = initial_distribution.shape[1]
         if watchers is None:
             watchers = np.linspace(0, self.lattice.length)
@@ -60,16 +60,17 @@ class Tracking:
         dist = initial_distribution
 
         for turn in range(n_turns):
+            # print(f"Turn {turn + 1}/{n_turns}")
             pos = end = 0
             watchers_iter = enumerate(iter(watchers))
             i, watcher = next(watchers_iter)
             for element in self.lattice:
-                end += element.length
+                end = round(end + element.length, 6)  # TODO: round to um see issue 69
                 while pos < end:
                     watcher_dist = watcher - pos
                     element_dist = end - pos
-                    step_size = min(watcher_dist, element_dist, step_size_max)
-                    dist, pos = runge_kutta_4(dist, pos, step_size, element)
+                    step_size = min(watcher_dist, element_dist, max_step)
+                    pos, dist = runge_kutta_4(pos, dist, step_size, element)
                     if watcher <= pos:
                         if watcher == pos:
                             j = turn * n_watchers + i
