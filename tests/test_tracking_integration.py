@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import apace as ap
 from apace.tracking_integration import Tracking
+import math
 from apace.plot import draw_lattice
 import matplotlib.pyplot as plt
 
@@ -33,11 +34,15 @@ def test_fodo_ring(tmp_path, fodo_ring, plots):
     dist = ap.distribution(2, x_dist="uniform", x_width=0.001)
     tracking_mat = ap.MatrixTracking(fodo_ring, dist)
     tracking_int = Tracking(fodo_ring)
-    s, trajectory = tracking_int.track(dist, max_step=0.1)
+    s_mat, x_mat = tracking_mat.orbit_position, tracking_mat.x
+    result = tracking_int.track(dist, max_step=math.inf)
+    s_int, x_int = result[0], result[1][:, 0]
+    assert np.allclose(np.interp(s_int, s_mat, x_mat[:, 0]), x_int[:, 0], rtol=0.01)
 
     if plots:
-        plt.plot(tracking_mat.orbit_position, tracking_mat.x, "--")
+        plt.plot(s_mat, x_mat, "--", label="Matrix Method", alpha=0.5)
         plt.gca().set_prop_cycle(None)
-        plt.plot(s, trajectory[:, 0], "x")
+        plt.plot(s_int, x_int, "x", label="Integration of EOM")
         ap.plot.draw_lattice(fodo_ring)
+        plt.legend(loc="lower right")
         plt.savefig("/tmp/test_fodo_ring.pdf")
