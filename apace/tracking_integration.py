@@ -2,7 +2,8 @@ import math
 import itertools
 import numpy as np
 from .classes import Drift, Dipole, Quadrupole, Sextupole
-from pyprofilers import profile_by_line, simple_timer
+
+# from pyprofilers import profile_by_line, simple_timer
 
 
 # @profile_by_line
