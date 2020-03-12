@@ -15,7 +15,8 @@ import sys
 from datetime import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
-from apace.__about__ import __title__, __version__, __author__
+sys.path.insert(0, os.path.abspath("../apace"))
+from __about__ import __title__, __version__, __author__
 
 # -- Project information -----------------------------------------------------
 # https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
