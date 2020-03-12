@@ -64,17 +64,14 @@ sphinx_gallery_conf = {
     "examples_dirs": "../examples",  # path to your example scripts
     "gallery_dirs": "examples",  # path to where to save gallery generated output
     "backreferences_dir": False,
-    "filename_pattern": "/",  # plot all Python files
+    "filename_pattern": r"*.\.py",  # plot all Python files
 }
 
 # Intersphinx
 extensions.append("sphinx.ext.intersphinx")
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    "numpy": (
-        "https://docs.scipy.org/doc/numpy/",
-        None,
-    ),  # TODO: check how sparse did it
+    "numpy": ("https://docs.scipy.org/doc/numpy/", None),  # TODO: look at sparse docs
     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
 }
 

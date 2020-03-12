@@ -1,5 +1,4 @@
 import math
-import itertools
 import numpy as np
 from .classes import Drift, Dipole, Quadrupole, Sextupole
 
@@ -43,8 +42,9 @@ def y_prime(t, y, element):
     return out
 
 
-# TODO: this is still experimental and is not well tested!!!
 class Tracking:
+    """TODO: this is still experimental and is not well tested!!!"""
+
     def __init__(self, lattice):
         self.lattice = lattice
 

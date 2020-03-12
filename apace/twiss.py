@@ -396,19 +396,3 @@ class Twiss(MatrixMethod):
 
     def _on_chromaticity_changed(self):
         self._chromaticity_needs_update = True
-
-    def beta_x_int(self, positions) -> np.ndarray:
-        """Linear interpolated :attr:`beta_x` for given orbit positions.
-
-        :param array_like positions: The orbit position at which to evaluate the interpolated values.
-        :return: Interpolated horizontal beta function.
-        """
-        return np.interp(positions, self.s, self.beta_x)
-
-    def beta_y_int(self, positions) -> np.ndarray:
-        """Linear interpolated :attr:`beta_y` for given orbit positions.
-
-        :param array_like positions: The orbit position at which to evaluate the interpolated values.
-        :return: Interpolated vertical beta function.
-        """
-        return np.interp(positions, self.s, self.beta_x)

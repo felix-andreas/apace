@@ -1,3 +1,13 @@
+"""
+TRIBS - Transverse Resonance Island Buckets
+===========================================
+
+Plot x-x' phase space for a machine close to a tune resonace.
+"""
+
+# TODO: not working at all!
+
+
 #%%
 import matplotlib.pyplot as plt
 import apace as ap
