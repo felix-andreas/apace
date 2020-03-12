@@ -10,6 +10,7 @@ Plot x-x' phase space for a machine close to a tune resonace.
 
 #%%
 import matplotlib.pyplot as plt
+
 import apace as ap
 from apace.tracking_integration import Tracking
 from apace.plot import draw_lattice, twiss_plot
