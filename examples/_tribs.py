@@ -41,7 +41,6 @@ while (abs((twiss.tune_x % 1) - 1 / 3)) > 0.25:
 
 fig = twiss_plot(twiss)
 fig.savefig("test_twiss.pdf")
-exit()
 
 #%%
 
