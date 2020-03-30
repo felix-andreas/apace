@@ -1,6 +1,7 @@
 import numpy as np
 from random import randrange
 import apace as ap
+import math
 
 # FODO circular accelerator from Klaus Wille Chapter 3.13.3
 D1 = ap.Drift("D1", length=0.55)
@@ -98,12 +99,28 @@ def test_chromaticity():
     print("chroma_x", twiss.chromaticity_x)
     print("chroma_y", twiss.chromaticity_y)
     # TODO: get reliable reference values
+    # elegant reference dnux/dp (1/(2$gp$r)) = -7.412977e-01
+    # dnuy/dp (1/(2$gp$r)) = -1.942589e+00
     # TODO: test if it changes when element changes
 
 
 def test_alpha_c():
+    # elegant reference alphac =  3.170114e-01, alphac2 =  3.543015e-01
     twiss = ap.Twiss(ring)
-    print()
-    print("alpha_c", twiss.alpha_c)
-    # TODO: get reliable reference values
+    assert math.isclose(3.170114e-01, twiss.alpha_c, rel_tol=0.02)
     # TODO: test if it changes when element changes
+
+
+def test_synchrotron_radiation_integrals():
+    # TODO: test dependence on n_kicks
+    # TODO: twiss should only be calculated once!
+    twiss = ap.Twiss(ring, energy=1000)  # reference values from elegant
+    assert math.isclose(1.521655e01, twiss.i1, rel_tol=0.05)
+    assert math.isclose(1.644950e00, twiss.i2, rel_tol=0.05)
+    assert math.isclose(4.306490e-01, twiss.i3, rel_tol=0.05)
+    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.05)
+    assert math.isclose(5.582228e-01, twiss.i5, rel_tol=0.05)
+
+    # elegant ex0 ($gp$rm) =  4.915882e-07
+    # elegant enx0 (m$be$nc $gp$rm) =  9.620140e-04
+    print(twiss.emittance)
