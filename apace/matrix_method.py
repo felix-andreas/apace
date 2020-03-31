@@ -9,7 +9,7 @@ MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
 C = 299_792_458
 C_SQUARED = C ** 2
-N_KICKS_DEFAULT = 1000  # TODO: use default kick length instead of n_kicks
+N_KICKS_DEFAULT = 1  # TODO: use default kick length instead of n_kicks
 
 
 class MatrixMethod:
@@ -30,8 +30,7 @@ class MatrixMethod:
         self.changed_elements = set()
         self.lattice.element_changed.connect(self._on_element_changed)
 
-        # self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
-        self.element_n_kicks = {}
+        self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
         self.element_n_kicks_changed = Signal()
 
         self._element_indices = {}
