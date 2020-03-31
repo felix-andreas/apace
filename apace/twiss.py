@@ -3,6 +3,7 @@ from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, matrix_product_accumulated
 from .matrix_method import MatrixMethod
 from .utils import Signal
+from .classes import Dipole
 
 CONST_C = 299_792_458  # m / s
 CONST_Q = 3.832e-13  # m
@@ -474,11 +475,24 @@ class Twiss(MatrixMethod):
     @property
     def i4(self) -> float:
         """The fourth synchrotron radiation integral."""
+
         if self._i4_needs_update:
-            # self._i4 = trapz(
-            #     self.eta_x[1:] * self.k0 * (self.k0 ** 2 + 2 * self.k1), self.s[1:]
-            # )
-            self._i4 = trapz(np.abs(self.k0 ** 3) * np.abs(self.eta_x[1:]), self.s[1:])
+            p_effect = 0  # poleface effect (see MAD-X source code or SLAC-Pub-1193)
+            eta_x = self.eta_x
+            for element in self.lattice.elements:  # TODO: test for performance
+                if isinstance(element, Dipole):
+                    pos = self.element_indices[element]
+                    n_kicks = self.n_kicks_per_element(element)
+                    e1, e2 = element.e1, element.e2
+                    tmp = np.tan(e1) * np.sum(eta_x[pos[::n_kicks]])
+                    tmp += np.tan(e2) * np.sum(  # TODO: is it correct to add + 1 here?
+                        eta_x[np.array(pos[n_kicks - 1 :: n_kicks]) + 1]
+                    )
+                    p_effect = element.k0 ** 2 * tmp
+            self._i4 = (
+                trapz(eta_x[1:] * self.k0 * (self.k0 ** 2 + 2 * self.k1), self.s[1:])
+                - p_effect
+            )
         return self._i4
 
     def _on_i4_changed(self):
@@ -511,7 +525,7 @@ class Twiss(MatrixMethod):
         return self.energy * CONST_MEV / CONST_ME / CONST_C ** 2
 
     @property
-    def emittance(self) -> float:
+    def emittance_x(self) -> float:
         if self._emittance_needs_update:
             self._emittance = CONST_Q * self.gamma ** 2 * self.i5 / (self.i2 - self.i4)
         return self._emittance

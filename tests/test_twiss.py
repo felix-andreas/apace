@@ -118,9 +118,6 @@ def test_synchrotron_radiation_integrals():
     assert math.isclose(1.521655e01, twiss.i1, rel_tol=0.05)
     assert math.isclose(1.644950e00, twiss.i2, rel_tol=0.05)
     assert math.isclose(4.306490e-01, twiss.i3, rel_tol=0.05)
-    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.05)
+    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.1)
     assert math.isclose(5.582228e-01, twiss.i5, rel_tol=0.05)
-
-    # elegant ex0 ($gp$rm) =  4.915882e-07
-    # elegant enx0 (m$be$nc $gp$rm) =  9.620140e-04
-    print(twiss.emittance)
+    assert math.isclose(4.915882e-07, twiss.emittance_x, rel_tol=0.05)
