@@ -34,7 +34,7 @@ n_turns = 50
 position = 0
 dist = ap.distribution(n_particles, x_dist="uniform", x_width=0.002, x_center=0.001)
 
-matrix_tracking = ap.MatrixTracking(fodo, dist, turns=n_turns, watch_points=[0])
+matrix_tracking = ap.TrackingMatrix(fodo, dist, turns=n_turns, watch_points=[0])
 
 #%%
 # Plot x-x' phase space
@@ -64,7 +64,7 @@ plt.xlabel(f"orbit position / s")
 plt.ylabel(f"horizontal offset x at fixed position {position} / m")
 
 # Plot horizontal offset for multiple positions
-matrix_tracking_all_positions = ap.MatrixTracking(fodo, dist, turns=n_turns)
+matrix_tracking_all_positions = ap.TrackingMatrix(fodo, dist, turns=n_turns)
 
 plt.subplot(2, 2, 4)
 plt.plot(

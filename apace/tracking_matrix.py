@@ -3,11 +3,11 @@ from collections.abc import Iterable
 import numpy as np
 
 from .clib import matrix_product_accumulated, matrix_product_ranges
-from .matrix_method import MatrixMethod, MATRIX_SIZE
+from .matrixmethod import MatrixMethod, MATRIX_SIZE
 from .utils import Signal
 
 
-class MatrixTracking:
+class TrackingMatrix:
     """Particle tracking using the transfer matrix method.
 
     :param Lattice lattice: Lattice which particles will be tracked through.
@@ -33,9 +33,7 @@ class MatrixTracking:
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
-        self.particle_trajectories_changed = Signal(
-            self.matrix_method.transfer_matrices_changed
-        )
+        self.particle_trajectories_changed = Signal(self.matrix_method.matrices_changed)
         self.particle_trajectories_changed.connect(
             self._on_particle_trajectories_changed
         )
@@ -102,14 +100,14 @@ class MatrixTracking:
 
     def update_particle_trajectories(self):
         """Manually update the 6D particle trajectories"""
-        n_kicks = self.matrix_method.n_kicks
+        n_kicks = self.matrix_method.n_steps
         n_points = self.matrix_method.n_points
         n_turns = self.n_turns
         watch_points = self.watch_points
         n_watch_points = len(watch_points)
         watch_all = n_watch_points == 0
         initial_distribution = self.initial_distribution
-        matrices = self.matrix_method.transfer_matrices
+        matrices = self.matrix_method.matrices
 
         if any(0 > point > n_kicks for point in watch_points):
             raise ValueError("Invalid watch points!")
