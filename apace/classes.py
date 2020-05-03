@@ -375,10 +375,10 @@ class Lattice(Base):
     def _print_tree(obj, prefix=""):
         string = f"{obj.name}\n"
         if isinstance(obj, Lattice):
-            *other, last = obj.tree
-            for node in other:
-                string += f"{prefix}├─── {Lattice._print_tree(node, prefix + '│   ')}"
-            string += f"{prefix}└─── {Lattice._print_tree(last, prefix + '    ')}"
+            *others, last = obj.tree
+            for child in others:
+                string += f"{prefix}├─── {self._print_tree(child, prefix + '│   ')}"
+            string += f"{prefix}└─── {self._print_tree(last, prefix + '    ')}"
         return string
 
     @classmethod
