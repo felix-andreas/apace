@@ -18,6 +18,7 @@ setup(
     license=about["__license__"],
     packages=find_packages(),
     package_data={"data": ["data"],},
+    setup_requires=["numpy"],
     install_requires=[
         "latticejson>=0.0.4",
         "numpy",
