@@ -10,26 +10,25 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
+from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, os.path.abspath(".."))
-# noinspection PyUnresolvedReferences
-from apace.__about__ import __title__, __version__, __author__  # noqa: E402
+base_path = Path(__file__).resolve().parent
+about: dict = {}
+exec((base_path / "../apace/__about__.py").read_text(), about)
 
 # -- Project information -----------------------------------------------------
 # https://stackoverflow.com/questions/56336234/build-fail-sphinx-error-contents-rst-not-found
 master_doc = "index"
 
-project = __title__
-copyright = "%d %s" % (datetime.now().year, __author__)
-author = __author__
+project = about["__title__"]
+copyright = "%d %s" % (datetime.now().year, about["__author__"])
+author = about["__author__"]
 
 # The short X.Y version
-version = __version__
+version = about["__version__"]
 # The full version, including alpha/beta/rc tags
-release = __version__
+release = about["__version__"]
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,7 +39,7 @@ extensions = []
 
 # AutoAPI
 extensions.append("autoapi.extension")
-autoapi_dirs = [os.path.join("..", __title__)]
+autoapi_dirs = [base_path / "../apace"]
 autoapi_root = "reference"
 autoapi_options = ["members", "undoc-members"]
 autoapi_add_toctree_entry = False
@@ -96,9 +95,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = "sphinx_rtd_theme"
-# html_theme = 'press'
+# html_theme = "press"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
