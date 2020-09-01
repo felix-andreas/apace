@@ -9,15 +9,15 @@ class Base:
     """Abstract base for all element and lattice classes.
 
     :param str name: The name of the object.
-    :param description: A brief description of the object.
-    :type description: str, optional
+    :param info: Additional information about the object.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, description=""):
+    def __init__(self, name, length, info=""):
         self.name: str = name
         """The name of the object."""
-        self.description: str = description
-        """A brief description of the object"""
+        self.info: str = info
+        """Additional information about the object"""
         self.parent_lattices: Set["Lattice"] = set()
         """All lattices which contain the object."""
         self._length = length
@@ -55,12 +55,12 @@ class Element(Base):
 
     :param str name: The name of the element.
     :param float length: The length of the element (m).
-    :param str description: A brief description of the element.
-    :type description: str, optional
+    :param str info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, info=""):
+        super().__init__(name, length, info)
         self._length = length
         self.attribute_changed: Signal = Signal()
         """Gets emitted when one of the attributes changes."""
@@ -86,8 +86,8 @@ class Drift(Element):
 
     :param str name: The name of the element.
     :param float length: The length of the element (m).
-    :param str description: A brief description of the element.
-    :type description: str, optional
+    :param str info: Additional information about the element.
+    :type info: str, optional
     """
 
     pass
@@ -103,12 +103,12 @@ class Dipole(Element):
     :type e1: float, optional
     :param e2: Exit angle in rad.
     :type e2: float, optional
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, angle, e1=0, e2=0, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, angle, e1=0, e2=0, info=""):
+        super().__init__(name, length, info)
         self._angle = angle
         self._e1 = e1
         self._e2 = e2
@@ -168,12 +168,12 @@ class Quadrupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k1: Geometric quadrupole strength (m^-2).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k1, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k1, info=""):
+        super().__init__(name, length, info)
         self._k1 = k1
 
     @property
@@ -193,12 +193,12 @@ class Sextupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k1: Geometric quadrupole strength (m^-3).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k2, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k2, info=""):
+        super().__init__(name, length, info)
         self._k2 = k2
 
     @property
@@ -218,12 +218,12 @@ class Octupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k3: Geometric quadrupole strength (m^-4).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k3, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k3, info=""):
+        super().__init__(name, length, info)
         self._k3 = k3
 
     @property
@@ -243,11 +243,11 @@ class Lattice(Base):
     :param str name: Name of the lattice.
     :param tree: Nested tree of elements and lattices.
     :type tree: Tuple[Union[Element, Lattice]]
-    :param str description: A brief description of the element.
+    :param str info: Additional information about the lattice.
     """
 
-    def __init__(self, name, tree, description=None):
-        super().__init__(name, description)
+    def __init__(self, name, tree, info=None):
+        super().__init__(name, info)
         self._tree = tree
         for obj in set(tree):
             obj.parent_lattices.add(self)
@@ -402,16 +402,13 @@ class Lattice(Base):
             objects[name] = class_(name=name, **attributes)
 
         # TODO: make sure sub_lattices are loaded in correct order
-        sub_lattices = data["sub_lattices"]
-        for name, tree_names in sub_lattices.items():
-            tree = [objects[name] for name in tree_names]
-            objects[name] = Lattice(name, tree)
+        for name, child_names in data["lattices"].items():
+            children = [objects[name] for name in child_names]
+            objects[name] = Lattice(name, children)
 
-        return cls(
-            name=data["name"],
-            tree=[objects[name] for name in data["lattice"]],
-            description=data.get("description", ""),
-        )
+        root_lattice = objects[data["root"]]
+        root_lattice.info = data.get("info", "")
+        return root_lattice
 
     def as_dict(self):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
@@ -423,15 +420,17 @@ class Lattice(Base):
             name = attributes.pop("name")
             elements_dict[name] = [type_.__name__, attributes]
 
-        sub_lattices_dict = {
+        lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
             for lattice in self.sub_lattices
         }
+        lattices_dict[self.name] = [obj.name for obj in self.tree]
 
         return dict(
-            name=self.name,
-            description=self.description,
+            version="2.0",
+            root=self.name,
+            info=self.info,
             lattice=[obj.name for obj in self.tree],
             elements=elements_dict,
-            sub_lattices=sub_lattices_dict,
+            lattices=lattices_dict,
         )
