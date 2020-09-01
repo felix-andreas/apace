@@ -17,7 +17,9 @@ setup(
     author=about["__author__"],
     license=about["__license__"],
     packages=find_packages(),
-    package_data={"data": ["data"],},
+    package_data={
+        "data": ["data"],
+    },
     install_requires=[
         "latticejson>=0.1.2",
         "numpy",
@@ -28,7 +30,9 @@ setup(
     ],
     test_requires=["pytest"],
     python_requires=">=3.6",
-    cffi_modules=["lib/build.py:ffi_builder",],
+    cffi_modules=[
+        "lib/build.py:ffi_builder",
+    ],
     entry_points={"console_scripts": ["apace=apace.cli:cli"]},
     classifiers=[
         "Development Status :: 3 - Alpha",
