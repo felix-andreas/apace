@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, matrix_product_accumulated
-from .matrix_method import MatrixMethod
+from .matrixmethod import MatrixMethod
 from .utils import Signal
 from .classes import Dipole
 
@@ -26,16 +26,14 @@ class Twiss(MatrixMethod):
     """
 
     def __init__(self, lattice, start_idx=0, energy=None):
-        super().__init__(lattice)
-        self.lattice = lattice
-        self.energy = energy
+        super().__init__(lattice, energy=energy)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()  # TODO: is currently unused
         """Gets emitted when the start index changes"""
 
         self.one_turn_matrix_changed = Signal(
-            self.start_idx_changed, self.transfer_matrices_changed
+            self.start_idx_changed, self.matrices_changed
         )
         """Gets emitted when the one turn matrix changes."""
         self.one_turn_matrix_changed.connect(self._on_one_turn_matrix_changed)
@@ -67,19 +65,15 @@ class Twiss(MatrixMethod):
         self._tune_fractional_needs_update = True
         self._tune_x_fractional = None
         self._tune_y_fractional = None
-        self._tune_x_fractional_hz = None
-        self._tune_y_fractional_hz = None
 
-        self.alpha_c_changed = Signal(
-            self.transfer_matrices_changed, self.twiss_array_changed
-        )
+        self.alpha_c_changed = Signal(self.matrices_changed, self.twiss_array_changed)
         self.tune_fractional_changed.connect(self._on_alpha_c_changed)
         """Gets emitted when the natural chormaticity changes."""
         self._alpha_c_needs_update = True
         self._alpha_c = None
 
         self.chromaticity_changed = Signal(
-            self.transfer_matrices_changed, self.twiss_array_changed
+            self.matrices_changed, self.twiss_array_changed
         )
         self.tune_fractional_changed.connect(self._on_chromaticity_changed)
         """Gets emitted when the natural chormaticity changes."""
@@ -132,7 +126,7 @@ class Twiss(MatrixMethod):
 
     @start_idx.setter
     def start_idx(self, value):
-        if value >= self.n_kicks:
+        if value >= self.n_steps:
             raise ValueError(
                 f"Start index {value} is too high! (Maximum {self.n_kicks})"
             )
@@ -190,8 +184,8 @@ class Twiss(MatrixMethod):
 
     def update_one_turn_matrix(self):
         """Manually update the one turn matrix and the accumulated array."""
-        matrix_array = self.transfer_matrices
-        if self._accumulated_array.shape[0] != self.n_kicks:
+        matrix_array = self.matrices
+        if self._accumulated_array.shape[0] != self.n_steps:
             self._accumulated_array = np.empty(matrix_array.shape)
 
         matrix_product_accumulated(
@@ -221,7 +215,7 @@ class Twiss(MatrixMethod):
 
     def update_twiss_array(self):
         """Manually update the twiss_array."""
-        n_points = self.n_points
+        n_points = self.n_steps + 1
         if self._twiss_array.shape[0] != n_points:
             self._twiss_array = np.empty((8, n_points))
 
@@ -308,7 +302,7 @@ class Twiss(MatrixMethod):
 
     @property
     def eta_x_dds(self) -> np.ndarray:
-        """Derivative of the horizontal dispersion function with respect to the orbit position s."""
+        """Derivative of the horizontal dispersion with respect to s."""
         return self.twiss_array[7]
 
     @property
@@ -361,44 +355,23 @@ class Twiss(MatrixMethod):
 
     @property
     def tune_x_fractional(self) -> float:
-        """Fractional part of the horizontal tune.
-        Gets calculated from the one turn matrix.
-        """
+        """Fractional part of the horizontal tune (Calculated from one-turn matrix). """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_x_fractional
 
     @property
     def tune_y_fractional(self) -> float:
-        """Fractional part of the vertical tune.
-        Gets calculated from the one turn matrix.
-        """
+        """Fractional part of the vertical tune (Calculated from one-turn matrix). """
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_y_fractional
-
-    @property
-    def tune_x_fractional_hz(self) -> float:
-        """Fractional part of the horizontal tune in Hz."""
-        if self._tune_fractional_needs_update:
-            self.update_fractional_tune()
-        return self._tune_x_fractional_hz
-
-    @property
-    def tune_y_fractional_hz(self) -> float:
-        """Fractional part of the vertical tune in Hz."""
-        if self._tune_fractional_needs_update:
-            self.update_fractional_tune()
-        return self._tune_y_fractional_hz
 
     def update_fractional_tune(self):
         """Manually update the fractional tune."""
         m = self.one_turn_matrix
         self._tune_x_fractional = np.arccos((m[0, 0] + m[1, 1]) / 2) / TWO_PI
         self._tune_y_fractional = np.arccos((m[2, 2] + m[3, 3]) / 2) / TWO_PI
-        tmp = self.velocity / self.lattice.length
-        self._tune_x_fractional_hz = self._tune_x_fractional * tmp
-        self._tune_y_fractional_hz = self._tune_y_fractional * tmp
         self._tune_fractional_needs_update = False
 
     def _on_tune_fractional_changed(self):

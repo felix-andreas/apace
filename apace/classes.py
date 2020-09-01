@@ -62,12 +62,9 @@ class Element(Base):
     def __init__(self, name, length, info=""):
         super().__init__(name, length, info)
         self._length = length
-        self.length_changed: Signal = Signal()
-        """Gets emitted when the length changes."""
-        self.length_changed.connect(self._on_length_changed)
-        self.value_changed: Signal = Signal()
+        self.attribute_changed: Signal = Signal()
         """Gets emitted when one of the attributes changes."""
-        self.value_changed.connect(self._on_value_changed)
+        self.attribute_changed.connect(self._on_attribute_changed)
 
     @property
     def length(self) -> float:
@@ -77,14 +74,9 @@ class Element(Base):
     @length.setter
     def length(self, value):
         self._length = value
-        self.length_changed()
-        self.value_changed(self, Attribute.LENGTH)
+        self.attribute_changed(self, Attribute.LENGTH)
 
-    def _on_length_changed(self, *args):
-        for lattice in self.parent_lattices:
-            lattice.length_changed()
-
-    def _on_value_changed(self, element, attribute):
+    def _on_attribute_changed(self, element, attribute):
         for lattice in self.parent_lattices:
             lattice.element_changed(element, attribute)
 
@@ -129,7 +121,7 @@ class Dipole(Element):
     @angle.setter
     def angle(self, value):
         self._angle = value
-        self.value_changed(self, Attribute.ANGLE)
+        self.attribute_changed(self, Attribute.ANGLE)
 
     @property
     def e1(self) -> float:
@@ -139,7 +131,7 @@ class Dipole(Element):
     @e1.setter
     def e1(self, value):
         self._e1 = value
-        self.value_changed(self, Attribute.E1)
+        self.attribute_changed(self, Attribute.E1)
 
     @property
     def e2(self) -> float:
@@ -149,7 +141,7 @@ class Dipole(Element):
     @e2.setter
     def e2(self, value):
         self._e2 = value
-        self.value_changed(self, Attribute.E2)
+        self.attribute_changed(self, Attribute.E2)
 
     @property
     def radius(self) -> float:
@@ -192,7 +184,7 @@ class Quadrupole(Element):
     @k1.setter
     def k1(self, value):
         self._k1 = value
-        self.value_changed(self, Attribute.K1)
+        self.attribute_changed(self, Attribute.K1)
 
 
 class Sextupole(Element):
@@ -217,7 +209,7 @@ class Sextupole(Element):
     @k2.setter
     def k2(self, value):
         self._k2 = value
-        self.value_changed(self, Attribute.K2)
+        self.attribute_changed(self, Attribute.K2)
 
 
 class Octupole(Element):
@@ -242,7 +234,7 @@ class Octupole(Element):
     @k3.setter
     def k3(self, value):
         self._k3 = value
-        self.value_changed(self, Attribute.K3)
+        self.attribute_changed(self, Attribute.K3)
 
 
 class Lattice(Base):
@@ -267,6 +259,10 @@ class Lattice(Base):
         self._indices = {}
         self._init_tree_properties(self.tree)
 
+        self.element_changed: Signal = Signal()
+        """Gets emitted when an attribute of an element within this lattice changes."""
+        self.element_changed.connect(self._on_element_changed)
+
         self._length = 0
         self._length_needs_update = True
         self.length_changed: Signal = Signal()
@@ -275,10 +271,6 @@ class Lattice(Base):
 
         self.n_elements = len(self.arrangement)
         """The number of elements within this lattice."""
-
-        self.element_changed: Signal = Signal()
-        """Gets emitted when an attribute of an element within this lattice changes."""
-        self.element_changed.connect(self._on_element_changed)
 
     def _init_tree_properties(self, tree, idx=0):
         """A recursive helper function to initialize the tree properties."""
@@ -298,8 +290,8 @@ class Lattice(Base):
                 sub_lattices.add(obj)
                 idx = self._init_tree_properties(obj.tree, idx)
             else:
-                elements.add(obj)
                 arrangement.append(obj)
+                elements.add(obj)
                 try:
                     indices[obj].append(idx)
                 except KeyError:
@@ -338,6 +330,9 @@ class Lattice(Base):
             lattice.length_changed()
 
     def _on_element_changed(self, element, attribute):
+        if attribute == Attribute.LENGTH:
+            self.length_changed()
+
         for lattice in self.parent_lattices:
             lattice.element_changed(element, attribute)
 
@@ -354,7 +349,7 @@ class Lattice(Base):
     @property
     def indices(self) -> Dict[Element, List[float]]:
         """A dict which contains the a `List` of indices for each element.
-           Can be thought of as inverse of arrangment."""
+        Can be thought of as inverse of arrangement."""
         return self._indices
 
     @property
@@ -374,18 +369,16 @@ class Lattice(Base):
 
     def print_tree(self):
         """Print the lattice as tree of objects. (Similar to unix tree command)"""
-        print(self._tree_as_string(self))
+        print(self._print_tree(self))
 
     @staticmethod
-    def _tree_as_string(obj, prefix=""):
-        string = obj.name + "\n"
+    def _print_tree(obj, prefix=""):
+        string = f"{obj.name}\n"
         if isinstance(obj, Lattice):
-            for node in obj.tree[:-1]:
-                string += f"{prefix}├─── "
-                string += Lattice._tree_as_string(node, prefix + "│   ")
-
-            string += f"{prefix}└─── "
-            string += Lattice._tree_as_string(obj.tree[-1], prefix + "    ")
+            *others, last = obj.tree
+            for child in others:
+                string += f"{prefix}├─── {Lattice._print_tree(child, prefix + '│   ')}"
+            string += f"{prefix}└─── {Lattice._print_tree(last, prefix + '    ')}"
         return string
 
     @classmethod

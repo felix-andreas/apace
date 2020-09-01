@@ -13,7 +13,7 @@ ring = ap.Lattice("fodo-ring", [fodo] * 8)
 
 twiss = ap.Twiss(ring)
 # a different start_idx should make no difference!
-twiss.start_idx = randrange(twiss.n_kicks)
+twiss.start_idx = randrange(twiss.n_steps)
 
 
 def test_beta():
