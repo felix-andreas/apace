@@ -2,6 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.gridspec as grid_spec
+from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib.path import Path
 import numpy as np
 from enum import Enum
@@ -136,42 +137,47 @@ def draw_lattice(
 
 
 def plot_twiss(
-    twiss, ax=None, line_style="solid", line_width=1.3, alpha=1.0, eta_x_scale=10
+    twiss,
+    ax=None,
+    line_style="solid",
+    line_width=1.3,
+    alpha=1.0,
+    eta_x_scale=10,
+    show_ylabels=False,
 ):
     if ax is None:
         _, ax = plt.subplots()
 
-    ax.plot(
-        twiss.s,
-        twiss.beta_x,
-        color=Color.RED,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=3,
-        label="$\\beta_x$/m",
-    )
-    ax.plot(
-        twiss.s,
-        twiss.beta_y,
-        color=Color.BLUE,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=2,
-        label="$\\beta_y$/m",
-    )
-    ax.plot(
-        twiss.s,
-        twiss.eta_x * eta_x_scale,
-        color=Color.GREEN,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=1,
-        label=f"{eta_x_scale}$\\eta_x$/m",
-    )
+    text_areas = [None] * 3
+    for value, label, color, order in (
+        (twiss.beta_x, r"$\beta_x$/m", Color.RED, 2),
+        (twiss.beta_y, r"$\beta_y$/m", Color.BLUE, 1),
+        (twiss.eta_x * eta_x_scale, rf"{eta_x_scale}$\eta_x$/m", Color.GREEN, 0),
+    ):
+        ax.plot(
+            twiss.s,
+            value,
+            color=color,
+            linewidth=line_width,
+            linestyle=line_style,
+            alpha=alpha,
+            zorder=order,
+            label=label,
+        )
 
+        text_areas[order] = TextArea(label, textprops=dict(color=color, rotation=90))
+
+    ax.add_artist(
+        AnchoredOffsetbox(
+            loc=8,
+            child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
+            pad=0.0,
+            frameon=False,
+            bbox_to_anchor=(-0.08, 0.3),
+            bbox_transform=ax.transAxes,
+            borderpad=0.0,
+        )
+    )
     ax.set_xlabel("Orbit Position $s$ / m")
     return ax
 
@@ -390,6 +396,5 @@ def floor_plan(
     margin = 0.05 * max((x_max - x_min), (y_max - y_min))
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
-    ax.axis("off")
 
     return ax
