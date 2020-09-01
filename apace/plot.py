@@ -136,7 +136,7 @@ def draw_lattice(
 
 
 def plot_twiss(
-    twiss, ax=None, line_style="solid", line_width=1.3, alpha=1.0, eta_x_scale=10,
+    twiss, ax=None, line_style="solid", line_width=1.3, alpha=1.0, eta_x_scale=10
 ):
     if ax is None:
         _, ax = plt.subplots()

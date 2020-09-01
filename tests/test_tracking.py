@@ -9,7 +9,7 @@ def test_tune(fodo_ring):
     n_turns = 10000
 
     dist = ap.distribution(n_particles, x_dist="uniform", x_width=0.02, x_center=0.01)
-    tracking = ap.MatrixTracking(fodo_ring, dist, turns=n_turns, watch_points=[0])
+    tracking = ap.TrackingMatrix(fodo_ring, dist, turns=n_turns, watch_points=[0])
     period_time = fodo_ring.length / 299_792_458
     freq = np.linspace(0.0, 1.0 / (2.0 * period_time), n_turns // 2)
     tmp = tracking.particle_trajectories[:, 0, -1]
@@ -30,7 +30,7 @@ def test_particle_trajectory(fodo_ring):
     n_turns = 1
 
     dist = ap.distribution(n_particles, x_dist="uniform", x_center=0.01)
-    tracking = ap.MatrixTracking(fodo_ring, dist, turns=n_turns, watch_points=None)
+    tracking = ap.TrackingMatrix(fodo_ring, dist, turns=n_turns, watch_points=None)
     twiss = ap.Twiss(fodo_ring)
     x = tracking.x
     beta_x = twiss.beta_x
