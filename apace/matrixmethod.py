@@ -9,16 +9,22 @@ MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
 C = 299_792_458
 C_SQUARED = C ** 2
-N_KICKS_DEFAULT = 1
 CONST_MEV = 1.602176634e-13  # MeV to Joule
 CONST_ME = 9.1093837015e-31  # kg
+
+# TODO: What is the best way to set the number of steps ?
+#    1. Fixed number of steps per element (depending on element type)
+#    2. Steps per meter (depending on element type)
+#    3. User defined function, which returns number of steps for given element
 
 
 class MatrixMethod:
     """The transfer matrix method.
 
     :param lattice: Lattice which transfer matrices gets calculated for.
-    :param float max_step_size: Maximum step size.
+    :param int steps_per_element: Fixed number of steps per element.
+                                     (ignored if steps_per_meter is passed)
+    :param number steps_per_meter: Fixed number of steps per meter.
     :param int start_index: Start index for the one-turn matrix and for the accumulated
                             transfer matrices.
     :param number start_position: Same as start_index but uses position instead of index
@@ -29,38 +35,48 @@ class MatrixMethod:
     def __init__(
         self,
         lattice,
-        max_step_size=0.1,
+        steps_per_element=10,
+        steps_per_meter=None,
         start_index=None,
         start_position=None,
         energy=None,
     ):
         self.lattice = lattice
-        self._max_step_size = max_step_size
         self._energy = energy
+        if steps_per_meter is None:
+            if isinstance(steps_per_element, (int, float)):
+                self.get_steps = lambda element: steps_per_element
+            elif isinstance(steps_per_element, dict):
+                self.get_steps = lambda element: steps_per_element.get(type(element))
+            else:
+                raise TypeError("steps_per_element must be a number or a dict.")
+        elif isinstance(steps_per_meter, (int, float)):
+            self.get_steps = lambda element: ceil(steps_per_meter * element.length)
+        elif isinstance(steps_per_meter, dict):
+            self.get_steps = lambda element: ceil(
+                steps_per_meter.get(type(element)) * element.length
+            )
+        else:
+            raise TypeError("steps_per_meter must be a number or a dict.")
 
-        self.changed_elements = self.lattice.elements
+        self.changed_elements = self.lattice.elements.copy()
         self.lattice.element_changed.connect(self._on_element_changed)
-
-        self._element_n_steps = {}
-        self._element_n_steps_needs_update = True
-        self.element_n_steps_changed = Signal()
-        self.element_n_steps_changed.connect(self._on_element_steps_changed)
 
         self._element_indices = {}
         self._element_indices_needs_update = True
-        self.element_indices_changed = Signal(self.lattice.length_changed)
+        self.element_indices_changed = Signal()
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_steps = 0
         self._n_points = 0
         self._n_steps_needs_update = True
-        self.n_kicks_changed = Signal(self.element_n_kicks_changed)
-        self.n_kicks_changed.connect(self._on_n_steps_changed)
+        self.n_steps_changed = Signal()
+        self.n_steps_changed.connect(self._on_n_steps_changed)
 
         self._step_size = np.empty(0)
         self._step_size_needs_update = True
         self.step_size_changed = Signal(
-            self.n_kicks_changed, self.lattice.length_changed
+            self.n_steps_changed, self.lattice.length_changed
         )
         self.step_size_changed.connect(self._on_step_size_changed)
 
@@ -90,10 +106,6 @@ class MatrixMethod:
         self._one_turn_matrix = np.empty(0)
 
     @property
-    def max_step_size(self) -> float:
-        return self._max_step_size
-
-    @property
     def energy(self) -> float:
         if self._energy is None:
             raise Exception("Energy is not set!")
@@ -107,27 +119,20 @@ class MatrixMethod:
     def velocity(self) -> float:
         return C * np.sqrt(1 - 1 / self.gamma ** 2)
 
-    def update_element_n_steps(self, elements):
-        self.element_n_steps = {
-            element: ceil(element.length / self.max_step_size) for element in elements
-        }
-        element_n_steps_changed()
-
     def _on_element_changed(self, element, attribute):
         if attribute == Attribute.LENGTH:
-            element_n_steps_changed()
-            self.update_element_n_steps([element])
+            # TODO: n_steps and n_indices can change if the length of an element changes
+            # but it is relativly expensive to recalculate them every time!
+            # n_steps_changed()
+            # element_indices_changed()
+            pass
 
         self.changed_elements.add(element)
         self.matrices_changed()
 
-    def n_steps_per_element(self, element) -> int:
-        """Returns the number of steps for a given element"""
-        return ceil(element.length / self.max_step_size)
-
     @property
     def n_steps(self) -> int:
-        """Total number of kicks. (:attr:`n_points` - 1)."""
+        """Total number of steps. (:attr:`n_points` - 1)."""
         if self._n_steps_needs_update:
             self.update_n_steps()
         return self._n_steps
@@ -139,7 +144,7 @@ class MatrixMethod:
 
     def update_n_steps(self):
         """Manually update the total number of kicks."""
-        self._n_steps = sum([self.element_n_steps[x] for x in self.lattice.arrangement])
+        self._n_steps = sum(map(self.get_steps, self.lattice.arrangement))
         self._n_steps_needs_update = False
 
     def _on_n_steps_changed(self):
@@ -150,7 +155,6 @@ class MatrixMethod:
         """Contains the indices of each element within the transfer_matrices."""
         if self._element_indices_needs_update:
             self.update_element_indices()
-
         return self._element_indices
 
     def update_element_indices(self):
@@ -158,7 +162,7 @@ class MatrixMethod:
         self._element_indices.clear()
         start = 0
         for element in self.lattice.arrangement:
-            end = start + self.n_steps_per_element(element)
+            end = start + self.get_steps(element)
             tmp = list(range(start, end))
             try:
                 self._element_indices[element].extend(tmp)
@@ -186,8 +190,8 @@ class MatrixMethod:
             self._step_size[0] = 0
 
         for element in self.lattice.elements:
-            n_kicks = self.n_steps_per_element(element)
-            self._step_size[self.element_indices[element]] = element.length / n_kicks
+            n_steps = self.get_steps(element)
+            self._step_size[self.element_indices[element]] = element.length / n_steps
 
         self._step_size_needs_update = False
 
@@ -247,7 +251,7 @@ class MatrixMethod:
         matrix_array = self._matrices
         for element in elements:
             pos = self.element_indices[element]  # indices in matrix array
-            n_kicks = self.n_steps_per_element(element)
+            n_kicks = self.get_steps(element)
             step_size = element.length / n_kicks
 
             # TODO: change element (4,5) for velocity smaller than light
@@ -315,8 +319,7 @@ class MatrixMethod:
                 matrix[0, 1] = matrix[2, 3] = step_size
                 matrix_array[pos] = matrix
 
-        self.changed_elements = set()
-        self._matrices_needs_full_update = False
+        self.changed_elements.clear()
 
     @property
     def start_index(self) -> int:

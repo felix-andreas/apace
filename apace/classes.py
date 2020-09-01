@@ -377,8 +377,8 @@ class Lattice(Base):
         if isinstance(obj, Lattice):
             *others, last = obj.tree
             for child in others:
-                string += f"{prefix}├─── {self._print_tree(child, prefix + '│   ')}"
-            string += f"{prefix}└─── {self._print_tree(last, prefix + '    ')}"
+                string += f"{prefix}├─── {Lattice._print_tree(child, prefix + '│   ')}"
+            string += f"{prefix}└─── {Lattice._print_tree(last, prefix + '    ')}"
         return string
 
     @classmethod
