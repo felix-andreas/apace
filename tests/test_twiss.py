@@ -107,17 +107,18 @@ def test_chromaticity():
 def test_alpha_c():
     # elegant reference alphac =  3.170114e-01, alphac2 =  3.543015e-01
     twiss = ap.Twiss(ring)
-    assert math.isclose(3.170114e-01, twiss.alpha_c, rel_tol=0.02)
+    assert math.isclose(3.170114e-01, twiss.alpha_c, rel_tol=0.05)
     # TODO: test if it changes when element changes
 
 
 def test_synchrotron_radiation_integrals():
+    """Reference values from elegant"""
     # TODO: test dependence on n_kicks
     # TODO: twiss should only be calculated once!
-    twiss = ap.Twiss(ring, energy=1000)  # reference values from elegant
-    assert math.isclose(1.521655e01, twiss.i1, rel_tol=0.05)
-    assert math.isclose(1.644950e00, twiss.i2, rel_tol=0.05)
-    assert math.isclose(4.306490e-01, twiss.i3, rel_tol=0.05)
-    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.6)
-    assert math.isclose(5.582228e-01, twiss.i5, rel_tol=0.05)
-    assert math.isclose(4.915882e-07, twiss.emittance_x, rel_tol=0.05)
+    twiss = ap.Twiss(ring, energy=1000, steps_per_meter=20)
+    assert math.isclose(1.521655e01, twiss.i1, rel_tol=0.01)
+    assert math.isclose(1.644950e00, twiss.i2, rel_tol=0.01)
+    assert math.isclose(4.306490e-01, twiss.i3, rel_tol=0.01)
+    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.01)
+    assert math.isclose(5.582228e-01, twiss.i5, rel_tol=0.01)
+    assert math.isclose(4.915882e-07, twiss.emittance_x, rel_tol=0.01)

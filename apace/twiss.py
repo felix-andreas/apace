@@ -18,15 +18,15 @@ class Twiss(MatrixMethod):
 
     :param Lattice lattice: Lattice to calculate the Twiss parameter for.
     :param start_idx: Index from which the accumulated array is calculated.
-                       This index is also used to calculated the initial twiss parameter
-                       using the periodicity condition.
+                      This index is also used to calculated the initial twiss parameter
+                      using the periodicity condition.
     :type start_idx: int, optional
     :param energy: Energy of the beam in mev
     :type energy: float, optional
     """
 
-    def __init__(self, lattice, start_idx=0, energy=None):
-        super().__init__(lattice, energy=energy)
+    def __init__(self, lattice, start_idx=0, **kwargs):
+        super().__init__(lattice, **kwargs)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()  # TODO: is currently unused
@@ -91,31 +91,23 @@ class Twiss(MatrixMethod):
         self._curly_h_changed.connect(self._on_curly_h_changed)
         self._i1 = None
         self._i1_needs_update = True
-        self._i1_changed = Signal(
-            self.twiss_array_changed, self.transfer_matrices_changed
-        )
+        self._i1_changed = Signal(self.twiss_array_changed, self.matrices_changed)
         self._i1_changed.connect(self._on_i1_changed)
         self._i2 = None
         self._i2_needs_update = True
-        self._i2_changed = Signal(self.transfer_matrices_changed)
+        self._i2_changed = Signal(self.matrices_changed)
         self._i2_changed.connect(self._on_i2_changed)
         self._i3 = None
         self._i3_needs_update = True
-        self._i3_changed = Signal(
-            self.twiss_array_changed, self.transfer_matrices_changed
-        )
+        self._i3_changed = Signal(self.twiss_array_changed, self.matrices_changed)
         self._i3_changed.connect(self._on_i3_changed)
         self._i4 = None
         self._i4_needs_update = True
-        self._i4_changed = Signal(
-            self.twiss_array_changed, self.transfer_matrices_changed
-        )
+        self._i4_changed = Signal(self.twiss_array_changed, self.matrices_changed)
         self._i4_changed.connect(self._on_i4_changed)
         self._i5 = None
         self._i5_needs_update = True
-        self._i5_changed = Signal(
-            self.twiss_array_changed, self.transfer_matrices_changed
-        )
+        self._i5_changed = Signal(self.twiss_array_changed, self.matrices_changed)
         self._i5_changed.connect(self._on_i5_changed)
 
     @property
@@ -455,7 +447,7 @@ class Twiss(MatrixMethod):
             for element in self.lattice.elements:  # TODO: test for performance
                 if isinstance(element, Dipole):
                     pos = self.element_indices[element]
-                    n_kicks = self.n_kicks_per_element(element)
+                    n_kicks = self.get_steps(element)
                     e1, e2 = element.e1, element.e2
                     tmp = np.tan(e1) * np.sum(eta_x[pos[::n_kicks]])
                     tmp += np.tan(e2) * np.sum(  # TODO: is it correct to add + 1 here?
