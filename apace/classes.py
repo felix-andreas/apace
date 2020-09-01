@@ -349,7 +349,7 @@ class Lattice(Base):
     @property
     def indices(self) -> Dict[Element, List[float]]:
         """A dict which contains the a `List` of indices for each element.
-        Can be thought of as inverse of arrangment."""
+        Can be thought of as inverse of arrangement."""
         return self._indices
 
     @property

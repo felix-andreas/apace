@@ -68,7 +68,6 @@ class MatrixMethod:
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
         self._n_steps = 0
-        self._n_points = 0
         self._n_steps_needs_update = True
         self.n_steps_changed = Signal()
         self.n_steps_changed.connect(self._on_n_steps_changed)
@@ -132,15 +131,10 @@ class MatrixMethod:
 
     @property
     def n_steps(self) -> int:
-        """Total number of steps. (:attr:`n_points` - 1)."""
+        """Total number of steps."""
         if self._n_steps_needs_update:
             self.update_n_steps()
         return self._n_steps
-
-    @property
-    def n_points(self) -> int:
-        """Total number of points (:attr:`n_kicks` + 1)."""
-        return self._n_steps + 1
 
     def update_n_steps(self):
         """Manually update the total number of kicks."""

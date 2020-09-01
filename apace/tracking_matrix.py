@@ -100,8 +100,8 @@ class TrackingMatrix:
 
     def update_particle_trajectories(self):
         """Manually update the 6D particle trajectories"""
-        n_kicks = self.matrix_method.n_steps
-        n_points = self.matrix_method.n_points
+        n_steps = self.matrix_method.n_steps
+        n_points = n_steps + 1
         n_turns = self.n_turns
         watch_points = self.watch_points
         n_watch_points = len(watch_points)
@@ -109,11 +109,11 @@ class TrackingMatrix:
         initial_distribution = self.initial_distribution
         matrices = self.matrix_method.matrices
 
-        if any(0 > point > n_kicks for point in watch_points):
+        if any(0 > point > n_steps for point in watch_points):
             raise ValueError("Invalid watch points!")
 
         if watch_all:
-            n = n_turns * n_kicks + 1
+            n = n_turns * n_steps + 1
         else:
             n = n_turns * n_watch_points
 
@@ -132,8 +132,8 @@ class TrackingMatrix:
             np.dot(acc_array, initial_distribution, out=trajectories[1:n_points])
             orbit_position[0:n_points] = self.matrix_method.s
             for i in range(1, n_turns):
-                idx = slice(i * n_kicks + 1, (i + 1) * n_kicks + 1)
-                np.dot(acc_array, trajectories[i * n_kicks], out=trajectories[idx])
+                idx = slice(i * n_steps + 1, (i + 1) * n_steps + 1)
+                np.dot(acc_array, trajectories[i * n_steps], out=trajectories[idx])
                 orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
         else:
             if watch_points[0] == 0:
@@ -152,7 +152,7 @@ class TrackingMatrix:
             ranges = np.empty((n_watch_points, 2), dtype=np.int32)
             for i, point in enumerate(watch_points):
                 # for multiple turns start and end_point must be the same!
-                if point == n_kicks:
+                if point == n_steps:
                     point = 0
 
                 ranges[i, 0] = point
