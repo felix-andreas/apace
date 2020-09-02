@@ -410,6 +410,9 @@ class Lattice(Base):
         root_lattice.info = data.get("info", "")
         return root_lattice
 
+    def as_file(self, path, file_format=None):
+        latticejson.save(self.as_dict(), path, file_format)
+
     def as_dict(self):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
         elements_dict = {}
