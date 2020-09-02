@@ -211,7 +211,7 @@ class Twiss(MatrixMethod):
         if self._twiss_array.shape[0] != n_points:
             self._twiss_array = np.empty((8, n_points))
 
-        if not self.stable:  # TODO: replace with warning
+        if not self.stable:  # TODO: replace with warning or exception??
             print(
                 f"Horizontal plane stability: {self.stable_x}\n"
                 f"Vertical plane stability: {self.stable_y}"
@@ -436,7 +436,7 @@ class Twiss(MatrixMethod):
     def _on_i3_changed(self):
         self._i3_needs_update = True
 
-    # TODO: I4 integral is false!
+    # TODO: Improve performance for I4
     @property
     def i4(self) -> float:
         """The fourth synchrotron radiation integral."""
@@ -485,8 +485,6 @@ class Twiss(MatrixMethod):
 
     @property
     def gamma(self) -> float:
-        if self.energy is None:
-            raise Exception("Cannot calculate gamma without energy!")
         return self.energy * CONST_MEV / CONST_ME / CONST_C ** 2
 
     @property
