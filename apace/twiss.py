@@ -3,7 +3,13 @@ from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, matrix_product_accumulated
 from .matrixmethod import MatrixMethod
 from .utils import Signal
+from .classes import Dipole
 
+CONST_C = 299_792_458  # m / s
+CONST_Q = 3.832e-13  # m
+CONST_ME = 9.1093837015e-31  # kg
+CONST_E = 1.602176634e-19  # C
+CONST_MEV = 1.602176634e-13  # C
 TWO_PI = 2 * np.pi
 
 
@@ -12,13 +18,15 @@ class Twiss(MatrixMethod):
 
     :param Lattice lattice: Lattice to calculate the Twiss parameter for.
     :param start_idx: Index from which the accumulated array is calculated.
-                       This index is also used to calculated the initial twiss parameter
-                       using the periodicity condition.
+                      This index is also used to calculated the initial twiss parameter
+                      using the periodicity condition.
     :type start_idx: int, optional
+    :param energy: Energy of the beam in mev
+    :type energy: float, optional
     """
 
-    def __init__(self, lattice, start_idx=0, energy=None):
-        super().__init__(lattice, energy=energy)
+    def __init__(self, lattice, start_idx=0, **kwargs):
+        super().__init__(lattice, **kwargs)
 
         self._start_idx = start_idx
         self.start_idx_changed = Signal()  # TODO: is currently unused
@@ -72,6 +80,35 @@ class Twiss(MatrixMethod):
         self._chromaticity_needs_update = True
         self._chromaticity_x = None
         self._chromaticity_y = None
+
+        self._emittance = None
+        self._emittance_needs_update = True
+        self._emittance_changed = Signal(self.twiss_array_changed)
+        self._emittance_changed.connect(self._on_emittance_changed)
+        self._curly_h = None
+        self._curly_h_needs_update = True
+        self._curly_h_changed = Signal(self.twiss_array_changed)
+        self._curly_h_changed.connect(self._on_curly_h_changed)
+        self._i1 = None
+        self._i1_needs_update = True
+        self._i1_changed = Signal(self.twiss_array_changed, self.matrices_changed)
+        self._i1_changed.connect(self._on_i1_changed)
+        self._i2 = None
+        self._i2_needs_update = True
+        self._i2_changed = Signal(self.matrices_changed)
+        self._i2_changed.connect(self._on_i2_changed)
+        self._i3 = None
+        self._i3_needs_update = True
+        self._i3_changed = Signal(self.twiss_array_changed, self.matrices_changed)
+        self._i3_changed.connect(self._on_i3_changed)
+        self._i4 = None
+        self._i4_needs_update = True
+        self._i4_changed = Signal(self.twiss_array_changed, self.matrices_changed)
+        self._i4_changed.connect(self._on_i4_changed)
+        self._i5 = None
+        self._i5_needs_update = True
+        self._i5_changed = Signal(self.twiss_array_changed, self.matrices_changed)
+        self._i5_changed.connect(self._on_i5_changed)
 
     @property
     def start_idx(self) -> int:
@@ -174,7 +211,7 @@ class Twiss(MatrixMethod):
         if self._twiss_array.shape[0] != n_points:
             self._twiss_array = np.empty((8, n_points))
 
-        if not self.stable:  # TODO: replace with warning
+        if not self.stable:  # TODO: replace with warning or exception??
             print(
                 f"Horizontal plane stability: {self.stable_x}\n"
                 f"Vertical plane stability: {self.stable_y}"
@@ -333,21 +370,6 @@ class Twiss(MatrixMethod):
         self._tune_fractional_needs_update = True
 
     @property
-    def alpha_c(self) -> float:
-        """Momentum Compaction Factor. Depends on `n_kicks`"""
-        if self._alpha_c_needs_update:
-            self.update_alpha_c()
-        return self._alpha_c
-
-    def update_alpha_c(self):
-        """Manually update the Momentum Compaction Factor."""
-        length = self.lattice.length
-        self._alpha_c = 1 / length * trapz(self.k0 * self.eta_x[1:], self.s[1:])
-
-    def _on_alpha_c_changed(self):
-        self._alpha_c_needs_update = True
-
-    @property
     def chromaticity_x(self) -> float:
         """Natural Horizontal Chromaticity. Depends on `n_kicks`"""
         if self._chromaticity_needs_update:
@@ -370,18 +392,105 @@ class Twiss(MatrixMethod):
     def _on_chromaticity_changed(self):
         self._chromaticity_needs_update = True
 
-    def beta_x_int(self, positions) -> np.ndarray:
-        """Linear interpolated :attr:`beta_x` for given orbit positions.
+    @property
+    def curly_h(self) -> float:
+        """The curly H function."""
+        if self._curly_h_needs_update:
+            self._curly_h = (
+                self.gamma_x * self.eta_x ** 2
+                + 2 * self.alpha_x * self.eta_x * self.eta_x_dds
+                + self.beta_x * self.eta_x_dds ** 2
+            )
+        return self._curly_h
 
-        :param array_like positions: The orbit position at which to evaluate the interpolated values.
-        :return: Interpolated horizontal beta function.
-        """
-        return np.interp(positions, self.s, self.beta_x)
+    def _on_curly_h_changed(self):
+        self._curly_h_needs_update = True
 
-    def beta_y_int(self, positions) -> np.ndarray:
-        """Linear interpolated :attr:`beta_y` for given orbit positions.
+    @property
+    def i1(self) -> float:
+        """The first synchrotron radiation integral."""
+        if self._i1_needs_update:
+            self._i1 = trapz(self.k0 * self.eta_x[1:], self.s[1:])
+        return self._i1
 
-        :param array_like positions: The orbit position at which to evaluate the interpolated values.
-        :return: Interpolated vertical beta function.
-        """
-        return np.interp(positions, self.s, self.beta_x)
+    def _on_i1_changed(self):
+        self._i1_needs_update = True
+
+    @property
+    def i2(self) -> float:
+        """The second synchrotron radiation integral."""
+        if self._i2_needs_update:
+            self._i2 = trapz(self.k0 ** 2, self.s[1:])
+        return self._i2
+
+    def _on_i2_changed(self):
+        self._i2_needs_update = True
+
+    @property
+    def i3(self) -> float:
+        """The third synchrotron radiation integral."""
+        if self._i3_needs_update:
+            self._i3 = trapz(np.abs(self.k0 ** 3), self.s[1:])
+        return self._i3
+
+    def _on_i3_changed(self):
+        self._i3_needs_update = True
+
+    @property  # TODO: Improve performance for I4
+    def i4(self) -> float:
+        """The fourth synchrotron radiation integral."""
+
+        if self._i4_needs_update:
+            p_effect = 0  # poleface effect (see MAD-X source code or SLAC-Pub-1193)
+            eta_x = self.eta_x
+            for element in self.lattice.elements:  # TODO: test for performance
+                if isinstance(element, Dipole):
+                    pos = self.element_indices[element]
+                    n_kicks = self.get_steps(element)
+                    e1, e2 = element.e1, element.e2
+                    tmp = np.tan(e1) * np.sum(eta_x[pos[::n_kicks]])
+                    tmp += np.tan(e2) * np.sum(  # TODO: is it correct to add + 1 here?
+                        eta_x[np.array(pos[n_kicks - 1 :: n_kicks]) + 1]
+                    )
+                    p_effect = element.k0 ** 2 * tmp
+            self._i4 = (
+                trapz(eta_x[1:] * self.k0 * (self.k0 ** 2 + 2 * self.k1), self.s[1:])
+                - p_effect
+            )
+        return self._i4
+
+    def _on_i4_changed(self):
+        self._i4_needs_update = True
+
+    @property
+    def i5(self) -> float:
+        """The fifth synchrotron radiation integral."""
+        if self._i5_needs_update:
+            self._i5 = trapz(self.curly_h[1:] * np.abs(self.k0 ** 3), self.s[1:])
+        return self._i5
+
+    def _on_i5_changed(self):
+        self._i5_needs_update = True
+
+    @property
+    def alpha_c(self) -> float:
+        """Momentum Compaction Factor. Depends on `n_kicks`"""
+        if self._alpha_c_needs_update:
+            self._alpha_c = self.i1 / self.lattice.length
+        return self._alpha_c
+
+    def _on_alpha_c_changed(self):
+        self._alpha_c_needs_update = True
+
+    @property
+    def gamma(self) -> float:
+        return self.energy * CONST_MEV / CONST_ME / CONST_C ** 2
+
+    @property
+    def emittance_x(self) -> float:
+        if self._emittance_needs_update:
+            self._emittance = CONST_Q * self.gamma ** 2 * self.i5 / (self.i2 - self.i4)
+        return self._emittance
+
+    def _on_emittance_changed(self):
+        self._emittance_needs_update = True
