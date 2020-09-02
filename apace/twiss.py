@@ -436,8 +436,7 @@ class Twiss(MatrixMethod):
     def _on_i3_changed(self):
         self._i3_needs_update = True
 
-    # TODO: Improve performance for I4
-    @property
+    @property  # TODO: Improve performance for I4
     def i4(self) -> float:
         """The fourth synchrotron radiation integral."""
 
@@ -477,7 +476,7 @@ class Twiss(MatrixMethod):
     def alpha_c(self) -> float:
         """Momentum Compaction Factor. Depends on `n_kicks`"""
         if self._alpha_c_needs_update:
-            self._alpha_c = 1 / self.lattice.length * self.i1
+            self._alpha_c = self.i1 / self.lattice.length
         return self._alpha_c
 
     def _on_alpha_c_changed(self):
