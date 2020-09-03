@@ -2,7 +2,8 @@ import inspect
 import latticejson
 import sys
 from typing import List, Dict, Set, Union
-from .utils import Signal, Attribute, AmbiguousNameError
+from .utils import Signal, Attribute
+from .exceptions import AmbiguousNameError
 
 
 class Base:

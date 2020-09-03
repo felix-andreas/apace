@@ -55,13 +55,3 @@ class Attribute(Enum):
     K3 = auto()
     E1 = auto()
     E2 = auto()
-
-
-class AmbiguousNameError(Exception):
-    """Raised if multiple elements or lattices have the same name.
-
-    :param str name: The ambiguous name.
-    """
-
-    def __init__(self, name):
-        super().__init__(f'The name "{name}" is ambiguous. Names must be unique!')
