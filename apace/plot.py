@@ -167,18 +167,19 @@ def plot_twiss(
 
         text_areas[order] = TextArea(label, textprops=dict(color=color, rotation=90))
 
-    ax.add_artist(
-        AnchoredOffsetbox(
-            loc=8,
-            child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
-            pad=0.0,
-            frameon=False,
-            bbox_to_anchor=(-0.08, 0.3),
-            bbox_transform=ax.transAxes,
-            borderpad=0.0,
-        )
-    )
     ax.set_xlabel("Orbit Position $s$ / m")
+    if show_ylabels:
+        ax.add_artist(
+            AnchoredOffsetbox(
+                loc=8,
+                child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
+                pad=0.0,
+                frameon=False,
+                bbox_to_anchor=(-0.08, 0.3),
+                bbox_transform=ax.transAxes,
+                borderpad=0.0,
+            )
+        )
     return ax
 
 
@@ -189,8 +190,6 @@ def _twiss_plot_section(
     x_max=None,
     y_min=None,
     y_max=None,
-    n_x_ticks=17,
-    n_y_ticks=4,
     annotate_elements=True,
     annotate_lattices=True,
     line_style="solid",
@@ -225,16 +224,18 @@ def _twiss_plot_section(
 # add attribute which defines which twiss parameters are plotted
 def twiss_plot(
     twiss,
-    main=True,
-    fig_size=(16, 9),
+    fig=None,
     sections=None,
     y_min=None,
     y_max=None,
+    main=True,
     eta_x_scale=10,
     ref_twiss=None,
     path=None,
 ):
-    fig = plt.figure(figsize=fig_size)
+    if fig is None:
+        fig = plt.figure()
+
     height_ratios = [2, 7] if (main and sections) else [1]
     main_grid = grid_spec.GridSpec(
         len(height_ratios), 1, fig, height_ratios=height_ratios
@@ -284,7 +285,6 @@ def twiss_plot(
                 y_min=y_min,
                 y_max=y_max,
                 annotate_elements=True,
-                n_x_ticks=None,
             )
 
     fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)

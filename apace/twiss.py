@@ -3,6 +3,7 @@ from scipy.integrate import trapz, cumtrapz
 from .clib import twiss_product, matrix_product_accumulated
 from .matrixmethod import MatrixMethod
 from .utils import Signal
+from .exceptions import UnstableLatticeError
 from .classes import Dipole
 
 CONST_C = 299_792_458  # m / s
@@ -156,7 +157,6 @@ class Twiss(MatrixMethod):
         If :attr:`term_y` > 0, this means that there exists a periodic solution within the vertical plane."""
         if self._one_turn_matrix_needs_update:
             self.update_one_turn_matrix()
-
         return self._term_y
 
     @property
@@ -207,16 +207,12 @@ class Twiss(MatrixMethod):
 
     def update_twiss_array(self):
         """Manually update the twiss_array."""
+        if not self.stable:
+            raise UnstableLatticeError(self)
+
         n_points = self.n_steps + 1
         if self._twiss_array.shape[0] != n_points:
             self._twiss_array = np.empty((8, n_points))
-
-        if not self.stable:  # TODO: replace with warning or exception??
-            print(
-                f"Horizontal plane stability: {self.stable_x}\n"
-                f"Vertical plane stability: {self.stable_y}"
-            )
-            return
 
         m = self.one_turn_matrix
         beta_x0 = np.abs(2 * m[0, 1]) / np.sqrt(self.term_x)

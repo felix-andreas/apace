@@ -13,4 +13,5 @@ from .twiss import Twiss
 from .tracking_matrix import TrackingMatrix
 from .distributions import distribution
 from .matrixmethod import MatrixMethod
-from .utils import Signal, AmbiguousNameError
+from .utils import Signal
+from .exceptions import AmbiguousNameError, UnstableLatticeError
