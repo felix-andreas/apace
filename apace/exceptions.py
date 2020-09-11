@@ -11,9 +11,9 @@ class AmbiguousNameError(Exception):
 class UnstableLatticeError(Exception):
     """Raised if no stable solution exists for the lattice."""
 
-    def __init__(self, lattice):
+    def __init__(self, twiss):
         super().__init__(
-            f"The lattice {lattice.name} is unstable!\n"
-            f"    Horizontal plane stability: {self.stable_x}\n"
-            f"    Vertical plane stability  : {self.stable_y}"
+            f"The lattice {twiss.lattice.name} is unstable!\n"
+            f"    Horizontal plane stability: {twiss.stable_x}\n"
+            f"    Vertical plane stability  : {twiss.stable_y}"
         )

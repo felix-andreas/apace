@@ -208,7 +208,7 @@ class Twiss(MatrixMethod):
     def update_twiss_array(self):
         """Manually update the twiss_array."""
         if not self.stable:
-            raise UnstableLatticeError(self.lattice)
+            raise UnstableLatticeError(self)
 
         n_points = self.n_steps + 1
         if self._twiss_array.shape[0] != n_points:
