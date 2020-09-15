@@ -24,7 +24,7 @@ def test_attributes(fodo_ring):
     assert 0.4 == fodo_ring["Q2"].length
     assert -1.2 == fodo_ring["Q2"].k1
 
-    fodo_cell = fodo_ring["FODO"]
+    fodo_cell = fodo_ring["CELL"]
     assert isinstance(fodo_cell, ap.Lattice)
     assert 6.0 == fodo_cell.length
 
