@@ -2,6 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.gridspec as grid_spec
+from matplotlib.widgets import Slider, Button
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib.path import Path
 import numpy as np
@@ -146,7 +147,7 @@ def plot_twiss(
     show_ylabels=False,
 ):
     if ax is None:
-        _, ax = plt.subplots()
+        ax = plt.gca()
 
     text_areas = [None] * 3
     for value, label, color, order in (
@@ -203,9 +204,16 @@ def _twiss_plot_section(
     if overwrite:
         ax.clear()
     if ref_twiss:
-        plot_twiss(ref_twiss, ax, ref_line_style, ref_line_width, alpha=0.5)
+        plot_twiss(
+            ref_twiss,
+            ax,
+            ref_line_style,
+            ref_line_width,
+            alpha=0.5,
+            eta_x_scale=eta_x_scale,
+        )
 
-    plot_twiss(twiss, ax, line_style, line_width, eta_x_scale)
+    plot_twiss(twiss, ax, line_style, line_width, eta_x_scale=eta_x_scale)
     if x_min is None:
         x_min = 0
     if x_max is None:
@@ -222,78 +230,100 @@ def _twiss_plot_section(
 
 # TODO: make sub_class of figure
 # add attribute which defines which twiss parameters are plotted
-def twiss_plot(
-    twiss,
-    fig=None,
-    sections=None,
-    y_min=None,
-    y_max=None,
-    main=True,
-    eta_x_scale=10,
-    ref_twiss=None,
-    path=None,
-):
-    if fig is None:
-        fig = plt.figure()
-
-    height_ratios = [2, 7] if (main and sections) else [1]
-    main_grid = grid_spec.GridSpec(
-        len(height_ratios), 1, fig, height_ratios=height_ratios
-    )
-
-    if main:
-        ax = fig.add_subplot(main_grid[0])
-        _twiss_plot_section(
-            twiss,
-            ax,
-            ref_twiss=ref_twiss,
-            y_min=y_min,
-            y_max=y_max,
-            annotate_elements=False,
-            eta_x_scale=eta_x_scale,
+class TwissPlot:
+    def __init__(
+        self,
+        twiss,
+        fig=None,
+        sections=None,
+        y_min=None,
+        y_max=None,
+        main=True,
+        eta_x_scale=10,
+        ref_twiss=None,
+        pairs=(),
+    ):
+        self.fig = plt.figure() if fig is None else fig
+        self.twiss = twiss
+        height_ratios = [4, 14] if (main and sections) else [1]
+        main_grid = grid_spec.GridSpec(
+            len(height_ratios), 1, self.fig, height_ratios=height_ratios
         )
 
-        ax.legend(
-            loc="lower left",
-            bbox_to_anchor=(0.0, 1.05),
-            ncol=10,
-            borderaxespad=0,
-            frameon=False,
-        )
+        if pairs:
+            fig_sliders, axs = plt.subplots(nrows=len(pairs))
+            self.sliders = []
+            for ax, (element, attribute) in zip(axs, pairs):
+                initial_value = getattr(element, attribute)
+                label = f"{element.name} {attribute}"
+                slider = Slider(ax, label, -5, 5, initial_value)
+                slider.on_changed(
+                    lambda value, element=element, attribute=attribute: (
+                        setattr(element, attribute, value),
+                        self.update(),
+                    )
+                )
+                self.sliders.append(slider)  # prevent garbage collection
 
-    if sections:
-        if isinstance(sections, str) or not isinstance(sections[0], Iterable):
-            sections = [sections]
-
-        n_sections = len(sections)
-        rows, cols = find_optimal_grid(n_sections)
-        sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, main_grid[-1])
-        for i, section in enumerate(sections):
-            ax = fig.add_subplot(sub_grid[i])
-
-            if isinstance(section, str):
-                raise NotImplementedError  # TODO: implement cell_start + cell_end
-            else:
-                x_min, x_max = section
-
+        if main:
+            self.ax_main = self.fig.add_subplot(main_grid[0])
             _twiss_plot_section(
-                twiss,
-                ax,
+                self.twiss,
+                self.ax_main,
                 ref_twiss=ref_twiss,
-                x_min=x_min,
-                x_max=x_max,
                 y_min=y_min,
                 y_max=y_max,
-                annotate_elements=True,
+                annotate_elements=False,
+                eta_x_scale=eta_x_scale,
             )
 
-    fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)
-    fig.tight_layout()
-    # fig.subplots_adjust(top=0.93)
-    if path:
-        fig.savefig(path)
+            self.ax_main.legend(
+                loc="lower left",
+                bbox_to_anchor=(0.0, 1.05),
+                ncol=10,
+                borderaxespad=0,
+                frameon=False,
+            )
 
-    return fig
+        if sections:
+            if isinstance(sections, str) or not isinstance(sections[0], Iterable):
+                sections = [sections]
+
+            n_sections = len(sections)
+            rows, cols = find_optimal_grid(n_sections)
+            sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, main_grid[1])
+            self.axs_sections = [
+                self.fig.add_subplot(sub_grid[i]) for i in range(len(sections))
+            ]
+            for i, section in enumerate(sections):
+                if isinstance(section, str):
+                    raise NotImplementedError  # TODO: implement cell_start + cell_end
+                else:
+                    x_min, x_max = section
+
+                _twiss_plot_section(
+                    self.twiss,
+                    self.axs_sections[i],
+                    ref_twiss=ref_twiss,
+                    x_min=x_min,
+                    x_max=x_max,
+                    y_min=y_min,
+                    y_max=y_max,
+                    annotate_elements=True,
+                    eta_x_scale=eta_x_scale,
+                )
+
+        self.fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)
+        # self.fig.tight_layout()
+
+    def update(self):
+        twiss = self.twiss
+        for ax in [self.ax_main] + self.axs_sections:
+            for line, data in zip(
+                ax.lines, (twiss.beta_x, twiss.beta_y, twiss.eta_x * 10)
+            ):
+                line.set_data(twiss.s, data)
+        self.fig.canvas.draw_idle()
 
 
 def find_optimal_grid(N):
