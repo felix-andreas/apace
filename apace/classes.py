@@ -434,7 +434,6 @@ class Lattice(Base):
             version="2.0",
             root=self.name,
             info=self.info,
-            lattice=[obj.name for obj in self.tree],
             elements=elements_dict,
             lattices=lattices_dict,
         )
