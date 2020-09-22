@@ -1,3 +1,4 @@
+from typing import Union, List, Tuple
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -5,11 +6,12 @@ import matplotlib.gridspec as grid_spec
 from matplotlib.widgets import Slider, Button
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib.path import Path
+from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 import numpy as np
 from enum import Enum
 from math import inf
 from collections.abc import Iterable
-from .classes import Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
+from .classes import Base, Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
 
 
 class Color:
@@ -112,7 +114,11 @@ def draw_lattice(
         position_list = np.add.accumulate(length_gen)
         i_min = np.searchsorted(position_list, x_min)
         i_max = np.searchsorted(position_list, x_max)
-        ax.set_xticks(position_list[i_min:i_max])
+        ticks = position_list[i_min : i_max + 1]
+        ax.set_xticks(ticks)
+        if len(ticks) < 5:
+            ax.xaxis.set_minor_locator(AutoMinorLocator())
+            ax.xaxis.set_minor_formatter(ScalarFormatter())
         ax.grid(linestyle="--")
 
     if annotate_sub_lattices:
@@ -143,7 +149,7 @@ def plot_twiss(
     line_style="solid",
     line_width=1.3,
     alpha=1.0,
-    eta_x_scale=10,
+    eta_scale=10,
     show_ylabels=False,
 ):
     if ax is None:
@@ -153,7 +159,7 @@ def plot_twiss(
     for value, label, color, order in (
         (twiss.beta_x, r"$\beta_x$/m", Color.RED, 2),
         (twiss.beta_y, r"$\beta_y$/m", Color.BLUE, 1),
-        (twiss.eta_x * eta_x_scale, rf"{eta_x_scale}$\eta_x$/m", Color.GREEN, 0),
+        (twiss.eta_x * eta_scale, rf"{eta_scale}$\eta_x$/m", Color.GREEN, 0),
     ):
         ax.plot(
             twiss.s,
@@ -198,7 +204,7 @@ def _twiss_plot_section(
     ref_twiss=None,
     ref_line_style="dashed",
     ref_line_width=2.5,
-    eta_x_scale=10,
+    eta_scale=10,
     overwrite=False,
 ):
     if overwrite:
@@ -210,10 +216,10 @@ def _twiss_plot_section(
             ref_line_style,
             ref_line_width,
             alpha=0.5,
-            eta_x_scale=eta_x_scale,
+            eta_scale=eta_scale,
         )
 
-    plot_twiss(twiss, ax, line_style, line_width, eta_x_scale=eta_x_scale)
+    plot_twiss(twiss, ax, line_style, line_width, eta_scale=eta_scale)
     if x_min is None:
         x_min = 0
     if x_max is None:
@@ -228,23 +234,38 @@ def _twiss_plot_section(
     draw_lattice(twiss.lattice, ax, x_min, x_max, annotate_elements=annotate_elements)
 
 
-# TODO: make sub_class of figure
-# add attribute which defines which twiss parameters are plotted
+# TODO:
+#   * make sub_class of figure
+#   * add attribute which defines which twiss parameters are plotted
 class TwissPlot:
+    """Convenience class to plot twiss parameters
+
+    :param Twiss twiss: The name of the object.
+    :param tuple: List of sections to plot. Can be either (min, max), "name" or object.
+    :type tuple: List[Union[Tuple[float, float], str, Base]
+    :param y_max float: Maximum y-limit
+    :param y_min float: Minimum y-limit
+    :param main bool: Wheter to plot whole ring or only given sections
+    :param eta_scale int: Scaling factor of the dipsersion function
+    :param Twiss ref_twiss: Reference twiss values. Will be plotted as dashed lines.
+    :param pairs: List of (element, attribute)-pairs to create interactice sliders for.
+    :type pairs: List[Tuple[Element, str]]
+    """
+
     def __init__(
         self,
         twiss,
-        fig=None,
         sections=None,
         y_min=None,
         y_max=None,
         main=True,
-        eta_x_scale=10,
+        eta_scale=10,
         ref_twiss=None,
-        pairs=(),
+        pairs=None,
     ):
-        self.fig = plt.figure() if fig is None else fig
+        self.fig = plt.figure()
         self.twiss = twiss
+        self.lattice = twiss.lattice
         height_ratios = [4, 14] if (main and sections) else [1]
         main_grid = grid_spec.GridSpec(
             len(height_ratios), 1, self.fig, height_ratios=height_ratios
@@ -274,21 +295,10 @@ class TwissPlot:
                 y_min=y_min,
                 y_max=y_max,
                 annotate_elements=False,
-                eta_x_scale=eta_x_scale,
-            )
-
-            self.ax_main.legend(
-                loc="lower left",
-                bbox_to_anchor=(0.0, 1.05),
-                ncol=10,
-                borderaxespad=0,
-                frameon=False,
+                eta_scale=eta_scale,
             )
 
         if sections:
-            if isinstance(sections, str) or not isinstance(sections[0], Iterable):
-                sections = [sections]
-
             n_sections = len(sections)
             rows, cols = find_optimal_grid(n_sections)
             sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, main_grid[1])
@@ -296,8 +306,11 @@ class TwissPlot:
                 self.fig.add_subplot(sub_grid[i]) for i in range(len(sections))
             ]
             for i, section in enumerate(sections):
-                if isinstance(section, str):
-                    raise NotImplementedError  # TODO: implement cell_start + cell_end
+                if isinstance(section, (str, Base)):
+                    obj = self.lattice[section] if isinstance(section, str) else section
+                    index = self.lattice.indices[obj][0]
+                    x_min = sum(obj.length for obj in self.lattice.arrangement[:index])
+                    x_max = x_min + obj.length
                 else:
                     x_min, x_max = section
 
@@ -310,11 +323,15 @@ class TwissPlot:
                     y_min=y_min,
                     y_max=y_max,
                     annotate_elements=True,
-                    eta_x_scale=eta_x_scale,
+                    eta_scale=eta_scale,
                 )
 
-        self.fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)
-        # self.fig.tight_layout()
+        handles, labels = self.fig.axes[0].get_legend_handles_labels()
+        self.fig.legend(
+            handles, labels, loc="upper left", ncol=10, frameon=False,
+        )
+        self.fig.suptitle(twiss.lattice.name, ha="right", x=0.98)
+        self.fig.tight_layout()
 
     def update(self):
         twiss = self.twiss
@@ -326,9 +343,9 @@ class TwissPlot:
         self.fig.canvas.draw_idle()
 
 
-def find_optimal_grid(N):
+def find_optimal_grid(n):
     rows, cols = 1, 1
-    while rows * cols < N:
+    while rows * cols < n:
         cols += 1
         rows, cols = cols, rows
 

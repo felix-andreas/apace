@@ -1,7 +1,7 @@
 import inspect
 import latticejson
 import sys
-from typing import List, Dict, Set, Union
+from typing import List, Dict, Set, Union, Iterator
 from .utils import Signal, Attribute
 from .exceptions import AmbiguousNameError
 
@@ -258,7 +258,7 @@ class Lattice(Base):
         self._sub_lattices = set()
         self._arrangement = []
         self._indices = {}
-        self._init_tree_properties(self.tree)
+        self._init_tree_properties()
 
         self.element_changed: Signal = Signal()
         """Gets emitted when an attribute of an element within this lattice changes."""
@@ -273,33 +273,40 @@ class Lattice(Base):
         self.n_elements = len(self.arrangement)
         """The number of elements within this lattice."""
 
-    def _init_tree_properties(self, tree, idx=0):
+    @staticmethod
+    def traverse_tree(tree) -> Iterator[Base]:
+        "Returns iterator which traverses all nodes of the lattice tree."
+        for obj in tree:
+            yield obj
+            if isinstance(obj, Lattice):
+                yield from Lattice.traverse_tree(obj)
+
+    def _init_tree_properties(self):
         """A recursive helper function to initialize the tree properties."""
         arrangement = self._arrangement
         indices = self._indices
         elements = self._elements
         sub_lattices = self._sub_lattices
         objects = self._objects
-        for obj in tree:
+        index = 0
+        for obj in Lattice.traverse_tree(self.tree):
             value = objects.get(obj.name)
             if value is None:
                 objects[obj.name] = obj
             elif obj is not value:
                 raise AmbiguousNameError(obj.name)
 
+            try:
+                indices[obj].append(index)
+            except KeyError:
+                indices[obj] = [index]
+
             if isinstance(obj, Lattice):
                 sub_lattices.add(obj)
-                idx = self._init_tree_properties(obj.tree, idx)
             else:
                 arrangement.append(obj)
                 elements.add(obj)
-                try:
-                    indices[obj].append(idx)
-                except KeyError:
-                    indices[obj] = [idx]
-
-                idx += 1
-        return idx
+                index += 1
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -322,6 +329,8 @@ class Lattice(Base):
 
     def update_length(self):
         """Manually update the Length of the lattice (m)."""
+        # TODO: can numpy be used to avoid rounding errors?
+        #       sum = (a + b) + (c + d)
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
@@ -350,7 +359,8 @@ class Lattice(Base):
     @property
     def indices(self) -> Dict[Element, List[float]]:
         """A dict which contains the a `List` of indices for each element.
-        Can be thought of as inverse of arrangement."""
+        Can be thought of as inverse of arrangement. Sub-lattices are associated with
+        the list of indices of their first element."""
         return self._indices
 
     @property
