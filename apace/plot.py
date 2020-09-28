@@ -343,7 +343,11 @@ class TwissPlot:
 
         handles, labels = self.fig.axes[0].get_legend_handles_labels()
         self.fig.legend(
-            handles, labels, loc="upper left", ncol=10, frameon=False,
+            handles,
+            labels,
+            loc="upper left",
+            ncol=10,
+            frameon=False,
         )
         self.fig.suptitle(twiss.lattice.name, ha="right", x=0.98)
         self.fig.tight_layout()
