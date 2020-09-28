@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Union, List, Tuple
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -34,6 +35,18 @@ ELEMENT_COLOR = {
 }
 
 FONT_SIZE = 8
+
+[
+    "beta_x",
+    "beta_y",
+    "eta_x",
+    "psi_x",
+    "psi_y",
+    "alpha_x",
+    "alpha_y",
+    "gamma_x",
+    "gamma_y",
+]
 
 
 def draw_lattice(
@@ -160,6 +173,7 @@ def plot_twiss(
         (twiss.beta_x, r"$\beta_x$/m", Color.RED, 2),
         (twiss.beta_y, r"$\beta_y$/m", Color.BLUE, 1),
         (twiss.eta_x * eta_scale, rf"{eta_scale}$\eta_x$/m", Color.GREEN, 0),
+        # (twiss.curly_h, rf"{eta_scale}$\mathscr{{H}}_x$", Color.ORANGE, -1),
     ):
         ax.plot(
             twiss.s,
@@ -266,6 +280,7 @@ class TwissPlot:
         self.fig = plt.figure()
         self.twiss = twiss
         self.lattice = twiss.lattice
+        self.eta_scale = eta_scale
         height_ratios = [4, 14] if (main and sections) else [1]
         main_grid = grid_spec.GridSpec(
             len(height_ratios), 1, self.fig, height_ratios=height_ratios
@@ -337,7 +352,13 @@ class TwissPlot:
         twiss = self.twiss
         for ax in [self.ax_main] + self.axs_sections:
             for line, data in zip(
-                ax.lines, (twiss.beta_x, twiss.beta_y, twiss.eta_x * 10)
+                ax.lines,
+                (
+                    twiss.beta_x,
+                    twiss.beta_y,
+                    twiss.eta_x * self.eta_scale,
+                    twiss.curly_h * self.eta_scale,
+                ),
             ):
                 line.set_data(twiss.s, data)
         self.fig.canvas.draw_idle()
