@@ -40,12 +40,13 @@ def test_optical_functions(twiss):
 # TODO: get ref value for emittance
 def test_optical_parameters(fodo_cell):
     """Reference values from elegant"""
-    # TODO: test dependence on n_kicks
     # TODO: twiss should only be calculated once!
-    twiss = ap.Twiss(fodo_cell, energy=1000, steps_per_meter=20)  # Todo: less kicks
+    twiss = ap.Twiss(fodo_cell, energy=1000, steps_per_meter=20)
     assert math.isclose(0.237, twiss.tune_x, abs_tol=1e-3)
     assert math.isclose(0.317, twiss.tune_y, abs_tol=1e-3)
-    # TODO: fix chromaticity
+    # TODO: fix chromaticity has different value than madx or elegant
+    # elegant: dnux/dp: -0.0927, dnuy/dp: -0.2438
+    #    madx:     dq1: -0.158 ,     dq2: -0.131
     # assert math.isclose(-0.158, twiss.chromaticity_x, abs_tol=1e-3)
     # assert math.isclose(-0.131, twiss.chromaticity_y, abs_tol=1e-3)
     assert math.isclose(0.317, twiss.alpha_c, abs_tol=1e-3)
@@ -79,16 +80,6 @@ def test_tune_fractional(twiss):
     # TODO: combine with 'test_one_turn_matrix'
     assert 0.2371 == round(twiss.tune_x_fractional, 4)
     assert 0.3175 == round(twiss.tune_y_fractional, 4)
-
-
-# def test_chromaticity(fodo_ring):
-#     twiss = ap.Twiss(fodo_ring, steps_per_meter=2000)
-#     print()
-#     print("chroma_x", twiss.chromaticity_x)
-#     print("chroma_y", twiss.chromaticity_y)
-#     # TODO: get reliable reference values
-#     # elegant reference dnux/dp (1/(2$gp$r)) = -7.412977e-01
-#     # dnuy/dp (1/(2$gp$r)) = -1.942589e+00
 
 
 def test_periodic_solution(twiss):
