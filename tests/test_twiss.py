@@ -12,11 +12,11 @@ allclose_atol = partial(np.allclose, atol=1e-3)
 _twiss = None
 # Todo: test start_idx with start_idx=randrange(n_elements)
 @pytest.fixture
-def twiss(fodo_ring):
+def twiss(fodo_cell):
     # Todo: make sure twiss object is reuseds and avoid scope mismatch
     global _twiss
     if _twiss is None:
-        _twiss = ap.Twiss(fodo_ring, steps_per_element=1)
+        _twiss = ap.Twiss(fodo_cell, steps_per_element=1)
     return _twiss
 
 
@@ -77,8 +77,8 @@ def test_one_turn_matrix(fodo_ring):
 
 def test_tune_fractional(twiss):
     # TODO: combine with 'test_one_turn_matrix'
-    assert 0.2371 == round(1 - twiss.tune_x_fractional, 4)
-    assert 0.3175 == round(1 - twiss.tune_y_fractional, 4)
+    assert 0.2371 == round(twiss.tune_x_fractional, 4)
+    assert 0.3175 == round(twiss.tune_y_fractional, 4)
 
 
 # def test_chromaticity(fodo_ring):
@@ -96,23 +96,26 @@ def test_periodic_solution(twiss):
     assert twiss.stable_x
     assert twiss.stable_y
 
-    tmp_k1 = Q1.k1
-    Q1.k1 = 0
+    q1 = twiss.lattice["Q1"]
+    tmp_k1 = q1.k1
+    q1.k1 = 0
     assert not twiss.stable
     assert not twiss.stable_x
     assert twiss.stable_y
-    Q1.k1 = tmp_k1
+    q1.k1 = tmp_k1
 
-    tmp_k1 = Q2.k1
-    Q2.k1 = 0
+    q2 = twiss.lattice["Q2"]
+    tmp_k1 = q2.k1
+    q2.k1 = 0
     assert not twiss.stable
     assert twiss.stable_x
     assert not twiss.stable_y
-    Q2.k1 = tmp_k1
+    q2.k1 = tmp_k1
 
 
 # TODO: test for all Twiss properties
 def test_element_change(twiss):
+    fodo_cell = twiss.lattice
     q1 = fodo_cell["Q1"]
     beta_x_initial = twiss.beta_x[0]
     tune_x_initial = twiss.tune_x
