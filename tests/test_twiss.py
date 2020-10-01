@@ -1,82 +1,63 @@
-import numpy as np
-from random import randrange
-import apace as ap
+from functools import partial
 import math
+from random import randrange
 
-# FODO circular accelerator from Klaus Wille Chapter 3.13.3
-D1 = ap.Drift("D1", length=0.55)
-Q1 = ap.Quadrupole("Q1", length=0.2, k1=1.2)
-B1 = ap.Dipole("B1", length=1.5, angle=0.392701, e1=0.1963505, e2=0.1963505)
-Q2 = ap.Quadrupole("Q2", length=0.4, k1=-1.2)
-fodo = ap.Lattice("fodo-lattice", [Q1, D1, B1, D1, Q2, D1, B1, D1, Q1])
-ring = ap.Lattice("fodo-ring", [fodo] * 8)
+import numpy as np
+import pytest
 
-twiss = ap.Twiss(ring)
-# a different start_idx should make no difference!
-twiss.start_idx = randrange(twiss.n_steps)
+import apace as ap
 
+allclose_atol = partial(np.allclose, atol=1e-3)
 
-def test_beta():
-    beta_x_start = twiss.beta_x[0]
-    beta_x_end = twiss.beta_x[-1]
-    beta_y_start = twiss.beta_y[0]
-    beta_y_end = twiss.beta_y[-1]
-
-    assert twiss.stable
-    assert 9.8176 == round(beta_x_start, 4)
-    assert 9.8176 == round(beta_x_end, 4)
-    assert 1.2376 == round(beta_y_start, 4)
-    assert 1.2376 == round(beta_y_end, 4)
+_twiss = None
+# Todo: test start_idx with start_idx=randrange(n_elements)
+@pytest.fixture
+def twiss(fodo_cell):
+    # Todo: make sure twiss object is reuseds and avoid scope mismatch
+    global _twiss
+    if _twiss is None:
+        _twiss = ap.Twiss(fodo_cell, steps_per_element=1)
+    return _twiss
 
 
-def test_dispersion():
-    eta_x_start = twiss.eta_x[0]
-    eta_x_end = twiss.eta_x[-1]
-
-    assert 3.4187 == round(eta_x_start, 4)
-    assert 3.4187 == round(eta_x_end, 4)
-
-
-def test_tune_integer():
-    assert 2 == round(twiss.tune_x)  # depends on number of matrices
-    assert 3 == round(twiss.tune_y)  # depends on number of matrices
-
-
-def test_tune_fractional():
-    assert 0.8970 == round(1 - twiss.tune_x_fractional, 4)
-    assert 0.5399 == round(1 - twiss.tune_y_fractional, 4)
-
-
-def test_element_change():
-    beta_x_start = twiss.beta_x[0]
-    tune_x_initial = twiss.tune_x
-    Q1.k1 += 0.25
-    assert beta_x_start != twiss.beta_x[0]
-    assert tune_x_initial != twiss.tune_x
-    Q1.k1 -= 0.25  # set back to avoid failure of other tests
+# Todo: use fodo-cell instead of ring for faster tests
+def test_optical_functions(twiss):
+    """reference values from madx"""
+    assert allclose_atol((9.818, 9.358, 7.068), twiss.beta_x[:3])
+    assert allclose_atol((7.068, 9.358, 9.818), twiss.beta_x[-3:])
+    assert allclose_atol((1.238, 1.331, 2.130), twiss.beta_y[:3])
+    assert allclose_atol((2.130, 1.331, 1.238), twiss.beta_y[-3:])
+    assert allclose_atol((0.000, 2.262, 1.902), twiss.alpha_x[:3])
+    assert allclose_atol((-1.902, -2.262, 0.000), twiss.alpha_x[-3:])
+    assert allclose_atol((-0.000, -0.473, -0.979), twiss.alpha_y[:3])
+    assert allclose_atol((0.979, 0.473, 0.000), twiss.alpha_y[-3:])
+    assert allclose_atol((3.419, 3.337, 2.889), twiss.eta_x[:3])
+    assert allclose_atol((2.889, 3.337, 3.419), twiss.eta_x[-3:])
+    assert allclose_atol((0.000, -0.814, -0.814), twiss.eta_x_dds[:3])
+    assert allclose_atol((0.814, 0.814, -0.000), twiss.eta_x_dds[-3:])
 
 
-def test_periodic_solution():
-    assert twiss.stable
-    assert twiss.stable_x
-    assert twiss.stable_y
+# TODO: get ref value for emittance
+def test_optical_parameters(fodo_cell):
+    """Reference values from elegant"""
+    # TODO: twiss should only be calculated once!
+    twiss = ap.Twiss(fodo_cell, energy=1000, steps_per_meter=20)
+    assert math.isclose(0.237, twiss.tune_x, abs_tol=1e-3)
+    assert math.isclose(0.317, twiss.tune_y, abs_tol=1e-3)
+    # TODO: fix chromaticity has different value than madx or elegant
+    # elegant: dnux/dp: -0.0927, dnuy/dp: -0.2438
+    #    madx:     dq1: -0.158 ,     dq2: -0.131
+    # assert math.isclose(-0.158, twiss.chromaticity_x, abs_tol=1e-3)
+    # assert math.isclose(-0.131, twiss.chromaticity_y, abs_tol=1e-3)
+    assert math.isclose(0.317, twiss.alpha_c, abs_tol=1e-3)
+    assert math.isclose(1.902, twiss.i1, abs_tol=1e-3)
+    assert math.isclose(0.206, twiss.i2, abs_tol=1e-3)
+    assert math.isclose(0.054, twiss.i3, abs_tol=1e-3)
+    assert math.isclose(-0.003, twiss.i4, abs_tol=1e-3)
+    assert math.isclose(0.070, twiss.i5, abs_tol=1e-3)
 
-    tmp_k1 = Q1.k1
-    Q1.k1 = 0
-    assert not twiss.stable
-    assert not twiss.stable_x
-    assert twiss.stable_y
-    Q1.k1 = tmp_k1
 
-    tmp_k1 = Q2.k1
-    Q2.k1 = 0
-    assert not twiss.stable
-    assert twiss.stable_x
-    assert not twiss.stable_y
-    Q2.k1 = tmp_k1
-
-
-one_turn = np.array(
+ONE_TURN_MATRIX = np.array(
     [
         [+0.79784474, -5.91866399, +0.00000000, +0.00000000, +0.00000000, +0.69110258],
         [+0.06140639, +0.79784474, +0.00000000, +0.00000000, +0.00000000, -0.20992831],
@@ -88,37 +69,48 @@ one_turn = np.array(
 )
 
 
-def test_one_turn_matrix():  # ony true if one turn matrix is calculated from pos = 0
-    twiss_idx_0 = ap.Twiss(ring, start_idx=0)
-    assert np.allclose(one_turn, twiss_idx_0.one_turn_matrix)
+# TODO: use one-turn matrix of fodo_cell
+def test_one_turn_matrix(fodo_ring):
+    # ony true if one turn matrix is calculated from pos = 0
+    twiss = ap.Twiss(fodo_ring, start_idx=0)
+    assert np.allclose(ONE_TURN_MATRIX, twiss.one_turn_matrix)
 
 
-def test_chromaticity():
-    twiss = ap.Twiss(ring)
-    print()
-    print("chroma_x", twiss.chromaticity_x)
-    print("chroma_y", twiss.chromaticity_y)
-    # TODO: get reliable reference values
-    # elegant reference dnux/dp (1/(2$gp$r)) = -7.412977e-01
-    # dnuy/dp (1/(2$gp$r)) = -1.942589e+00
-    # TODO: test if it changes when element changes
+def test_tune_fractional(twiss):
+    # TODO: combine with 'test_one_turn_matrix'
+    assert 0.2371 == round(twiss.tune_x_fractional, 4)
+    assert 0.3175 == round(twiss.tune_y_fractional, 4)
 
 
-def test_alpha_c():
-    # elegant reference alphac =  3.170114e-01, alphac2 =  3.543015e-01
-    twiss = ap.Twiss(ring)
-    assert math.isclose(3.170114e-01, twiss.alpha_c, rel_tol=0.05)
-    # TODO: test if it changes when element changes
+def test_periodic_solution(twiss):
+    assert twiss.stable
+    assert twiss.stable_x
+    assert twiss.stable_y
+
+    q1 = twiss.lattice["Q1"]
+    tmp_k1 = q1.k1
+    q1.k1 = 0
+    assert not twiss.stable
+    assert not twiss.stable_x
+    assert twiss.stable_y
+    q1.k1 = tmp_k1
+
+    q2 = twiss.lattice["Q2"]
+    tmp_k1 = q2.k1
+    q2.k1 = 0
+    assert not twiss.stable
+    assert twiss.stable_x
+    assert not twiss.stable_y
+    q2.k1 = tmp_k1
 
 
-def test_synchrotron_radiation_integrals():
-    """Reference values from elegant"""
-    # TODO: test dependence on n_kicks
-    # TODO: twiss should only be calculated once!
-    twiss = ap.Twiss(ring, energy=1000, steps_per_meter=20)
-    assert math.isclose(1.521655e01, twiss.i1, rel_tol=0.01)
-    assert math.isclose(1.644950e00, twiss.i2, rel_tol=0.01)
-    assert math.isclose(4.306490e-01, twiss.i3, rel_tol=0.01)
-    assert math.isclose(-2.147071e-02, twiss.i4, rel_tol=0.01)
-    assert math.isclose(5.582228e-01, twiss.i5, rel_tol=0.01)
-    assert math.isclose(4.915882e-07, twiss.emittance_x, rel_tol=0.01)
+# TODO: test for all Twiss properties
+def test_element_change(twiss):
+    fodo_cell = twiss.lattice
+    q1 = fodo_cell["Q1"]
+    beta_x_initial = twiss.beta_x[0]
+    tune_x_initial = twiss.tune_x
+    q1.k1 += 0.25
+    assert beta_x_initial != twiss.beta_x[0]
+    assert tune_x_initial != twiss.tune_x
+    q1.k1 -= 0.25  # set back to avoid failure of other tests
