@@ -273,6 +273,7 @@ class Twiss(MatrixMethod):
         """Vertical alpha function."""
         return self.twiss_array[3]
 
+    # TODO: is it necessary to calculate gamma in C-code as it is g = (1 + a**2) / b
     @property
     def gamma_x(self) -> np.ndarray:
         """Horizontal gamma function."""
@@ -381,7 +382,7 @@ class Twiss(MatrixMethod):
 
     def update_chromaticity(self):
         """Manually update the natural chromaticity."""
-        const = 1 / 4 / np.pi
+        const = 0.25 / np.pi
         self._chromaticity_x = -const * trapz(self.k1 * self.beta_x[1:], self.s[1:])
         self._chromaticity_y = +const * trapz(self.k1 * self.beta_y[1:], self.s[1:])
 
@@ -435,7 +436,6 @@ class Twiss(MatrixMethod):
     @property  # TODO: Improve performance for I4
     def i4(self) -> float:
         """The fourth synchrotron radiation integral."""
-
         if self._i4_needs_update:
             p_effect = 0  # poleface effect (see MAD-X source code or SLAC-Pub-1193)
             eta_x = self.eta_x

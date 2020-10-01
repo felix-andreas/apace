@@ -273,9 +273,9 @@ The layout and order of elements within an accelerator is usually stored in a so
 
 apace tries to get the best out of both worlds and uses a JSON based lattice file. JSON is able to describe complex data structures, has a simple syntax and is available in all common programming language.
 
-apace lattice file for a simple fodo ring:
+apace lattice file for a simple fodo cell:
 
-.. literalinclude:: ../data/lattices/fodo_ring.json
+.. literalinclude:: ../data/lattices/fodo_cell.json
   :language: JSON
 
 

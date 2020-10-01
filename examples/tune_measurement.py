@@ -6,7 +6,7 @@ Get tune from Fourier-Transform of transversal particle oscillation at fixed pos
 
 **Lattice file:**
 
-.. literalinclude:: ../../data/lattices/fodo_ring.json
+.. literalinclude:: ../../data/lattices/fodo_cell.json
    :language: json
 
 """
@@ -24,7 +24,7 @@ from math import sqrt
 #%%
 # Load FODO lattice from file
 
-fodo = ap.Lattice.from_file("../data/lattices/fodo_ring.json")
+fodo = ap.Lattice.from_file("../data/lattices/fodo_cell.json")
 
 #%%
 # Create particle distribution
