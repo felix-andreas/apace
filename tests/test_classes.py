@@ -54,9 +54,3 @@ def test_print_tree():
     nested3 = ap.Lattice("nested3", [drift, nested2, drift])
     nested4 = ap.Lattice("nested4", 2 * [nested3])
     nested4.print_tree()
-
-
-def test_print_objects(fodo_ring):
-    print()
-    print(fodo_ring.arrangement[0], end="\n\n")
-    print(fodo_ring.arrangement[1], end="\n\n")
