@@ -180,15 +180,12 @@ def plot_twiss(
     text_areas = []
     for i, function in enumerate(twiss_functions):
         value = getattr(twiss, function)
-        scale = scales.get(function)
+        scale = scales.get(function, "")
         label, color = OPTICAL_FUNCTIONS[function]
-        if scale is not None:
-            value *= scale
-            label = str(scale) + label
-
+        label = str(scale) + label
         ax.plot(
             twiss.s,
-            value,
+            value if scale == "" else scale * value,
             color=color,
             linewidth=line_width,
             linestyle=line_style,
