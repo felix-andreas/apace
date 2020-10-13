@@ -36,10 +36,7 @@ ELEMENT_COLOR = {
 
 
 OPTICAL_FUNCTIONS = {
-    "beta_x": (
-        r"$\beta_x$/m",
-        Color.RED,
-    ),
+    "beta_x": (r"$\beta_x$/m", Color.RED),
     "beta_y": (r"$\beta_y$/m", Color.BLUE),
     "eta_x": (r"$\eta_x$/m", Color.GREEN),
     "psi_x": (r"$\psi_x$", Color.YELLOW),
@@ -359,13 +356,7 @@ class TwissPlot:
                 )
 
         handles, labels = self.fig.axes[0].get_legend_handles_labels()
-        self.fig.legend(
-            handles,
-            labels,
-            loc="upper left",
-            ncol=10,
-            frameon=False,
-        )
+        self.fig.legend(handles, labels, loc="upper left", ncol=10, frameon=False)
         self.fig.suptitle(twiss.lattice.name, ha="right", x=0.98)
         self.fig.tight_layout()
 
