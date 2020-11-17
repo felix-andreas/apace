@@ -1,6 +1,6 @@
 """
 apace: Another Particle Accelerator Code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================================
 
 **apace** is yet another particle accelerator code designed for the optimization of 
 beam optics. It is available as Python package and aims to provide a convenient and 
