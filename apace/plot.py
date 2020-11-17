@@ -2,12 +2,17 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.gridspec as grid_spec
+from matplotlib.widgets import Slider, Button
+from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib.path import Path
+from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 import numpy as np
-from enum import Enum
 from math import inf
 from collections.abc import Iterable
-from .classes import Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
+from .classes import Base, Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
+
+
+FONT_SIZE = 8
 
 
 class Color:
@@ -29,7 +34,17 @@ ELEMENT_COLOR = {
     Octupole: Color.BLUE,
 }
 
-FONT_SIZE = 8
+
+OPTICAL_FUNCTIONS = {
+    "beta_x": (r"$\beta_x$/m", Color.RED),
+    "beta_y": (r"$\beta_y$/m", Color.BLUE),
+    "eta_x": (r"$\eta_x$/m", Color.GREEN),
+    "eta_x_dds": (r"$\eta_x'$/m", Color.ORANGE),
+    "psi_x": (r"$\psi_x$", Color.YELLOW),
+    "psi_y": (r"$\psi_y$", Color.ORANGE),
+    "alpha_x": (r"$\alpha_x$", Color.MAGENTA),
+    "alpha_y": (r"$\alpha_y$", Color.BLACK),
+}
 
 
 def draw_lattice(
@@ -37,6 +52,7 @@ def draw_lattice(
     ax=None,
     x_min=-inf,
     x_max=inf,
+    location="top",
     draw_elements=True,
     annotate_elements=True,
     draw_sub_lattices=True,
@@ -65,6 +81,12 @@ def draw_lattice(
     y_span = y_max - y_min
     rect_height = y_span / 32
 
+    y0 = -rect_height / 2
+    if location == "top":
+        y0 += y_max
+    elif location == "bottom":
+        y0 += y_min
+
     if draw_elements:
         start = end = 0
         arrangement = lattice.arrangement
@@ -79,7 +101,7 @@ def draw_lattice(
 
             rec_length = min(end, x_max) - max(start, x_min)
             rectangle = plt.Rectangle(
-                (start if start > x_min else x_min, y_max - rect_height / 2),
+                (start if start > x_min else x_min, y0),
                 rec_length,
                 rect_height,
                 fc=ELEMENT_COLOR[type(element)],
@@ -95,7 +117,7 @@ def draw_lattice(
                 )
                 ax.annotate(
                     element.name,
-                    xy=(center, y_max + sign * 0.75 * rect_height),
+                    xy=(center, y0 + sign * 0.75 * rect_height),
                     fontsize=FONT_SIZE,
                     ha="center",
                     va=va,
@@ -110,11 +132,15 @@ def draw_lattice(
         position_list = np.add.accumulate(length_gen)
         i_min = np.searchsorted(position_list, x_min)
         i_max = np.searchsorted(position_list, x_max)
-        ax.set_xticks(position_list[i_min:i_max])
+        ticks = position_list[i_min : i_max + 1]
+        ax.set_xticks(ticks)
+        if len(ticks) < 5:
+            ax.xaxis.set_minor_locator(AutoMinorLocator())
+            ax.xaxis.set_minor_formatter(ScalarFormatter())
         ax.grid(linestyle="--")
 
     if annotate_sub_lattices:
-        y0 = y_max - 3 * rect_height
+        y0_anno = y0 - 3 * rect_height
         end = 0
         for obj in lattice.tree:
             end += obj.length
@@ -124,7 +150,7 @@ def draw_lattice(
             x0 = end - obj.length / 2
             ax.annotate(
                 obj.name,
-                xy=(x0, y0),
+                xy=(x0, y0_anno),
                 fontsize=FONT_SIZE,
                 fontstyle="oblique",
                 alpha=0.5,
@@ -136,43 +162,52 @@ def draw_lattice(
 
 
 def plot_twiss(
-    twiss, ax=None, line_style="solid", line_width=1.3, alpha=1.0, eta_x_scale=10,
+    twiss,
+    twiss_functions=("beta_x", "beta_y", "eta_x"),
+    *,
+    scales={"eta_x": 10, "eta_x_dds": 10},
+    ax=None,
+    line_style="solid",
+    line_width=1.3,
+    alpha=1.0,
+    show_ylabels=False,
 ):
     if ax is None:
-        _, ax = plt.subplots()
+        ax = plt.gca()
+    if scales is None:
+        scales = {}
 
-    ax.plot(
-        twiss.s,
-        twiss.beta_x,
-        color=Color.RED,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=3,
-        label="$\\beta_x$/m",
-    )
-    ax.plot(
-        twiss.s,
-        twiss.beta_y,
-        color=Color.BLUE,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=2,
-        label="$\\beta_y$/m",
-    )
-    ax.plot(
-        twiss.s,
-        twiss.eta_x * eta_x_scale,
-        color=Color.GREEN,
-        linewidth=line_width,
-        linestyle=line_style,
-        alpha=alpha,
-        zorder=1,
-        label=f"{eta_x_scale}$\\eta_x$/m",
-    )
+    text_areas = []
+    for i, function in enumerate(twiss_functions):
+        value = getattr(twiss, function)
+        scale = scales.get(function, "")
+        label, color = OPTICAL_FUNCTIONS[function]
+        label = str(scale) + label
+        ax.plot(
+            twiss.s,
+            value if scale == "" else scale * value,
+            color=color,
+            linewidth=line_width,
+            linestyle=line_style,
+            alpha=alpha,
+            zorder=10 - i,
+            label=label,
+        )
+        text_areas.append(TextArea(label, textprops=dict(color=color, rotation=90)))
 
     ax.set_xlabel("Orbit Position $s$ / m")
+    if show_ylabels:
+        ax.add_artist(
+            AnchoredOffsetbox(
+                loc=8,
+                child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
+                pad=0.0,
+                frameon=False,
+                bbox_to_anchor=(-0.08, 0.3),
+                bbox_transform=ax.transAxes,
+                borderpad=0.0,
+            )
+        )
     return ax
 
 
@@ -183,8 +218,6 @@ def _twiss_plot_section(
     x_max=None,
     y_min=None,
     y_max=None,
-    n_x_ticks=17,
-    n_y_ticks=4,
     annotate_elements=True,
     annotate_lattices=True,
     line_style="solid",
@@ -192,15 +225,23 @@ def _twiss_plot_section(
     ref_twiss=None,
     ref_line_style="dashed",
     ref_line_width=2.5,
-    eta_x_scale=10,
+    scales={"eta_x": 10},
     overwrite=False,
 ):
     if overwrite:
         ax.clear()
     if ref_twiss:
-        plot_twiss(ref_twiss, ax, ref_line_style, ref_line_width, alpha=0.5)
+        plot_twiss(
+            ref_twiss,
+            ax=ax,
+            line_style=ref_line_style,
+            line_width=ref_line_width,
+            alpha=0.5,
+        )
 
-    plot_twiss(twiss, ax, line_style, line_width, eta_x_scale)
+    plot_twiss(
+        twiss, ax=ax, line_style=line_style, line_width=line_width, scales=scales
+    )
     if x_min is None:
         x_min = 0
     if x_max is None:
@@ -215,84 +256,126 @@ def _twiss_plot_section(
     draw_lattice(twiss.lattice, ax, x_min, x_max, annotate_elements=annotate_elements)
 
 
-# TODO: make sub_class of figure
-# add attribute which defines which twiss parameters are plotted
-def twiss_plot(
-    twiss,
-    main=True,
-    fig_size=(16, 9),
-    sections=None,
-    y_min=None,
-    y_max=None,
-    eta_x_scale=10,
-    ref_twiss=None,
-    path=None,
-):
-    fig = plt.figure(figsize=fig_size)
-    height_ratios = [2, 7] if (main and sections) else [1]
-    main_grid = grid_spec.GridSpec(
-        len(height_ratios), 1, fig, height_ratios=height_ratios
-    )
+# TODO:
+#   * make sub_class of figure
+#   * add attribute which defines which twiss parameters are plotted
+#   * add twiss_functions argument similar to plot_twiss
+class TwissPlot:
+    """Convenience class to plot twiss parameters
 
-    if main:
-        ax = fig.add_subplot(main_grid[0])
-        _twiss_plot_section(
-            twiss,
-            ax,
-            ref_twiss=ref_twiss,
-            y_min=y_min,
-            y_max=y_max,
-            annotate_elements=False,
-            eta_x_scale=eta_x_scale,
+    :param Twiss twiss: The name of the object.
+    :param tuple: List of sections to plot. Can be either (min, max), "name" or object.
+    :type tuple: List[Union[Tuple[float, float], str, Base]
+    :param y_max float: Maximum y-limit
+    :param y_min float: Minimum y-limit
+    :param main bool: Wheter to plot whole ring or only given sections
+    :param scales Dict[str, int]: Optional scaling factors for optical functions
+    :param Twiss ref_twiss: Reference twiss values. Will be plotted as dashed lines.
+    :param pairs: List of (element, attribute)-pairs to create interactice sliders for.
+    :type pairs: List[Tuple[Element, str]]
+    """
+
+    def __init__(
+        self,
+        twiss,
+        twiss_functions=("beta_x", "beta_y", "eta_x"),
+        *,
+        sections=None,
+        y_min=None,
+        y_max=None,
+        main=True,
+        scales={"eta_x": 10},
+        ref_twiss=None,
+        pairs=None,
+    ):
+        self.fig = plt.figure()
+        self.twiss = twiss
+        self.lattice = twiss.lattice
+        self.twiss_functions = twiss_functions
+        self.scales = scales
+        height_ratios = [4, 14] if (main and sections) else [1]
+        main_grid = grid_spec.GridSpec(
+            len(height_ratios), 1, self.fig, height_ratios=height_ratios
         )
+        self.axs_sections = []  # TODO: needed for update function
 
-        ax.legend(
-            loc="lower left",
-            bbox_to_anchor=(0.0, 1.05),
-            ncol=10,
-            borderaxespad=0,
-            frameon=False,
-        )
+        if pairs:
+            fig_sliders, axs = plt.subplots(nrows=len(pairs))
+            if not isinstance(axs, Iterable):
+                axs = (axs,)
+            self.sliders = []
+            for ax, (element, attribute) in zip(axs, pairs):
+                initial_value = getattr(element, attribute)
+                label = f"{element.name} {attribute}"
+                slider = Slider(ax, label, -5, 5, initial_value)
+                slider.on_changed(
+                    lambda value, element=element, attribute=attribute: (
+                        setattr(element, attribute, value),
+                        self.update(),
+                    )
+                )
+                self.sliders.append(slider)  # prevent garbage collection
 
-    if sections:
-        if isinstance(sections, str) or not isinstance(sections[0], Iterable):
-            sections = [sections]
-
-        n_sections = len(sections)
-        rows, cols = find_optimal_grid(n_sections)
-        sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, main_grid[-1])
-        for i, section in enumerate(sections):
-            ax = fig.add_subplot(sub_grid[i])
-
-            if isinstance(section, str):
-                raise NotImplementedError  # TODO: implement cell_start + cell_end
-            else:
-                x_min, x_max = section
-
+        if main:
+            self.ax_main = self.fig.add_subplot(main_grid[0])
             _twiss_plot_section(
-                twiss,
-                ax,
+                self.twiss,
+                self.ax_main,
                 ref_twiss=ref_twiss,
-                x_min=x_min,
-                x_max=x_max,
                 y_min=y_min,
                 y_max=y_max,
-                annotate_elements=True,
-                n_x_ticks=None,
+                annotate_elements=False,
+                scales=scales,
             )
 
-    fig.suptitle(twiss.lattice.name, ha="right", x=0.9925)
-    fig.tight_layout()
-    # fig.subplots_adjust(top=0.93)
-    if path:
-        fig.savefig(path)
+        if sections:
+            n_sections = len(sections)
+            rows, cols = find_optimal_grid(n_sections)
+            sub_grid = grid_spec.GridSpecFromSubplotSpec(rows, cols, main_grid[1])
+            self.axs_sections = [
+                self.fig.add_subplot(sub_grid[i]) for i in range(len(sections))
+            ]
+            for i, section in enumerate(sections):
+                if isinstance(section, (str, Base)):
+                    obj = self.lattice[section] if isinstance(section, str) else section
+                    index = self.lattice.indices[obj][0]
+                    x_min = sum(obj.length for obj in self.lattice.arrangement[:index])
+                    x_max = x_min + obj.length
+                else:
+                    x_min, x_max = section
 
-    return fig
+                _twiss_plot_section(
+                    self.twiss,
+                    self.axs_sections[i],
+                    ref_twiss=ref_twiss,
+                    x_min=x_min,
+                    x_max=x_max,
+                    y_min=y_min,
+                    y_max=y_max,
+                    annotate_elements=True,
+                    scales=scales,
+                )
+
+        handles, labels = self.fig.axes[0].get_legend_handles_labels()
+        self.fig.legend(handles, labels, loc="upper left", ncol=10, frameon=False)
+        self.fig.suptitle(twiss.lattice.name, ha="right", x=0.98)
+        self.fig.tight_layout()
+
+    def update(self):
+        twiss = self.twiss
+        for ax in [self.ax_main] + self.axs_sections:
+            for line, function in zip(ax.lines, self.twiss_functions):
+                data = getattr(twiss, function)
+                scale = self.scales.get(function)
+                if scale is not None:
+                    data *= scale
+                line.set_data(twiss.s, data)
+        self.fig.canvas.draw_idle()
 
 
-def find_optimal_grid(N):
+def find_optimal_grid(n):
     rows, cols = 1, 1
-    while rows * cols < N:
+    while rows * cols < n:
         cols += 1
         rows, cols = cols, rows
 
@@ -390,6 +473,5 @@ def floor_plan(
     margin = 0.05 * max((x_max - x_min), (y_max - y_min))
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
-    ax.axis("off")
 
     return ax

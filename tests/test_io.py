@@ -2,7 +2,8 @@ import apace as ap
 
 # TODO: fix linter/mypy erros
 # https://stackoverflow.com/questions/59187502/mypy-dict-containing-instances-of-different-subclasses
-def test_attributes(fodo_ring):
+def test_attributes(fodo_cell):
+    fodo_ring = ap.Lattice("fodo-ring", 8 * [fodo_cell])
     d1 = fodo_ring["D1"]
     assert isinstance(d1, ap.Drift)
     assert 0.55 == fodo_ring["D1"].length

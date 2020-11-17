@@ -10,7 +10,8 @@ from .classes import (
     Lattice,
 )
 from .twiss import Twiss
-from .matrix_tracking import MatrixTracking
+from .tracking_matrix import TrackingMatrix
 from .distributions import distribution
-from .matrix_method import MatrixMethod
-from .utils import Signal, AmbiguousNameError
+from .matrixmethod import MatrixMethod
+from .utils import Signal
+from .exceptions import AmbiguousNameError, UnstableLatticeError

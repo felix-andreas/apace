@@ -1,53 +1,81 @@
-import numpy as np
-from .classes import Element, Drift, Dipole, Quadrupole
-from .utils import Signal
 from typing import List, Dict
-
+import numpy as np
+from math import ceil
+from .classes import Element, Drift, Dipole, Quadrupole
+from .utils import Signal, Attribute
 from .clib import matrix_product_accumulated
 
 MATRIX_SIZE = 6
 IDENTITY = np.identity(MATRIX_SIZE)
 C = 299_792_458
 C_SQUARED = C ** 2
-N_KICKS_DEFAULT = 1
+CONST_MEV = 1.602176634e-13  # MeV to Joule
+CONST_ME = 9.1093837015e-31  # kg
+
+# TODO: What is the best way to set the number of steps ?
+#    1. Fixed number of steps per element (depending on element type)
+#    2. Steps per meter (depending on element type)
+#    3. User defined function, which returns number of steps for given element
 
 
 class MatrixMethod:
     """The transfer matrix method.
 
     :param lattice: Lattice which transfer matrices gets calculated for.
-    :param int start_index: Start index for the one-turn matrix
-           and for the accumulated transfer matrices.
-    :param float start_position: Same as start_index but uses position instead of index of the position.
-           Is ignored if start_index is set.
-    :param number velocity: Velocity of the particles.
+    :param int steps_per_element: Fixed number of steps per element.
+                                     (ignored if steps_per_meter is passed)
+    :param number steps_per_meter: Fixed number of steps per meter.
+    :param int start_index: Start index for the one-turn matrix and for the accumulated
+                            transfer matrices.
+    :param number start_position: Same as start_index but uses position instead of index
+                                  of the position. Is ignored if start_index is set.
+    :param number energy: Total energy per particle in MeV.
     """
 
-    def __init__(self, lattice, start_index=None, start_position=None, velocity=C):
+    def __init__(
+        self,
+        lattice,
+        steps_per_element=10,
+        steps_per_meter=None,
+        start_index=None,
+        start_position=None,
+        energy=None,
+    ):
         self.lattice = lattice
-        self.velocity = velocity
+        self._energy = energy
+        if steps_per_meter is None:
+            if isinstance(steps_per_element, (int, float)):
+                self.get_steps = lambda element: steps_per_element
+            elif isinstance(steps_per_element, dict):
+                self.get_steps = lambda element: steps_per_element.get(type(element))
+            else:
+                raise TypeError("steps_per_element must be a number or a dict.")
+        elif isinstance(steps_per_meter, (int, float)):
+            self.get_steps = lambda element: ceil(steps_per_meter * element.length)
+        elif isinstance(steps_per_meter, dict):
+            self.get_steps = lambda element: ceil(
+                steps_per_meter.get(type(element)) * element.length
+            )
+        else:
+            raise TypeError("steps_per_meter must be a number or a dict.")
 
-        self.changed_elements = set()
+        self.changed_elements = self.lattice.elements.copy()
         self.lattice.element_changed.connect(self._on_element_changed)
-
-        self.element_n_kicks = {Drift: 3, Dipole: 10, Quadrupole: 5}
-        self.element_n_kicks_changed = Signal()
 
         self._element_indices = {}
         self._element_indices_needs_update = True
-        self.element_indices_changed = Signal(self.element_n_kicks_changed)
+        self.element_indices_changed = Signal()
         self.element_indices_changed.connect(self._on_element_indices_changed)
 
-        self._n_kicks = 0
-        self._n_points = 0
-        self._n_kicks_needs_update = True
-        self.n_kicks_changed = Signal(self.element_n_kicks_changed)
-        self.n_kicks_changed.connect(self._on_n_kicks_changed)
+        self._n_steps = 0
+        self._n_steps_needs_update = True
+        self.n_steps_changed = Signal()
+        self.n_steps_changed.connect(self._on_n_steps_changed)
 
         self._step_size = np.empty(0)
         self._step_size_needs_update = True
         self.step_size_changed = Signal(
-            self.n_kicks_changed, self.lattice.length_changed
+            self.n_steps_changed, self.lattice.length_changed
         )
         self.step_size_changed.connect(self._on_step_size_changed)
 
@@ -56,9 +84,8 @@ class MatrixMethod:
         self.s_changed = Signal(self.step_size_changed)
         self.s_changed.connect(self._on_s_changed)
 
-        self._transfer_matrices = np.empty(0)
-        self._transfer_matrices_needs_full_update = True
-        self.transfer_matrices_changed = Signal()
+        self._matrices = np.empty(0)
+        self.matrices_changed = Signal()
         self._k0 = np.empty(0)
         self._k1 = np.empty(0)
 
@@ -68,62 +95,60 @@ class MatrixMethod:
         if start_position is not None and start_index is None:
             self.start_position = start_position
 
-        self._transfer_matrices_acc = np.empty(0)
-        self._transfer_matrices_acc_needs_update = True
-        self.transfer_matrices_acc_changed = Signal(
-            self.transfer_matrices_changed, self._start_position_changed
+        self._matrices_acc = np.empty(0)
+        self._matrices_acc_needs_update = True
+        self.matrices_acc_changed = Signal(
+            self.matrices_changed, self._start_position_changed
         )
-        self.transfer_matrices_acc_changed.connect(
-            self._on_transfer_matrices_accumulated_changed
-        )
+        self.matrices_acc_changed.connect(self._on_matrices_accumulated_changed)
 
         self._one_turn_matrix = np.empty(0)
 
+    @property
+    def energy(self) -> float:
+        if self._energy is None:
+            raise Exception("Energy is not set!")
+        return self._energy
+
+    @property
+    def gamma(self) -> float:
+        return self.energy * CONST_MEV / CONST_ME / C_SQUARED
+
+    @property
+    def velocity(self) -> float:
+        return C * np.sqrt(1 - 1 / self.gamma ** 2)
+
     def _on_element_changed(self, element, attribute):
+        if attribute == Attribute.LENGTH:
+            # TODO: n_steps and n_indices can change if the length of an element changes
+            # but it is relativly expensive to recalculate them every time!
+            # n_steps_changed()
+            # element_indices_changed()
+            pass
+
         self.changed_elements.add(element)
-        self.transfer_matrices_changed()
-
-    # TODO: Better API to set n_kicks
-    def set_n_kicks(self):
-        self.element_n_kicks_changed()
-        raise NotImplementedError
-
-    def n_kicks_per_element(self, element) -> int:
-        """Returns the number of kicks for a given element"""
-        return self.element_n_kicks.get(element.__class__, N_KICKS_DEFAULT)
+        self.matrices_changed()
 
     @property
-    def n_kicks(self) -> int:
-        """Total number of kicks. (:attr:`n_points` - 1)."""
-        if self._n_kicks_needs_update:
-            self.update_n_kicks()
+    def n_steps(self) -> int:
+        """Total number of steps."""
+        if self._n_steps_needs_update:
+            self.update_n_steps()
+        return self._n_steps
 
-        return self._n_kicks
-
-    @property
-    def n_points(self) -> int:
-        """Total number of points (:attr:`n_kicks` + 1)."""
-        if self._n_kicks_needs_update:
-            self.update_n_kicks()
-
-        return self._n_points
-
-    def update_n_kicks(self):
+    def update_n_steps(self):
         """Manually update the total number of kicks."""
-        n_kicks = sum(map(self.n_kicks_per_element, self.lattice.arrangement))
-        self._n_kicks = n_kicks
-        self._n_points = n_kicks + 1
-        self._n_kicks_needs_update = False
+        self._n_steps = sum(map(self.get_steps, self.lattice.arrangement))
+        self._n_steps_needs_update = False
 
-    def _on_n_kicks_changed(self):
-        self._n_kicks_needs_update = True
+    def _on_n_steps_changed(self):
+        self._n_steps_needs_update = True
 
     @property
     def element_indices(self) -> Dict[Element, List[int]]:
         """Contains the indices of each element within the transfer_matrices."""
         if self._element_indices_needs_update:
             self.update_element_indices()
-
         return self._element_indices
 
     def update_element_indices(self):
@@ -131,7 +156,7 @@ class MatrixMethod:
         self._element_indices.clear()
         start = 0
         for element in self.lattice.arrangement:
-            end = start + self.n_kicks_per_element(element)
+            end = start + self.get_steps(element)
             tmp = list(range(start, end))
             try:
                 self._element_indices[element].extend(tmp)
@@ -154,13 +179,13 @@ class MatrixMethod:
 
     def update_step_size(self):
         """Manually update the step_size array."""
-        if self._step_size.size != self.n_kicks:
-            self._step_size = np.empty(self.n_kicks)
+        if self._step_size.size != self.n_steps:
+            self._step_size = np.empty(self.n_steps)
             self._step_size[0] = 0
 
         for element in self.lattice.elements:
-            n_kicks = self.n_kicks_per_element(element)
-            self._step_size[self.element_indices[element]] = element.length / n_kicks
+            n_steps = self.get_steps(element)
+            self._step_size[self.element_indices[element]] = element.length / n_steps
 
         self._step_size_needs_update = False
 
@@ -177,7 +202,7 @@ class MatrixMethod:
 
     def update_s(self):
         """Manually update the orbit position array s."""
-        points = self.n_kicks + 1
+        points = self.n_steps + 1
         if self._s.size != points:
             self._s = np.empty(points)
             self._s[0] = 0
@@ -188,65 +213,55 @@ class MatrixMethod:
         self._s_needs_update = True
 
     @property
-    def transfer_matrices(self) -> np.ndarray:
+    def matrices(self) -> np.ndarray:
         """Array of transfer matrices with shape (6, 6, n_kicks)"""
-        if self.changed_elements or self._transfer_matrices_needs_full_update:
-            self.update_transfer_matrices()
-
-        return self._transfer_matrices
+        if self.changed_elements:
+            self.update_matrices()
+        return self._matrices
 
     @property
     def k0(self) -> np.ndarray:
         """Array of deflections angles with shape (n_kicks)."""
-        if self.changed_elements or self._transfer_matrices_needs_full_update:
-            self.update_transfer_matrices()
-
+        if self.changed_elements:
+            self.update_matrices()
         return self._k0
 
     @property
     def k1(self) -> np.ndarray:
         """Array of geometric quadruole strenghts with shape (n_kicks)."""
-        if self.changed_elements or self._transfer_matrices_needs_full_update:
-            self.update_transfer_matrices()
-
+        if self.changed_elements:
+            self.update_matrices()
         return self._k1
 
-    def update_transfer_matrices(self):
+    def update_matrices(self):
         """Manually update the transfer_matrices."""
-        if self._transfer_matrices.shape[0] != self.n_kicks:
-            self._transfer_matrices = np.empty((self.n_kicks, MATRIX_SIZE, MATRIX_SIZE))
-            self._k0 = np.empty(self.n_kicks)
-            self._k1 = np.empty(self.n_kicks)
+        if self._matrices.shape[0] != self.n_steps:
+            self._matrices = np.empty((self.n_steps, MATRIX_SIZE, MATRIX_SIZE))
+            self._k0 = np.empty(self.n_steps)
+            self._k1 = np.empty(self.n_steps)
 
-        if self._transfer_matrices_needs_full_update:
-            elements = self.lattice.elements
-        else:
-            elements = self.changed_elements
+        elements = self.changed_elements
 
-        matrix_array = self._transfer_matrices
+        matrix_array = self._matrices
         for element in elements:
-            pos = self.element_indices[element]  # indices in matrix transfer_matrices
-            n_kicks = self.n_kicks_per_element(element)
+            pos = self.element_indices[element]  # indices in matrix array
+            n_kicks = self.get_steps(element)
             step_size = element.length / n_kicks
 
-            # TODO: change element 4,5 for velocity smaller than light
-            velocity = self.velocity
-            if velocity < C:
-                gamma = 1 / np.sqrt(1 - velocity ** 2 / C_SQUARED)
-                el_45 = step_size / gamma ** 2
-            else:
-                el_45 = 0
+            # TODO: change element (4,5) for velocity smaller than light
+            # el_45 = 0 if energy is None else step_size / gamma ** 2
 
-            if isinstance(element, Quadrupole) and element.k1:
-                k0 = 0
-                k1 = element.k1
+            self._k0[pos] = k0 = getattr(element, "k0", 0)
+            self._k1[pos] = k1 = getattr(element, "k1", 0)
+
+            if isinstance(element, Quadrupole) and k1:
                 sqk = np.sqrt(np.absolute(k1))
                 om = sqk * step_size
                 sin = np.sin(om)
                 cos = np.cos(om)
                 sinh = np.sinh(om)
                 cosh = np.cosh(om)
-                if k1 > 0:  # k1 > horizontal focusing
+                if k1 > 0:  # horizontal focusing
                     matrix_array[pos] = [
                         [cos, 1 / sqk * sin, 0, 0, 0, 0],
                         [-sqk * sin, cos, 0, 0, 0, 0],
@@ -255,7 +270,7 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1],
                     ]
-                else:  # k1 < vertical focusing
+                else:  # vertical focusing
                     matrix_array[pos] = [
                         [cosh, 1 / sqk * sinh, 0, 0, 0, 0],
                         [sqk * sinh, cosh, 0, 0, 0, 0],
@@ -264,9 +279,7 @@ class MatrixMethod:
                         [0, 0, 0, 0, 1, 0],
                         [0, 0, 0, 0, 0, 1],
                     ]
-            elif isinstance(element, Dipole) and element.angle:
-                k0 = element.k0
-                k1 = 0
+            elif isinstance(element, Dipole) and k0:
                 phi = element.angle / n_kicks
                 sin = np.sin(phi)
                 cos = np.cos(phi)
@@ -296,17 +309,11 @@ class MatrixMethod:
                         matrix_edge_2, matrix_array[pos[-1]]
                     )
             else:  # Drifts and remaining elements
-                k0 = 0
-                k1 = 0
                 matrix = IDENTITY.copy()
                 matrix[0, 1] = matrix[2, 3] = step_size
                 matrix_array[pos] = matrix
 
-            self._k0[pos] = k0
-            self._k1[pos] = k1
-
         self.changed_elements.clear()
-        self._transfer_matrices_needs_full_update = False
 
     @property
     def start_index(self) -> int:
@@ -328,16 +335,14 @@ class MatrixMethod:
         self.start_index = np.searchsorted(self.s, value) - 1
 
     @property
-    def transfer_matrices_acc(self) -> np.ndarray:
+    def matrices_acc(self) -> np.ndarray:
         """The accumulated transfer matrices starting from start_index."""
-        if self._transfer_matrices_acc_needs_update:
-            self.update_transfer_matrices_acc()
-        return self._transfer_matrices_acc
+        if self._matrices_acc_needs_update:
+            self.update_matrices_acc()
+        return self._matrices_acc
 
-    def update_transfer_matrices_acc(self):
-        matrix_product_accumulated(
-            self.transfer_matrices, self.transfer_matrices_acc, self.start_index
-        )
+    def update_matrices_acc(self):
+        matrix_product_accumulated(self.matrices, self.matrices_acc, self.start_index)
 
-    def _on_transfer_matrices_accumulated_changed(self):
-        self.transfer_matrices_acc_changed = True
+    def _on_matrices_accumulated_changed(self):
+        self.matrices_acc_changed = True

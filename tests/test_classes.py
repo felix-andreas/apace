@@ -43,17 +43,14 @@ def test_indices():
     assert [0, 1, 5] == l1.indices[e0]
     assert [2, 4, 6] == l1.indices[e1]
     assert [3, 7, 8] == l1.indices[e2]
+    assert [1, 5] == l1.indices[l0]
 
 
-def test_print_tree(fodo_ring):
-    nested1 = ap.Lattice("nested1", [fodo_ring])
-    nested2 = ap.Lattice("nested2", [nested1])
-    nested3 = ap.Lattice("nested3", [nested2])
+def test_print_tree():
+    print()
+    drift = ap.Drift("D", length=1)
+    nested1 = ap.Lattice("nested1", [drift, drift])
+    nested2 = ap.Lattice("nested2", [drift, nested1, drift])
+    nested3 = ap.Lattice("nested3", [drift, nested2, drift])
     nested4 = ap.Lattice("nested4", 2 * [nested3])
     nested4.print_tree()
-
-
-def test_print_objects(fodo_ring):
-    print()
-    print(fodo_ring.arrangement[0], end="\n\n")
-    print(fodo_ring.arrangement[1], end="\n\n")

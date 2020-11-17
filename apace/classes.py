@@ -1,23 +1,24 @@
 import inspect
 import latticejson
 import sys
-from typing import List, Dict, Set, Union
-from .utils import Signal, Attribute, AmbiguousNameError
+from typing import List, Dict, Set, Union, Iterator
+from .utils import Signal, Attribute
+from .exceptions import AmbiguousNameError
 
 
 class Base:
     """Abstract base for all element and lattice classes.
 
     :param str name: The name of the object.
-    :param description: A brief description of the object.
-    :type description: str, optional
+    :param info: Additional information about the object.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, description=""):
+    def __init__(self, name, length, info=""):
         self.name: str = name
         """The name of the object."""
-        self.description: str = description
-        """A brief description of the object"""
+        self.info: str = info
+        """Additional information about the object"""
         self.parent_lattices: Set["Lattice"] = set()
         """All lattices which contain the object."""
         self._length = length
@@ -55,19 +56,16 @@ class Element(Base):
 
     :param str name: The name of the element.
     :param float length: The length of the element (m).
-    :param str description: A brief description of the element.
-    :type description: str, optional
+    :param str info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, info=""):
+        super().__init__(name, length, info)
         self._length = length
-        self.length_changed: Signal = Signal()
-        """Gets emitted when the length changes."""
-        self.length_changed.connect(self._on_length_changed)
-        self.value_changed: Signal = Signal()
+        self.attribute_changed: Signal = Signal()
         """Gets emitted when one of the attributes changes."""
-        self.value_changed.connect(self._on_value_changed)
+        self.attribute_changed.connect(self._on_attribute_changed)
 
     @property
     def length(self) -> float:
@@ -77,14 +75,9 @@ class Element(Base):
     @length.setter
     def length(self, value):
         self._length = value
-        self.length_changed()
-        self.value_changed(self, Attribute.LENGTH)
+        self.attribute_changed(self, Attribute.LENGTH)
 
-    def _on_length_changed(self, *args):
-        for lattice in self.parent_lattices:
-            lattice.length_changed()
-
-    def _on_value_changed(self, element, attribute):
+    def _on_attribute_changed(self, element, attribute):
         for lattice in self.parent_lattices:
             lattice.element_changed(element, attribute)
 
@@ -94,8 +87,8 @@ class Drift(Element):
 
     :param str name: The name of the element.
     :param float length: The length of the element (m).
-    :param str description: A brief description of the element.
-    :type description: str, optional
+    :param str info: Additional information about the element.
+    :type info: str, optional
     """
 
     pass
@@ -111,12 +104,12 @@ class Dipole(Element):
     :type e1: float, optional
     :param e2: Exit angle in rad.
     :type e2: float, optional
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, angle, e1=0, e2=0, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, angle, e1=0, e2=0, info=""):
+        super().__init__(name, length, info)
         self._angle = angle
         self._e1 = e1
         self._e2 = e2
@@ -129,7 +122,7 @@ class Dipole(Element):
     @angle.setter
     def angle(self, value):
         self._angle = value
-        self.value_changed(self, Attribute.ANGLE)
+        self.attribute_changed(self, Attribute.ANGLE)
 
     @property
     def e1(self) -> float:
@@ -139,7 +132,7 @@ class Dipole(Element):
     @e1.setter
     def e1(self, value):
         self._e1 = value
-        self.value_changed(self, Attribute.E1)
+        self.attribute_changed(self, Attribute.E1)
 
     @property
     def e2(self) -> float:
@@ -149,7 +142,7 @@ class Dipole(Element):
     @e2.setter
     def e2(self, value):
         self._e2 = value
-        self.value_changed(self, Attribute.E2)
+        self.attribute_changed(self, Attribute.E2)
 
     @property
     def radius(self) -> float:
@@ -176,12 +169,12 @@ class Quadrupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k1: Geometric quadrupole strength (m^-2).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k1, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k1, info=""):
+        super().__init__(name, length, info)
         self._k1 = k1
 
     @property
@@ -192,7 +185,7 @@ class Quadrupole(Element):
     @k1.setter
     def k1(self, value):
         self._k1 = value
-        self.value_changed(self, Attribute.K1)
+        self.attribute_changed(self, Attribute.K1)
 
 
 class Sextupole(Element):
@@ -201,12 +194,12 @@ class Sextupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k1: Geometric quadrupole strength (m^-3).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k2, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k2, info=""):
+        super().__init__(name, length, info)
         self._k2 = k2
 
     @property
@@ -217,7 +210,7 @@ class Sextupole(Element):
     @k2.setter
     def k2(self, value):
         self._k2 = value
-        self.value_changed(self, Attribute.K2)
+        self.attribute_changed(self, Attribute.K2)
 
 
 class Octupole(Element):
@@ -226,12 +219,12 @@ class Octupole(Element):
     :param str name: Name of the element.
     :param float length: Length of the element (m).
     :param float k3: Geometric quadrupole strength (m^-4).
-    :param description: A brief description of the element.
-    :type description: str, optional
+    :param info: Additional information about the element.
+    :type info: str, optional
     """
 
-    def __init__(self, name, length, k3, description=""):
-        super().__init__(name, length, description)
+    def __init__(self, name, length, k3, info=""):
+        super().__init__(name, length, info)
         self._k3 = k3
 
     @property
@@ -242,7 +235,7 @@ class Octupole(Element):
     @k3.setter
     def k3(self, value):
         self._k3 = value
-        self.value_changed(self, Attribute.K3)
+        self.attribute_changed(self, Attribute.K3)
 
 
 class Lattice(Base):
@@ -251,11 +244,11 @@ class Lattice(Base):
     :param str name: Name of the lattice.
     :param tree: Nested tree of elements and lattices.
     :type tree: Tuple[Union[Element, Lattice]]
-    :param str description: A brief description of the element.
+    :param str info: Additional information about the lattice.
     """
 
-    def __init__(self, name, tree, description=None):
-        super().__init__(name, description)
+    def __init__(self, name, tree, info=None):
+        super().__init__(name, info)
         self._tree = tree
         for obj in set(tree):
             obj.parent_lattices.add(self)
@@ -265,7 +258,11 @@ class Lattice(Base):
         self._sub_lattices = set()
         self._arrangement = []
         self._indices = {}
-        self._init_tree_properties(self.tree)
+        self._init_tree_properties()
+
+        self.element_changed: Signal = Signal()
+        """Gets emitted when an attribute of an element within this lattice changes."""
+        self.element_changed.connect(self._on_element_changed)
 
         self._length = 0
         self._length_needs_update = True
@@ -276,37 +273,40 @@ class Lattice(Base):
         self.n_elements = len(self.arrangement)
         """The number of elements within this lattice."""
 
-        self.element_changed: Signal = Signal()
-        """Gets emitted when an attribute of an element within this lattice changes."""
-        self.element_changed.connect(self._on_element_changed)
+    @staticmethod
+    def traverse_tree(tree) -> Iterator[Base]:
+        "Returns iterator which traverses all nodes of the lattice tree."
+        for obj in tree:
+            yield obj
+            if isinstance(obj, Lattice):
+                yield from Lattice.traverse_tree(obj)
 
-    def _init_tree_properties(self, tree, idx=0):
+    def _init_tree_properties(self):
         """A recursive helper function to initialize the tree properties."""
         arrangement = self._arrangement
         indices = self._indices
         elements = self._elements
         sub_lattices = self._sub_lattices
         objects = self._objects
-        for obj in tree:
+        index = 0
+        for obj in Lattice.traverse_tree(self.tree):
             value = objects.get(obj.name)
             if value is None:
                 objects[obj.name] = obj
             elif obj is not value:
                 raise AmbiguousNameError(obj.name)
 
+            try:
+                indices[obj].append(index)
+            except KeyError:
+                indices[obj] = [index]
+
             if isinstance(obj, Lattice):
                 sub_lattices.add(obj)
-                idx = self._init_tree_properties(obj.tree, idx)
             else:
-                elements.add(obj)
                 arrangement.append(obj)
-                try:
-                    indices[obj].append(idx)
-                except KeyError:
-                    indices[obj] = [idx]
-
-                idx += 1
-        return idx
+                elements.add(obj)
+                index += 1
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -329,6 +329,8 @@ class Lattice(Base):
 
     def update_length(self):
         """Manually update the Length of the lattice (m)."""
+        # TODO: can numpy be used to avoid rounding errors?
+        #       sum = (a + b) + (c + d)
         self._length = sum(obj.length for obj in self.tree)
         self._length_needs_update = False
 
@@ -338,6 +340,9 @@ class Lattice(Base):
             lattice.length_changed()
 
     def _on_element_changed(self, element, attribute):
+        if attribute == Attribute.LENGTH:
+            self.length_changed()
+
         for lattice in self.parent_lattices:
             lattice.element_changed(element, attribute)
 
@@ -354,7 +359,8 @@ class Lattice(Base):
     @property
     def indices(self) -> Dict[Element, List[float]]:
         """A dict which contains the a `List` of indices for each element.
-           Can be thought of as inverse of arrangment."""
+        Can be thought of as inverse of arrangement. Sub-lattices are associated with
+        the list of indices of their first element."""
         return self._indices
 
     @property
@@ -374,18 +380,16 @@ class Lattice(Base):
 
     def print_tree(self):
         """Print the lattice as tree of objects. (Similar to unix tree command)"""
-        print(self._tree_as_string(self))
+        print(self._print_tree(self))
 
     @staticmethod
-    def _tree_as_string(obj, prefix=""):
-        string = obj.name + "\n"
+    def _print_tree(obj, prefix=""):
+        string = f"{obj.name}\n"
         if isinstance(obj, Lattice):
-            for node in obj.tree[:-1]:
-                string += f"{prefix}├─── "
-                string += Lattice._tree_as_string(node, prefix + "│   ")
-
-            string += f"{prefix}└─── "
-            string += Lattice._tree_as_string(obj.tree[-1], prefix + "    ")
+            *others, last = obj.tree
+            for child in others:
+                string += f"{prefix}├─── {Lattice._print_tree(child, prefix + '│   ')}"
+            string += f"{prefix}└─── {Lattice._print_tree(last, prefix + '    ')}"
         return string
 
     @classmethod
@@ -409,16 +413,16 @@ class Lattice(Base):
             objects[name] = class_(name=name, **attributes)
 
         # TODO: make sure sub_lattices are loaded in correct order
-        sub_lattices = data["sub_lattices"]
-        for name, tree_names in sub_lattices.items():
-            tree = [objects[name] for name in tree_names]
-            objects[name] = Lattice(name, tree)
+        for name, child_names in data["lattices"].items():
+            children = [objects[name] for name in child_names]
+            objects[name] = Lattice(name, children)
 
-        return cls(
-            name=data["name"],
-            tree=[objects[name] for name in data["lattice"]],
-            description=data.get("description", ""),
-        )
+        root_lattice = objects[data["root"]]
+        root_lattice.info = data.get("info", "")
+        return root_lattice
+
+    def as_file(self, path, file_format=None):
+        latticejson.save(self.as_dict(), path, file_format)
 
     def as_dict(self):
         """Serializes the `Lattice` object into a latticeJSON compliant dictionary."""
@@ -430,15 +434,16 @@ class Lattice(Base):
             name = attributes.pop("name")
             elements_dict[name] = [type_.__name__, attributes]
 
-        sub_lattices_dict = {
+        lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
             for lattice in self.sub_lattices
         }
+        lattices_dict[self.name] = [obj.name for obj in self.tree]
 
         return dict(
-            name=self.name,
-            description=self.description,
-            lattice=[obj.name for obj in self.tree],
+            version="2.0",
+            root=self.name,
+            info=self.info,
             elements=elements_dict,
-            sub_lattices=sub_lattices_dict,
+            lattices=lattices_dict,
         )
