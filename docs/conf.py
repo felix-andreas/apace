@@ -37,17 +37,29 @@ release = about["__version__"]
 # ones.
 extensions = []
 
+# Sphinx-gallery (must come before AutoAPI, will throw error otherwise!)
+extensions.append("sphinx_gallery.gen_gallery")
+sphinx_gallery_conf = {
+    "examples_dirs": "../examples",  # path to your example scripts
+    "gallery_dirs": "examples",  # path to where to save gallery generated output
+}
+
 # AutoAPI
 extensions.append("autoapi.extension")
 autoapi_dirs = [base_path / "../apace"]
 autoapi_root = "reference"
-autoapi_options = ["members", "undoc-members"]
 autoapi_add_toctree_entry = False
 autoapi_template_dir = "_templates/autoapi"
-# # noinspection SpellCheckingInspection
-# autoapi_python_class_content = 'both'
-# autoapi_include_summaries = True
-autoapi_generate_api_docs = True
+# Render type annotations (see: autoapi docs (How-to Guides))
+extensions.append("sphinx.ext.autodoc")
+autodoc_typehints = "description"
+# See: https://github.com/readthedocs/sphinx-autoapi/issues/181
+# alternatively modules could be made private
+def autoapi_skip_member(app, what, name, obj, skip, options):
+    if what == "module" and name != "apace.plot":
+        return True
+    return None
+
 
 # Markdown support
 # extensions.append('m2r')
@@ -57,14 +69,6 @@ extensions.append("recommonmark")
 # Auto section label
 # extensions.append('sphinx.ext.autosectionlabel')
 
-# Sphinx-gallery
-extensions.append("sphinx_gallery.gen_gallery")
-sphinx_gallery_conf = {
-    "examples_dirs": "../examples",  # path to your example scripts
-    "gallery_dirs": "examples",  # path to where to save gallery generated output
-    "backreferences_dir": False,
-    "filename_pattern": "/",  # plot all Python files
-}
 
 # Intersphinx
 extensions.append("sphinx.ext.intersphinx")
@@ -89,7 +93,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "venv", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -102,3 +106,7 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+def setup(app):
+    app.connect("autoapi-skip-member", autoapi_skip_member)

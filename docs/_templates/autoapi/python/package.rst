@@ -10,13 +10,6 @@ API Reference
 
 This is the API reference. To learn how to use and work with apace, see :ref:`user-guide`.
 
-{% if obj.docstring %}
-.. autoapi-nested-parse::
-
-   {{ obj.docstring|prepare_docstring|indent(3) }}
-
-{% endif %}
-
 {% if obj.all is not none %}
 {% set visible_children = obj.children|selectattr("short_name", "in", obj.all)|list %}
 {% elif obj.type is equalto("package") %}
@@ -28,6 +21,13 @@ This is the API reference. To learn how to use and work with apace, see :ref:`us
 {% set visible_functions = visible_children|selectattr("type", "equalto", "function")|list %}
 {% set visible_exceptions = visible_children|selectattr("type", "equalto", "exception")|list %}
 {% set constants = obj.children|selectattr("type", "equalto", "data")|list %}
+{% set constants_dict = {} %}
+{% for constant in constants %}
+{%- set _ = constants_dict.update({constant.name: constant}) -%}
+{% endfor %}
+
+* :const:`__version__` **=** :code:`{{ constants_dict["__version__"].value }}`
+* :const:`__license__` **=** :code:`{{ constants_dict["__license__"].value }}`
 
 Classes
 -------
@@ -47,11 +47,13 @@ Exceptions
 * :exc:`{{ exception.name }}` - {{ exception.summary }}
 {% endfor %}
 
-Constants
----------
-{% for constant in constants %}
-* :const:`{{ constant.name }}` **=** :code:`{{ constant.value }}`
-{% endfor %}
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+   
+   plot/index
 
 Detailed Overview
 -----------------
@@ -66,5 +68,3 @@ Detailed Overview
 {% for obj in visible_exceptions %}
 {{ obj.rendered|indent(0) }}
 {% endfor %}
-
-
