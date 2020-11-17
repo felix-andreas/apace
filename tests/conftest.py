@@ -10,6 +10,17 @@ LATTICE_PATH = BASE_PATH / "../data/lattices"
 FODO_CELL_JSON = json.loads((LATTICE_PATH / "fodo_cell.json").read_text())
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--plots", action="store_true", default=False, help="Plot test results"
+    )
+
+
+@pytest.fixture
+def plots(request):
+    return request.config.getoption("--plots")
+
+
 @pytest.fixture
 def base_path():
     return BASE_PATH

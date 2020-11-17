@@ -2,19 +2,24 @@ import math
 import numpy as np
 from .classes import Drift, Dipole, Quadrupole, Sextupole
 
+# from pyprofilers import profile_by_line, simple_timer
 
-def runge_kutta_4(y0, t, h, element):
-    k1 = h * y_prime(y0, t, element)
-    k2 = h * y_prime(y0 + k1 / 2, t + h / 2, element)
-    k3 = h * y_prime(y0 + k2 / 2, t + h / 2, element)
-    k4 = h * y_prime(y0 + k3, t + h, element)
+
+# @profile_by_line
+def runge_kutta_4(t, y0, h, element):
+    k1 = h * y_prime(t, y0, element)
+    k2 = h * y_prime(t + h / 2, y0 + k1 / 2, element)
+    k3 = h * y_prime(t + h / 2, y0 + k2 / 2, element)
+    k4 = h * y_prime(t + h, y0 + k3, element)
     return t + h, y0 + (k1 + 2 * k2 + 2 * k3 + k4) / 6
 
 
-def y_prime(y, t, element):
+# @profile_by_line
+def y_prime(t, y, element):
     out = np.zeros(y.shape)
-    out[0] = np.copy(y[1])
-    out[2] = np.copy(y[3])
+    # TODO: is a copy needed here?
+    out[0] = y[1]
+    out[2] = y[3]
     if isinstance(element, Drift):
         out[1] = 0
         out[3] = 0
@@ -37,27 +42,42 @@ def y_prime(y, t, element):
     return out
 
 
-# TODO: this is still experimental and not well tested!!!
 class Tracking:
+    """TODO: this is still experimental and is not well tested!!!"""
+
     def __init__(self, lattice):
         self.lattice = lattice
 
-    def track(self, initial_distribution, step_size=0.01):
-        n_steps = math.ceil(self.lattice.length / step_size) + 10
+    def track(self, initial_distribution, max_step=0.01, n_turns=1, watchers=None):
         n_particles = initial_distribution.shape[1]
-        s = np.empty(n_steps)
-        s[0] = 0
-        trajectory = np.empty((n_steps, 6, n_particles))
-        trajectory[0] = initial_distribution
+        if watchers is None:
+            watchers = np.linspace(0, self.lattice.length)
 
-        end = 0
-        i = 0
-        for element in self.lattice.arrangement:
-            end += element.length
-            while s[i] < end:
-                step_size_arg = min(step_size, end - s[0])
-                s[i + 1], trajectory[i + 1] = runge_kutta_4(
-                    trajectory[i], s[i], step_size_arg, element
-                )
-                i += 1
-        return s[: i + 1], trajectory[: i + 1]
+        n_watchers = len(watchers)
+        n_steps = n_watchers * n_turns
+        s = np.empty(n_steps)
+        trajectory = np.empty((n_steps, 6, n_particles))
+
+        dist = initial_distribution
+
+        for turn in range(n_turns):
+            # print(f"Turn {turn + 1}/{n_turns}")
+            pos = end = 0
+            watchers_iter = enumerate(iter(watchers))
+            i, watcher = next(watchers_iter)
+            for element in self.lattice:
+                end = round(end + element.length, 6)  # TODO: round to um see issue 69
+                while pos < end:
+                    watcher_dist = watcher - pos
+                    element_dist = end - pos
+                    step_size = min(watcher_dist, element_dist, max_step)
+                    pos, dist = runge_kutta_4(pos, dist, step_size, element)
+                    if watcher <= pos:
+                        if watcher == pos:
+                            j = turn * n_watchers + i
+                            trajectory[j] = dist
+                            s[j] = pos + turn * self.lattice.length
+
+                        i, watcher = next(watchers_iter, (None, math.inf))
+
+        return s, trajectory

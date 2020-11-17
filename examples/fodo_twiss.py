@@ -5,7 +5,8 @@ Twiss parameter of a FODO lattice
 This example shows how to calulate and plot the Twiss parameter of a FOOD lattice.
 """
 
-#%% Create a fodo based ring
+#%%
+# Create a fodo based ring
 import numpy as np
 import apace as ap
 
@@ -20,7 +21,6 @@ fodo_ring = ap.Lattice("FODO_RING", [fodo_cell] * 8)
 
 #%%
 # Output some info on the FODO lattice
-
 print(
     f"Overview of {fodo_ring.name}",
     f"Num of elements: {len(fodo_ring.arrangement)}",
@@ -31,7 +31,6 @@ print(
 
 #%%
 # Create a new ``Twiss`` object to calculate the Twiss parameter
-
 twiss = ap.Twiss(fodo_ring)
 
 print(
