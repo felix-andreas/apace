@@ -47,14 +47,6 @@ Exceptions
 * :exc:`{{ exception.name }}` - {{ exception.summary }}
 {% endfor %}
 
-Submodules
-----------
-.. toctree::
-   :titlesonly:
-   :maxdepth: 1
-   
-   plot/index
-
 Detailed Overview
 -----------------
 {% for obj in visible_classes %}
@@ -68,3 +60,11 @@ Detailed Overview
 {% for obj in visible_exceptions %}
 {{ obj.rendered|indent(0) }}
 {% endfor %}
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+   
+   plot/index
