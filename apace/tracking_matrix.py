@@ -7,7 +7,7 @@ from .matrixmethod import MatrixMethod, MATRIX_SIZE
 from .utils import Signal
 
 
-class TrackingMatrix:
+class TrackingMatrix(MatrixMethod):
     """Particle tracking using the transfer matrix method.
 
     :param Lattice lattice: Lattice which particles will be tracked through.
@@ -20,10 +20,15 @@ class TrackingMatrix:
     """
 
     def __init__(
-        self, lattice, initial_distribution, turns=1, watch_points=None, start_point=0
+        self,
+        lattice,
+        initial_distribution,
+        turns=1,
+        watch_points=None,
+        start_point=0,
+        **kwargs
     ):
-        self.lattice = lattice
-        self.matrix_method = MatrixMethod(lattice)
+        super().__init__(lattice, **kwargs)
         self._initial_distribution = initial_distribution
 
         self.n_turns = turns
@@ -33,7 +38,7 @@ class TrackingMatrix:
         self._orbit_position = np.empty(0)
         self._particle_trajectories = np.empty(0)
         self._particle_trajectories_needs_update = True
-        self.particle_trajectories_changed = Signal(self.matrix_method.matrices_changed)
+        self.particle_trajectories_changed = Signal(self.matrices_changed)
         self.particle_trajectories_changed.connect(
             self._on_particle_trajectories_changed
         )
@@ -100,14 +105,14 @@ class TrackingMatrix:
 
     def update_particle_trajectories(self):
         """Manually update the 6D particle trajectories"""
-        n_steps = self.matrix_method.n_steps
+        n_steps = self.n_steps
         n_points = n_steps + 1
         n_turns = self.n_turns
         watch_points = self.watch_points
         n_watch_points = len(watch_points)
         watch_all = n_watch_points == 0
         initial_distribution = self.initial_distribution
-        matrices = self.matrix_method.matrices
+        matrices = self.matrices
 
         if any(0 > point > n_steps for point in watch_points):
             raise ValueError("Invalid watch points!")
@@ -130,11 +135,11 @@ class TrackingMatrix:
             matrix_product_accumulated(matrices, acc_array, 0)
             trajectories[0] = initial_distribution
             np.dot(acc_array, initial_distribution, out=trajectories[1:n_points])
-            orbit_position[0:n_points] = self.matrix_method.s
+            orbit_position[0:n_points] = self.s
             for i in range(1, n_turns):
                 idx = slice(i * n_steps + 1, (i + 1) * n_steps + 1)
                 np.dot(acc_array, trajectories[i * n_steps], out=trajectories[idx])
-                orbit_position[idx] = self.matrix_method.s[1:] + i * self.lattice.length
+                orbit_position[idx] = self.s[1:] + i * self.lattice.length
         else:
             if watch_points[0] == 0:
                 trajectories[0] = initial_distribution
@@ -147,7 +152,7 @@ class TrackingMatrix:
                 )
                 trajectories[0] = np.dot(to_first_point, initial_distribution)
 
-            orbit_position[:n_watch_points] = self.matrix_method.s[watch_points]
+            orbit_position[:n_watch_points] = self.s[watch_points]
             acc_array = np.empty((n_watch_points, MATRIX_SIZE, MATRIX_SIZE))
             ranges = np.empty((n_watch_points, 2), dtype=np.int32)
             for i, point in enumerate(watch_points):
@@ -163,7 +168,7 @@ class TrackingMatrix:
             for turn in range(1, n_turns):
                 idx = turn * n_watch_points
                 orbit_position[idx : idx + n_watch_points] = (
-                    self.matrix_method.s[watch_points] + turn * self.lattice.length
+                    self.s[watch_points] + turn * self.lattice.length
                 )
                 for j in range(n_watch_points):
                     i = idx + j
