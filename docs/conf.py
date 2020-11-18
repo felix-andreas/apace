@@ -42,7 +42,8 @@ extensions.append("sphinx_gallery.gen_gallery")
 sphinx_gallery_conf = {
     "examples_dirs": "../examples",  # path to your example scripts
     "gallery_dirs": "examples",  # path to where to save gallery generated output
-    "filename_pattern": "/",  # plot all Python files
+    # TODO: is needed to generate example graphics but leads to error in readthedocs ci
+    # "filename_pattern": "/",  # plot all Python files
 }
 
 # AutoAPI
