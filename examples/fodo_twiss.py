@@ -48,6 +48,6 @@ print(
 
 #%%
 # Use the builtin `plot_lattice` utility function to plot the Twiss parameter
-from apace.plot import twiss_plot
+from apace.plot import TwissPlot
 
-fig = twiss_plot(twiss, fodo_ring)
+fig = TwissPlot(twiss, fodo_ring).fig
