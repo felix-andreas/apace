@@ -250,7 +250,10 @@ class Twiss(MatrixMethod):
             initial_twiss = self._initial_twiss
 
         twiss_product(
-            self.accumulated_array, initial_twiss, self._twiss_array, self.start_idx,
+            self.accumulated_array,
+            initial_twiss,
+            self._twiss_array,
+            self.start_idx,
         )
 
         self._twiss_array_needs_update = False
