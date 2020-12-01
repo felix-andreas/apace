@@ -1,0 +1,40 @@
+{
+    "version": "2.0",
+    "title": "Nested Lattice",
+    "root": "MAIN",
+    "elements": {
+        "D1": [
+            "Drift",
+            {
+                "length": 1.0
+            }
+        ],
+        "D2": [
+            "Drift",
+            {
+                "length": 2.0
+            }
+        ]
+    },
+    "lattices": {
+        "SUB1": [
+            "D1",
+            "D2"
+        ],
+        "SUB2": [
+            "D1",
+            "SUB1",
+            "D2"
+        ],
+        "SUB3": [
+            "D1",
+            "SUB2",
+            "D2"
+        ],
+        "MAIN": [
+            "D1",
+            "SUB3",
+            "D2"
+        ]
+    }
+}
