@@ -247,8 +247,13 @@ class Lattice(Base):
     :param str info: Additional information about the lattice.
     """
 
-    def __init__(self, name, tree, info=None):
-        super().__init__(name, info)
+    def __init__(self, name, tree, info=""):
+        super().__init__(name, length=0, info=info)
+        self._length_needs_update = True
+        self.length_changed: Signal = Signal()
+        """Gets emitted when the length of lattice changes."""
+        self.length_changed.connect(self._on_length_changed)
+
         self._tree = tree
         for obj in set(tree):
             obj.parent_lattices.add(self)
@@ -264,12 +269,6 @@ class Lattice(Base):
         """Gets emitted when an attribute of an element within this lattice changes."""
         self.element_changed.connect(self._on_element_changed)
 
-        self._length = 0
-        self._length_needs_update = True
-        self.length_changed: Signal = Signal()
-        """Gets emitted when the length of lattice changes."""
-        self.length_changed.connect(self._on_length_changed)
-
         self.n_elements = len(self.arrangement)
         """The number of elements within this lattice."""
 
@@ -279,7 +278,7 @@ class Lattice(Base):
         for obj in tree:
             yield obj
             if isinstance(obj, Lattice):
-                yield from Lattice.traverse_tree(obj)
+                yield from Lattice.traverse_tree(obj.tree)
 
     def _init_tree_properties(self):
         """A recursive helper function to initialize the tree properties."""
@@ -412,9 +411,8 @@ class Lattice(Base):
             class_ = getattr(sys.modules[__name__], type_)
             objects[name] = class_(name=name, **attributes)
 
-        # TODO: make sure sub_lattices are loaded in correct order
-        for name, child_names in data["lattices"].items():
-            children = [objects[name] for name in child_names]
+        for name, child_names in latticejson.utils.sort_lattices(data).items():
+            children = [objects[child_name] for child_name in child_names]
             objects[name] = Lattice(name, children)
 
         root_lattice = objects[data["root"]]
@@ -434,6 +432,7 @@ class Lattice(Base):
             name = attributes.pop("name")
             elements_dict[name] = [type_.__name__, attributes]
 
+        # TODO: make sure lattices are sorted
         lattices_dict = {
             lattice.name: [obj.name for obj in lattice.tree]
             for lattice in self.sub_lattices

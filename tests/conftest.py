@@ -8,6 +8,7 @@ import apace as ap
 BASE_PATH = Path(__file__).resolve().parent
 LATTICE_PATH = BASE_PATH / "../data/lattices"
 FODO_CELL_JSON = json.loads((LATTICE_PATH / "fodo_cell.json").read_text())
+NESTED_LATTICE = json.loads((LATTICE_PATH / "nested_lattice.json").read_text())
 
 
 @pytest.fixture
@@ -29,3 +30,8 @@ def fodo_cell():
 @pytest.fixture
 def fodo_ring(fodo_cell):
     return ap.Lattice("fodo-ring", 8 * [fodo_cell])
+
+
+@pytest.fixture
+def nested_lattice():
+    return ap.Lattice.from_dict(NESTED_LATTICE)
