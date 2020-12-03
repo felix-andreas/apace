@@ -33,8 +33,9 @@ def test_attributes(fodo_cell):
     assert 48 == fodo_ring.length
 
 
-def test_serialize_lattice(fodo_ring):
-    fodo_reload = ap.Lattice.from_dict(fodo_ring.as_dict())
-    assert fodo_ring.length == fodo_reload.length
-    assert len(fodo_ring.elements) == len(fodo_reload.elements)
-    assert len(fodo_ring.sub_lattices) == len(fodo_reload.sub_lattices)
+def test_serialize_lattice(fodo_cell, nested_lattice):
+    for lattice in fodo_cell, nested_lattice:
+        lattice_reload = ap.Lattice.from_dict(lattice.as_dict())
+        assert lattice.length == lattice_reload.length
+        assert len(lattice.elements) == len(lattice_reload.elements)
+        assert len(lattice.sub_lattices) == len(lattice_reload.sub_lattices)
