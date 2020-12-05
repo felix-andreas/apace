@@ -13,6 +13,9 @@ apace/**/*.so
 apace/**/*.o
 apace/**/*.c
 
+# tests
+tests/_test_output
+
 # Distribution / packaging
 .Python
 build/
