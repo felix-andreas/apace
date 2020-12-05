@@ -1,27 +1,30 @@
+from collections.abc import Iterable
+from itertools import zip_longest
+from math import inf
+
 import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import matplotlib.gridspec as grid_spec
-from matplotlib.widgets import Slider, Button
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.offsetbox import AnchoredOffsetbox, TextArea, VPacker
 from matplotlib.path import Path
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
-import numpy as np
-from math import inf
-from collections.abc import Iterable
-from .classes import Base, Drift, Dipole, Quadrupole, Sextupole, Octupole, Lattice
+from matplotlib.widgets import Slider
 
+from .classes import Base, Dipole, Drift, Lattice, Octupole, Quadrupole, Sextupole
 
 FONT_SIZE = 8
 
 
 class Color:
-    RED = "crimson"
-    GREEN = "mediumseagreen"
-    BLUE = "dodgerblue"
-    YELLOW = "gold"
-    ORANGE = "darkorange"
-    MAGENTA = "darkmagenta"
+    RED = "#EF4444"
+    YELLOW = "#FBBF24"
+    GREEN = "#10B981"
+    BLUE = "#3B82F6"
+    ORANGE = "F97316"
+    PURPLE = "#8B5CF6"
+    CYAN = "#06B6D4"
     WHITE = "white"
     BLACK = "black"
 
@@ -42,115 +45,95 @@ OPTICAL_FUNCTIONS = {
     "eta_x_dds": (r"$\eta_x'$/m", Color.ORANGE),
     "psi_x": (r"$\psi_x$", Color.YELLOW),
     "psi_y": (r"$\psi_y$", Color.ORANGE),
-    "alpha_x": (r"$\alpha_x$", Color.MAGENTA),
-    "alpha_y": (r"$\alpha_y$", Color.BLACK),
+    "alpha_x": (r"$\alpha_x$", Color.PURPLE),
+    "alpha_y": (r"$\alpha_y$", Color.CYAN),
 }
 
 
-def draw_lattice(
-    lattice,
-    ax=None,
-    x_min=-inf,
-    x_max=inf,
-    location="top",
-    draw_elements=True,
-    annotate_elements=True,
-    draw_sub_lattices=True,
-    annotate_sub_lattices=True,
+def draw_elements(
+    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True, location: str = "top",
 ):
     """Draw elements of a lattice to a matplotlib axes
 
+    :param ax: matplotlib axes, if not provided use current axes
+    :type ax: matplotlib.axes
     :param lattice: lattice which gets drawn
     :type lattice: ap.Lattice
-    :param ax: matplotlib axes, if not provided use current axes
-    :type ax: matplotlib.axes, optional
-    :param annotate_elements: whether to display the names of elments, defaults to False
-    :type annotate_elements: bool, optional
+    :param labels: whether to display the names of elments, defaults to False
+    :type labels: bool, optional
     :param draw_sub_lattices: Whether to show the start and end position of the sub lattices,
                         defaults to True
     :type draw_sublattices: bool, optional
-    :param x_min: minimum position from which elements get drawn, defaults to -inf
-    :type x_min: float, optional
-    :param x_max: maximum position to which elements get drawn, defaults to inf
-    :type x_max: float, optional
     """
-    if ax is None:
-        ax = plt.gca()
 
+    x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
-    y_span = y_max - y_min
-    rect_height = y_span / 32
+    rect_height = 0.05 * (y_max - y_min)
+    y0 = y_max if location == "top" else y_min
 
-    y0 = -rect_height / 2
-    if location == "top":
-        y0 += y_max
-    elif location == "bottom":
-        y0 += y_min
+    start = end = 0
+    arrangement = lattice.arrangement
+    for element, next_element in zip_longest(arrangement, arrangement[1:]):
+        end += element.length
+        if element is next_element:
+            continue
 
-    if draw_elements:
-        start = end = 0
-        arrangement = lattice.arrangement
-        for element, next_element in zip(arrangement, arrangement[1:] + [None]):
-            end += element.length
-            if element is next_element:
-                continue
-
-            if isinstance(element, Drift) or start >= x_max or end <= x_min:
-                start = end
-                continue
-
-            rec_length = min(end, x_max) - max(start, x_min)
-            rectangle = plt.Rectangle(
-                (start if start > x_min else x_min, y0),
-                rec_length,
-                rect_height,
-                fc=ELEMENT_COLOR[type(element)],
-                clip_on=False,
-                zorder=10,
-            )
-            ax.add_patch(rectangle)
-
-            center = (start + end) / 2
-            if annotate_elements and x_min < center < x_max:
-                sign, va = (
-                    (1, "bottom") if isinstance(element, Quadrupole) else (-1, "top")
-                )
-                ax.annotate(
-                    element.name,
-                    xy=(center, y0 + sign * 0.75 * rect_height),
-                    fontsize=FONT_SIZE,
-                    ha="center",
-                    va=va,
-                    annotation_clip=False,
-                    zorder=11,
-                )
-
+        if isinstance(element, Drift) or start >= x_max or end <= x_min:
             start = end
+            continue
 
-    if draw_sub_lattices:
-        length_gen = [0] + [obj.length for obj in lattice.tree]
-        position_list = np.add.accumulate(length_gen)
-        i_min = np.searchsorted(position_list, x_min)
-        i_max = np.searchsorted(position_list, x_max)
-        ticks = position_list[i_min : i_max + 1]
-        ax.set_xticks(ticks)
-        if len(ticks) < 5:
-            ax.xaxis.set_minor_locator(AutoMinorLocator())
-            ax.xaxis.set_minor_formatter(ScalarFormatter())
-        ax.grid(linestyle="--")
+        rec_length = min(end, x_max) - max(start, x_min)
+        rectangle = plt.Rectangle(
+            (max(start, x_min), y0 - rect_height / 2),
+            rec_length,
+            rect_height,
+            fc=ELEMENT_COLOR[type(element)],
+            clip_on=False,
+            zorder=10,
+        )
+        ax.add_patch(rectangle)
+        start = end
+        if labels:
+            sign = (isinstance(element, Quadrupole) << 1) - 1
+            ax.annotate(
+                element.name,
+                xy=((start + end) / 2, y0 + sign * rect_height),
+                fontsize=FONT_SIZE,
+                ha="center",
+                va="center",
+                annotation_clip=False,
+                zorder=11,
+            )
 
-    if annotate_sub_lattices:
-        y0_anno = y0 - 3 * rect_height
-        end = 0
+
+def draw_sub_lattices(
+    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True,
+):
+    x_min, x_max = ax.get_xlim()
+    length_gen = [0.0, *(obj.length for obj in lattice.tree)]
+    position_list = np.add.accumulate(length_gen)
+    i_min = np.searchsorted(position_list, x_min)
+    i_max = np.searchsorted(position_list, x_max)
+    ticks = position_list[i_min : i_max + 1]
+    ax.set_xticks(ticks)
+    if len(ticks) < 5:
+        ax.xaxis.set_minor_locator(AutoMinorLocator())
+        ax.xaxis.set_minor_formatter(ScalarFormatter())
+    ax.grid(linestyle="--")
+
+    if labels:
+        y_min, y_max = ax.get_ylim()
+        y0 = y_max - 0.1 * (y_max - y_min)
+        start = end = 0
         for obj in lattice.tree:
             end += obj.length
-            if not isinstance(obj, Lattice):
+            if not isinstance(obj, Lattice) or start >= x_max or end <= x_min:
                 continue
 
             x0 = end - obj.length / 2
             ax.annotate(
                 obj.name,
-                xy=(x0, y0_anno),
+                xy=(x0, y0),
                 fontsize=FONT_SIZE,
                 fontstyle="oblique",
                 alpha=0.5,
@@ -159,21 +142,20 @@ def draw_lattice(
                 clip_on=True,
                 zorder=102,
             )
+            start = end
 
 
 def plot_twiss(
+    ax,
     twiss,
-    twiss_functions=("beta_x", "beta_y", "eta_x"),
     *,
+    twiss_functions=("beta_x", "beta_y", "eta_x"),
     scales={"eta_x": 10, "eta_x_dds": 10},
-    ax=None,
     line_style="solid",
     line_width=1.3,
     alpha=1.0,
     show_ylabels=False,
 ):
-    if ax is None:
-        ax = plt.gca()
     if scales is None:
         scales = {}
 
@@ -208,14 +190,14 @@ def plot_twiss(
                 borderpad=0.0,
             )
         )
-    return ax
 
 
 def _twiss_plot_section(
+    ax,
     twiss,
-    ax=None,
-    x_min=None,
-    x_max=None,
+    *,
+    x_min=-inf,
+    x_max=inf,
     y_min=None,
     y_max=None,
     annotate_elements=True,
@@ -223,8 +205,6 @@ def _twiss_plot_section(
     line_style="solid",
     line_width=1.3,
     ref_twiss=None,
-    ref_line_style="dashed",
-    ref_line_width=2.5,
     scales={"eta_x": 10},
     overwrite=False,
 ):
@@ -232,20 +212,12 @@ def _twiss_plot_section(
         ax.clear()
     if ref_twiss:
         plot_twiss(
-            ref_twiss,
-            ax=ax,
-            line_style=ref_line_style,
-            line_width=ref_line_width,
-            alpha=0.5,
+            ax, ref_twiss, line_style="dashed", line_width=2.5, alpha=0.5,
         )
 
-    plot_twiss(
-        twiss, ax=ax, line_style=line_style, line_width=line_width, scales=scales
-    )
-    if x_min is None:
-        x_min = 0
-    if x_max is None:
-        x_max = twiss.lattice.length
+    plot_twiss(ax, twiss, line_style=line_style, line_width=line_width, scales=scales)
+    x_min = max(x_min, 0)
+    x_max = min(x_max, twiss.lattice.length)
     if y_min is None:
         y_min = -0.5
     if y_max is None:
@@ -253,7 +225,8 @@ def _twiss_plot_section(
 
     ax.set_xlim((x_min, x_max))
     ax.set_ylim((y_min, y_max))
-    draw_lattice(twiss.lattice, ax, x_min, x_max, annotate_elements=annotate_elements)
+    draw_elements(ax, twiss.lattice, labels=annotate_elements)
+    draw_sub_lattices(ax, twiss.lattice, labels=annotate_lattices)
 
 
 # TODO:
@@ -300,7 +273,7 @@ class TwissPlot:
         self.axs_sections = []  # TODO: needed for update function
 
         if pairs:
-            fig_sliders, axs = plt.subplots(nrows=len(pairs))
+            _, axs = plt.subplots(nrows=len(pairs))
             if not isinstance(axs, Iterable):
                 axs = (axs,)
             self.sliders = []
@@ -319,8 +292,8 @@ class TwissPlot:
         if main:
             self.ax_main = self.fig.add_subplot(main_grid[0])
             _twiss_plot_section(
-                self.twiss,
                 self.ax_main,
+                self.twiss,
                 ref_twiss=ref_twiss,
                 y_min=y_min,
                 y_max=y_max,
@@ -345,8 +318,8 @@ class TwissPlot:
                     x_min, x_max = section
 
                 _twiss_plot_section(
-                    self.twiss,
                     self.axs_sections[i],
+                    self.twiss,
                     ref_twiss=ref_twiss,
                     x_min=x_min,
                     x_max=x_max,
@@ -364,6 +337,7 @@ class TwissPlot:
 
         self.fig.suptitle(title, ha="right", x=0.98)
         self.fig.tight_layout()
+        self.fig.subplots_adjust(top=0.9)
 
     def update(self):
         twiss = self.twiss
