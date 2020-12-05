@@ -6,10 +6,14 @@ import pytest
 import apace as ap
 
 
-# skip slow tests: see https://docs.pytest.org/en/latest/example/simple.html
+# use @pytest.mark.slow to skip slow tests
+# for more information see: https://docs.pytest.org/en/latest/example/simple.html
 def pytest_addoption(parser):
     parser.addoption(
         "--runslow", action="store_true", default=False, help="run slow tests"
+    )
+    parser.addoption(
+        "--plots", action="store_true", default=False, help="Plot test results"
     )
 
 
@@ -25,6 +29,11 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
+
+
+@pytest.fixture
+def plots(request):
+    return request.config.getoption("--plots")
 
 
 BASE_PATH = Path(__file__).parent
