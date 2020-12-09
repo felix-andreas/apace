@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 # TODO: improve and add assert statments
-def test_quadrupole(test_output_dir, plots):
+def test_quadrupole(test_output_dir, plot):
     d1 = ap.Drift("D1", length=5)
     d2 = ap.Drift("D2", length=0.2)
     q = ap.Quadrupole("Q1", length=0.2, k1=1.5)
@@ -18,7 +18,7 @@ def test_quadrupole(test_output_dir, plots):
     )
     tracking = Tracking(lattice)
     s, trajectory = tracking.track(distribution)
-    if plots:
+    if plot:
         _, ax = plt.subplots(figsize=(20, 5))
         ax.plot(s, trajectory[:, 0])
         plt.ylim(-0.0002, 0.0002)

@@ -30,7 +30,6 @@ class Color:
 
 
 ELEMENT_COLOR = {
-    Drift: Color.BLACK,
     Dipole: Color.YELLOW,
     Quadrupole: Color.RED,
     Sextupole: Color.GREEN,
@@ -51,52 +50,38 @@ OPTICAL_FUNCTIONS = {
 
 
 def draw_elements(
-    ax: mpl.axes.Axes,
-    lattice: Lattice,
-    *,
-    labels: bool = True,
-    location: str = "top",
+    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True, location: str = "top",
 ):
-    """Draw elements of a lattice to a matplotlib axes
-
-    :param ax: matplotlib axes, if not provided use current axes
-    :type ax: matplotlib.axes
-    :param lattice: lattice which gets drawn
-    :type lattice: ap.Lattice
-    :param labels: whether to display the names of elments, defaults to False
-    :type labels: bool, optional
-    :param draw_sub_lattices: Whether to show the start and end position of the sub lattices,
-                        defaults to True
-    :type draw_sublattices: bool, optional
-    """
-
+    """Draw the elements of a lattice onto a matplotlib axes."""
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
     rect_height = 0.05 * (y_max - y_min)
     y0 = y_max if location == "top" else y_min
-
-    start = end = 0
     arrangement = lattice.arrangement
+    position = start = end = 0
     for element, next_element in zip_longest(arrangement, arrangement[1:]):
-        end += element.length
-        if element is next_element:
+        position += element.length
+        if element is next_element or end <= x_min:
+            continue
+        elif start >= x_max:
+            break
+
+        start, end = end, position
+        try:
+            color = ELEMENT_COLOR[type(element)]
+        except KeyError:
             continue
 
-        if isinstance(element, Drift) or start >= x_max or end <= x_min:
-            start = end
-            continue
-
-        rec_length = min(end, x_max) - max(start, x_min)
-        rectangle = plt.Rectangle(
-            (max(start, x_min), y0 - rect_height / 2),
-            rec_length,
-            rect_height,
-            fc=ELEMENT_COLOR[type(element)],
-            clip_on=False,
-            zorder=10,
+        ax.add_patch(
+            plt.Rectangle(
+                (max(start, x_min), y0 - rect_height / 2),
+                min(end, x_max) - max(start, x_min),
+                rect_height,
+                facecolor=color,
+                clip_on=False,
+                zorder=10,
+            )
         )
-        ax.add_patch(rectangle)
-        start = end
         if labels:
             sign = (isinstance(element, Quadrupole) << 1) - 1
             ax.annotate(
@@ -111,10 +96,7 @@ def draw_elements(
 
 
 def draw_sub_lattices(
-    ax: mpl.axes.Axes,
-    lattice: Lattice,
-    *,
-    labels: bool = True,
+    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True,
 ):
     x_min, x_max = ax.get_xlim()
     length_gen = [0.0, *(obj.length for obj in lattice.tree)]
@@ -219,11 +201,7 @@ def _twiss_plot_section(
         ax.clear()
     if ref_twiss:
         plot_twiss(
-            ax,
-            ref_twiss,
-            line_style="dashed",
-            line_width=2.5,
-            alpha=0.5,
+            ax, ref_twiss, line_style="dashed", line_width=2.5, alpha=0.5,
         )
 
     plot_twiss(ax, twiss, line_style=line_style, line_width=line_width, scales=scales)
@@ -372,25 +350,29 @@ def find_optimal_grid(n):
 
 
 def floor_plan(
-    lattice, ax=None, start_angle=0, annotate_elements=True, direction="clockwise"
+    ax: mpl.axes.Axes,
+    lattice: Lattice,
+    *,
+    start_angle: float = 0,
+    labels: bool = True,
+    direction: str = "clockwise",
 ):
-    if ax is None:
-        ax = plt.gca()
-
     ax.set_aspect("equal")
-    codes = [Path.MOVETO, Path.LINETO]
+    codes = Path.MOVETO, Path.LINETO
     current_angle = start_angle
-
     start = np.zeros(2)
     end = np.zeros(2)
     x_min = y_min = 0
     x_max = y_max = 0
     arrangement = lattice.arrangement
-    arrangement_shifted = arrangement[1:] + arrangement[0:1]
-    for element, next_element in zip(arrangement, arrangement_shifted):
-        color = ELEMENT_COLOR[type(element)]
+    for element, next_element in zip_longest(arrangement, arrangement[1:]):
         length = element.length
-        line_width = 0.5 if isinstance(element, Drift) else 3
+        if isinstance(element, Drift):
+            color = Color.BLACK
+            line_width = 0.5
+        else:
+            color = ELEMENT_COLOR[type(element)]
+            line_width = 0.5
 
         # TODO: refactor current angle
         angle = 0
@@ -440,7 +422,7 @@ def floor_plan(
         if element is next_element:
             continue
 
-        if annotate_elements and not isinstance(element, Drift):
+        if labels and not isinstance(element, Drift):
             angle_center = (current_angle - angle / 2) + np.pi / 2
             sign = -1 if isinstance(element, Quadrupole) else 1
             center = (start + end) / 2 + sign * 0.5 * np.array(
