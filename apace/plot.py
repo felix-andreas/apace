@@ -50,7 +50,11 @@ OPTICAL_FUNCTIONS = {
 
 
 def draw_elements(
-    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True, location: str = "top",
+    ax: mpl.axes.Axes,
+    lattice: Lattice,
+    *,
+    labels: bool = True,
+    location: str = "top",
 ):
     """Draw the elements of a lattice onto a matplotlib axes."""
     x_min, x_max = ax.get_xlim()
@@ -96,7 +100,10 @@ def draw_elements(
 
 
 def draw_sub_lattices(
-    ax: mpl.axes.Axes, lattice: Lattice, *, labels: bool = True,
+    ax: mpl.axes.Axes,
+    lattice: Lattice,
+    *,
+    labels: bool = True,
 ):
     x_min, x_max = ax.get_xlim()
     length_gen = [0.0, *(obj.length for obj in lattice.tree)]
@@ -201,7 +208,11 @@ def _twiss_plot_section(
         ax.clear()
     if ref_twiss:
         plot_twiss(
-            ax, ref_twiss, line_style="dashed", line_width=2.5, alpha=0.5,
+            ax,
+            ref_twiss,
+            line_style="dashed",
+            line_width=2.5,
+            alpha=0.5,
         )
 
     plot_twiss(ax, twiss, line_style=line_style, line_width=line_width, scales=scales)
