@@ -48,10 +48,10 @@ ELEMENT_COLOR = {
 
 
 OPTICAL_FUNCTIONS = {
-    "beta_x": (r"$\beta_x$/m", Color.RED),
-    "beta_y": (r"$\beta_y$/m", Color.BLUE),
-    "eta_x": (r"$\eta_x$/m", Color.GREEN),
-    "eta_x_dds": (r"$\eta_x'$/m", Color.ORANGE),
+    "beta_x": (r"$\beta_x$ / m", Color.RED),
+    "beta_y": (r"$\beta_y$ / m", Color.BLUE),
+    "eta_x": (r"$\eta_x$ / m", Color.GREEN),
+    "eta_x_dds": (r"$\eta_x'$ / m", Color.ORANGE),
     "psi_x": (r"$\psi_x$", Color.YELLOW),
     "psi_y": (r"$\psi_y$", Color.ORANGE),
     "alpha_x": (r"$\alpha_x$", Color.PURPLE),
@@ -75,7 +75,7 @@ def draw_elements(
     else:
         y0 = y_min - rect_height
         y_min -= 3 * rect_height
-        plt.hlines(y0, x_min, x_max, linewidth=1)
+        plt.hlines(y0, x_min, x_max, color="black", linewidth=1)
     ax.set_ylim(y_min, y_max)
 
     arrangement = lattice.arrangement
@@ -94,9 +94,13 @@ def draw_elements(
         except KeyError:
             continue
 
+        y0_local = y0
+        if isinstance(element, Dipole) and element.angle < 0:
+            y0_local += rect_height / 4
+
         ax.add_patch(
             plt.Rectangle(
-                (max(start, x_min), y0 - rect_height / 2),
+                (max(start, x_min), y0_local - rect_height / 2),
                 min(end, x_max) - max(start, x_min),
                 rect_height,
                 facecolor=color,
@@ -141,11 +145,9 @@ def draw_sub_lattices(
         y_min, y_max = ax.get_ylim()
         height = 0.08 * (y_max - y_min)
         if location == "top":
-            y_max = y_max + height
-            y0 = y_max - height
+            y0, y_max = y_max, y_max + height
         else:
-            y_min = y_min - height
-            y0 = y_min + height / 2
+            y0, y_min = y_min - height / 3, y_min - height
 
         ax.set_ylim(y_min, y_max)
         start = end = 0
@@ -186,12 +188,15 @@ def plot_twiss(
     text_areas = []
     for i, function in enumerate(twiss_functions):
         value = getattr(twiss, function)
-        scale = scales.get(function, "")
         label, color = OPTICAL_FUNCTIONS[function]
-        label = str(scale) + label
+        scale = scales.get(function)
+        if scale is not None:
+            label = f"{scale} {label}"
+            value = scale * value
+
         ax.plot(
             twiss.s,
-            value if scale == "" else scale * value,
+            value,
             color=color,
             linewidth=line_width,
             linestyle=line_style,
@@ -199,19 +204,17 @@ def plot_twiss(
             zorder=10 - i,
             label=label,
         )
-        text_areas.append(TextArea(label, textprops=dict(color=color, rotation=90)))
+        text_areas.insert(0, TextArea(label, textprops=dict(color=color, rotation=90)))
 
     ax.set_xlabel("Orbit Position $s$ / m")
     if show_ylabels:
         ax.add_artist(
             AnchoredOffsetbox(
-                loc=8,
-                child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
-                pad=0.0,
-                frameon=False,
-                bbox_to_anchor=(-0.08, 0.3),
+                child=VPacker(children=text_areas, align="bottom", pad=0, sep=20),
+                loc="center left",
+                bbox_to_anchor=(-0.125, 0, 1.125, 1),
                 bbox_transform=ax.transAxes,
-                borderpad=0.0,
+                frameon=False,
             )
         )
 
@@ -404,14 +407,15 @@ def floor_plan(
     x_min = y_min = 0
     x_max = y_max = 0
     arrangement = lattice.arrangement
+    sign = 1
     for element, next_element in zip_longest(arrangement, arrangement[1:]):
         length = element.length
         if isinstance(element, Drift):
             color = Color.BLACK
-            line_width = 0.5
+            line_width = 1
         else:
             color = ELEMENT_COLOR[type(element)]
-            line_width = 0.5
+            line_width = 6
 
         # TODO: refactor current angle
         angle = 0
@@ -461,9 +465,9 @@ def floor_plan(
         if element is next_element:
             continue
 
-        if labels and not isinstance(element, Drift):
+        if labels and isinstance(element, (Dipole, Quadrupole)):
             angle_center = (current_angle - angle / 2) + np.pi / 2
-            sign = -1 if isinstance(element, Quadrupole) else 1
+            sign = -sign
             center = (start + end) / 2 + sign * 0.5 * np.array(
                 [np.cos(angle_center), np.sin(angle_center)]
             )
@@ -480,8 +484,7 @@ def floor_plan(
 
         start = end.copy()
 
-    margin = 0.05 * max((x_max - x_min), (y_max - y_min))
+    margin = 0.01 * max((x_max - x_min), (y_max - y_min))
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
-
     return ax
