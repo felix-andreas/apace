@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from itertools import zip_longest
 from math import inf
+from typing import List, Optional, Tuple
 
 import matplotlib as mpl
 import matplotlib.gridspec as grid_spec
@@ -12,7 +13,16 @@ from matplotlib.path import Path
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 from matplotlib.widgets import Slider
 
-from .classes import Base, Dipole, Drift, Lattice, Octupole, Quadrupole, Sextupole
+from .classes import (
+    Base,
+    Dipole,
+    Drift,
+    Element,
+    Lattice,
+    Octupole,
+    Quadrupole,
+    Sextupole,
+)
 
 FONT_SIZE = 8
 
@@ -60,12 +70,20 @@ def draw_elements(
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
     rect_height = 0.05 * (y_max - y_min)
-    y0 = y_max if location == "top" else y_min
+    if location == "top":
+        y0 = y_max = y_max + rect_height
+    else:
+        y0 = y_min - rect_height
+        y_min -= 3 * rect_height
+        plt.hlines(y0, x_min, x_max, linewidth=1)
+    ax.set_ylim(y_min, y_max)
+
     arrangement = lattice.arrangement
     position = start = end = 0
+    sign = 1
     for element, next_element in zip_longest(arrangement, arrangement[1:]):
         position += element.length
-        if element is next_element or end <= x_min:
+        if element is next_element or position <= x_min:
             continue
         elif start >= x_max:
             break
@@ -86,11 +104,12 @@ def draw_elements(
                 zorder=10,
             )
         )
-        if labels:
-            sign = (isinstance(element, Quadrupole) << 1) - 1
+        if labels and type(element) in {Dipole, Quadrupole}:
+            # sign = (isinstance(element, Quadrupole) << 1) - 1
+            sign = -sign
             ax.annotate(
                 element.name,
-                xy=((start + end) / 2, y0 + sign * rect_height),
+                xy=((start + end) / 2, y0 - sign * rect_height),
                 fontsize=FONT_SIZE,
                 ha="center",
                 va="center",
@@ -104,6 +123,7 @@ def draw_sub_lattices(
     lattice: Lattice,
     *,
     labels: bool = True,
+    location: str = "bottom",
 ):
     x_min, x_max = ax.get_xlim()
     length_gen = [0.0, *(obj.length for obj in lattice.tree)]
@@ -112,14 +132,22 @@ def draw_sub_lattices(
     i_max = np.searchsorted(position_list, x_max)
     ticks = position_list[i_min : i_max + 1]
     ax.set_xticks(ticks)
-    if len(ticks) < 5:
-        ax.xaxis.set_minor_locator(AutoMinorLocator())
-        ax.xaxis.set_minor_formatter(ScalarFormatter())
-    ax.grid(linestyle="--")
+    # if len(ticks) < 5:
+    #     ax.xaxis.set_minor_locator(AutoMinorLocator())
+    #     ax.xaxis.set_minor_formatter(ScalarFormatter())
+    ax.grid(axis="x", linestyle="--")
 
     if labels:
         y_min, y_max = ax.get_ylim()
-        y0 = y_max - 0.1 * (y_max - y_min)
+        height = 0.08 * (y_max - y_min)
+        if location == "top":
+            y_max = y_max + height
+            y0 = y_max - height
+        else:
+            y_min = y_min - height
+            y0 = y_min + height / 2
+
+        ax.set_ylim(y_min, y_max)
         start = end = 0
         for obj in lattice.tree:
             end += obj.length
@@ -130,7 +158,7 @@ def draw_sub_lattices(
             ax.annotate(
                 obj.name,
                 xy=(x0, y0),
-                fontsize=FONT_SIZE,
+                fontsize=FONT_SIZE + 2,
                 fontstyle="oblique",
                 alpha=0.5,
                 va="center",
@@ -259,7 +287,7 @@ class TwissPlot:
         main=True,
         scales={"eta_x": 10},
         ref_twiss=None,
-        pairs=None,
+        pairs: Optional[List[Tuple[Element, str]]] = None,
     ):
         self.fig = plt.figure()
         self.twiss = twiss
