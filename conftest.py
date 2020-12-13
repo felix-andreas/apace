@@ -13,7 +13,7 @@ def pytest_addoption(parser):
         "--runslow", action="store_true", default=False, help="run slow tests"
     )
     parser.addoption(
-        "--plots", action="store_true", default=False, help="Plot test results"
+        "--plot", action="store_true", default=False, help="Plot test results"
     )
 
 
@@ -32,8 +32,8 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture
-def plots(request):
-    return request.config.getoption("--plots")
+def plot(request):
+    return request.config.getoption("--plot")
 
 
 BASE_PATH = Path(__file__).parent

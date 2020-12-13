@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 from itertools import zip_longest
 from math import inf
+from typing import List, Optional, Tuple
 
 import matplotlib as mpl
 import matplotlib.gridspec as grid_spec
@@ -12,7 +13,16 @@ from matplotlib.path import Path
 from matplotlib.ticker import AutoMinorLocator, ScalarFormatter
 from matplotlib.widgets import Slider
 
-from .classes import Base, Dipole, Drift, Lattice, Octupole, Quadrupole, Sextupole
+from .classes import (
+    Base,
+    Dipole,
+    Drift,
+    Element,
+    Lattice,
+    Octupole,
+    Quadrupole,
+    Sextupole,
+)
 
 FONT_SIZE = 8
 
@@ -30,7 +40,6 @@ class Color:
 
 
 ELEMENT_COLOR = {
-    Drift: Color.BLACK,
     Dipole: Color.YELLOW,
     Quadrupole: Color.RED,
     Sextupole: Color.GREEN,
@@ -39,10 +48,10 @@ ELEMENT_COLOR = {
 
 
 OPTICAL_FUNCTIONS = {
-    "beta_x": (r"$\beta_x$/m", Color.RED),
-    "beta_y": (r"$\beta_y$/m", Color.BLUE),
-    "eta_x": (r"$\eta_x$/m", Color.GREEN),
-    "eta_x_dds": (r"$\eta_x'$/m", Color.ORANGE),
+    "beta_x": (r"$\beta_x$ / m", Color.RED),
+    "beta_y": (r"$\beta_y$ / m", Color.BLUE),
+    "eta_x": (r"$\eta_x$ / m", Color.GREEN),
+    "eta_x_dds": (r"$\eta_x'$ / m", Color.ORANGE),
     "psi_x": (r"$\psi_x$", Color.YELLOW),
     "psi_y": (r"$\psi_y$", Color.ORANGE),
     "alpha_x": (r"$\alpha_x$", Color.PURPLE),
@@ -57,51 +66,54 @@ def draw_elements(
     labels: bool = True,
     location: str = "top",
 ):
-    """Draw elements of a lattice to a matplotlib axes
-
-    :param ax: matplotlib axes, if not provided use current axes
-    :type ax: matplotlib.axes
-    :param lattice: lattice which gets drawn
-    :type lattice: ap.Lattice
-    :param labels: whether to display the names of elments, defaults to False
-    :type labels: bool, optional
-    :param draw_sub_lattices: Whether to show the start and end position of the sub lattices,
-                        defaults to True
-    :type draw_sublattices: bool, optional
-    """
-
+    """Draw the elements of a lattice onto a matplotlib axes."""
     x_min, x_max = ax.get_xlim()
     y_min, y_max = ax.get_ylim()
     rect_height = 0.05 * (y_max - y_min)
-    y0 = y_max if location == "top" else y_min
+    if location == "top":
+        y0 = y_max = y_max + rect_height
+    else:
+        y0 = y_min - rect_height
+        y_min -= 3 * rect_height
+        plt.hlines(y0, x_min, x_max, color="black", linewidth=1)
+    ax.set_ylim(y_min, y_max)
 
-    start = end = 0
     arrangement = lattice.arrangement
+    position = start = end = 0
+    sign = 1
     for element, next_element in zip_longest(arrangement, arrangement[1:]):
-        end += element.length
-        if element is next_element:
+        position += element.length
+        if element is next_element or position <= x_min:
+            continue
+        elif start >= x_max:
+            break
+
+        start, end = end, position
+        try:
+            color = ELEMENT_COLOR[type(element)]
+        except KeyError:
             continue
 
-        if isinstance(element, Drift) or start >= x_max or end <= x_min:
-            start = end
-            continue
+        y0_local = y0
+        if isinstance(element, Dipole) and element.angle < 0:
+            y0_local += rect_height / 4
 
-        rec_length = min(end, x_max) - max(start, x_min)
-        rectangle = plt.Rectangle(
-            (max(start, x_min), y0 - rect_height / 2),
-            rec_length,
-            rect_height,
-            fc=ELEMENT_COLOR[type(element)],
-            clip_on=False,
-            zorder=10,
+        ax.add_patch(
+            plt.Rectangle(
+                (max(start, x_min), y0_local - rect_height / 2),
+                min(end, x_max) - max(start, x_min),
+                rect_height,
+                facecolor=color,
+                clip_on=False,
+                zorder=10,
+            )
         )
-        ax.add_patch(rectangle)
-        start = end
-        if labels:
-            sign = (isinstance(element, Quadrupole) << 1) - 1
+        if labels and type(element) in {Dipole, Quadrupole}:
+            # sign = (isinstance(element, Quadrupole) << 1) - 1
+            sign = -sign
             ax.annotate(
                 element.name,
-                xy=((start + end) / 2, y0 + sign * rect_height),
+                xy=((start + end) / 2, y0 - sign * rect_height),
                 fontsize=FONT_SIZE,
                 ha="center",
                 va="center",
@@ -115,6 +127,7 @@ def draw_sub_lattices(
     lattice: Lattice,
     *,
     labels: bool = True,
+    location: str = "bottom",
 ):
     x_min, x_max = ax.get_xlim()
     length_gen = [0.0, *(obj.length for obj in lattice.tree)]
@@ -123,14 +136,20 @@ def draw_sub_lattices(
     i_max = np.searchsorted(position_list, x_max)
     ticks = position_list[i_min : i_max + 1]
     ax.set_xticks(ticks)
-    if len(ticks) < 5:
-        ax.xaxis.set_minor_locator(AutoMinorLocator())
-        ax.xaxis.set_minor_formatter(ScalarFormatter())
-    ax.grid(linestyle="--")
+    # if len(ticks) < 5:
+    #     ax.xaxis.set_minor_locator(AutoMinorLocator())
+    #     ax.xaxis.set_minor_formatter(ScalarFormatter())
+    ax.grid(axis="x", linestyle="--")
 
     if labels:
         y_min, y_max = ax.get_ylim()
-        y0 = y_max - 0.1 * (y_max - y_min)
+        height = 0.08 * (y_max - y_min)
+        if location == "top":
+            y0, y_max = y_max, y_max + height
+        else:
+            y0, y_min = y_min - height / 3, y_min - height
+
+        ax.set_ylim(y_min, y_max)
         start = end = 0
         for obj in lattice.tree:
             end += obj.length
@@ -141,7 +160,7 @@ def draw_sub_lattices(
             ax.annotate(
                 obj.name,
                 xy=(x0, y0),
-                fontsize=FONT_SIZE,
+                fontsize=FONT_SIZE + 2,
                 fontstyle="oblique",
                 alpha=0.5,
                 va="center",
@@ -169,12 +188,15 @@ def plot_twiss(
     text_areas = []
     for i, function in enumerate(twiss_functions):
         value = getattr(twiss, function)
-        scale = scales.get(function, "")
         label, color = OPTICAL_FUNCTIONS[function]
-        label = str(scale) + label
+        scale = scales.get(function)
+        if scale is not None:
+            label = f"{scale} {label}"
+            value = scale * value
+
         ax.plot(
             twiss.s,
-            value if scale == "" else scale * value,
+            value,
             color=color,
             linewidth=line_width,
             linestyle=line_style,
@@ -182,19 +204,17 @@ def plot_twiss(
             zorder=10 - i,
             label=label,
         )
-        text_areas.append(TextArea(label, textprops=dict(color=color, rotation=90)))
+        text_areas.insert(0, TextArea(label, textprops=dict(color=color, rotation=90)))
 
     ax.set_xlabel("Orbit Position $s$ / m")
     if show_ylabels:
         ax.add_artist(
             AnchoredOffsetbox(
-                loc=8,
-                child=VPacker(children=text_areas, align="bottom", pad=0, sep=10),
-                pad=0.0,
-                frameon=False,
-                bbox_to_anchor=(-0.08, 0.3),
+                child=VPacker(children=text_areas, align="bottom", pad=0, sep=20),
+                loc="center left",
+                bbox_to_anchor=(-0.125, 0, 1.125, 1),
                 bbox_transform=ax.transAxes,
-                borderpad=0.0,
+                frameon=False,
             )
         )
 
@@ -270,7 +290,7 @@ class TwissPlot:
         main=True,
         scales={"eta_x": 10},
         ref_twiss=None,
-        pairs=None,
+        pairs: Optional[List[Tuple[Element, str]]] = None,
     ):
         self.fig = plt.figure()
         self.twiss = twiss
@@ -372,25 +392,30 @@ def find_optimal_grid(n):
 
 
 def floor_plan(
-    lattice, ax=None, start_angle=0, annotate_elements=True, direction="clockwise"
+    ax: mpl.axes.Axes,
+    lattice: Lattice,
+    *,
+    start_angle: float = 0,
+    labels: bool = True,
+    direction: str = "clockwise",
 ):
-    if ax is None:
-        ax = plt.gca()
-
     ax.set_aspect("equal")
-    codes = [Path.MOVETO, Path.LINETO]
+    codes = Path.MOVETO, Path.LINETO
     current_angle = start_angle
-
     start = np.zeros(2)
     end = np.zeros(2)
     x_min = y_min = 0
     x_max = y_max = 0
     arrangement = lattice.arrangement
-    arrangement_shifted = arrangement[1:] + arrangement[0:1]
-    for element, next_element in zip(arrangement, arrangement_shifted):
-        color = ELEMENT_COLOR[type(element)]
+    sign = 1
+    for element, next_element in zip_longest(arrangement, arrangement[1:]):
         length = element.length
-        line_width = 0.5 if isinstance(element, Drift) else 3
+        if isinstance(element, Drift):
+            color = Color.BLACK
+            line_width = 1
+        else:
+            color = ELEMENT_COLOR[type(element)]
+            line_width = 6
 
         # TODO: refactor current angle
         angle = 0
@@ -440,9 +465,9 @@ def floor_plan(
         if element is next_element:
             continue
 
-        if annotate_elements and not isinstance(element, Drift):
+        if labels and isinstance(element, (Dipole, Quadrupole)):
             angle_center = (current_angle - angle / 2) + np.pi / 2
-            sign = -1 if isinstance(element, Quadrupole) else 1
+            sign = -sign
             center = (start + end) / 2 + sign * 0.5 * np.array(
                 [np.cos(angle_center), np.sin(angle_center)]
             )
@@ -459,8 +484,7 @@ def floor_plan(
 
         start = end.copy()
 
-    margin = 0.05 * max((x_max - x_min), (y_max - y_min))
+    margin = 0.01 * max((x_max - x_min), (y_max - y_min))
     ax.set_xlim(x_min - margin, x_max + margin)
     ax.set_ylim(y_min - margin, y_max + margin)
-
     return ax
