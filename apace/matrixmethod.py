@@ -138,7 +138,7 @@ class MatrixMethod:
 
     def update_n_steps(self):
         """Manually update the total number of kicks."""
-        self._n_steps = sum(map(self.get_steps, self.lattice.arrangement))
+        self._n_steps = sum(map(self.get_steps, self.lattice.sequence))
         self._n_steps_needs_update = False
 
     def _on_n_steps_changed(self):
@@ -155,7 +155,7 @@ class MatrixMethod:
         """Manually update the indices of each element."""
         self._element_indices.clear()
         start = 0
-        for element in self.lattice.arrangement:
+        for element in self.lattice.sequence:
             end = start + self.get_steps(element)
             tmp = list(range(start, end))
             try:

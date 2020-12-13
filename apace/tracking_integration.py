@@ -52,7 +52,7 @@ class Tracking:
 
         end = 0
         i = 0
-        for element in self.lattice.arrangement:
+        for element in self.lattice.sequence:
             end += element.length
             while s[i] < end:
                 step_size_arg = min(step_size, end - s[0])
