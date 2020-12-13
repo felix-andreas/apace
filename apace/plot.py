@@ -78,10 +78,10 @@ def draw_elements(
         plt.hlines(y0, x_min, x_max, color="black", linewidth=1)
     ax.set_ylim(y_min, y_max)
 
-    arrangement = lattice.arrangement
+    sequence = lattice.sequence
     position = start = end = 0
     sign = 1
-    for element, next_element in zip_longest(arrangement, arrangement[1:]):
+    for element, next_element in zip_longest(sequence, sequence[1:]):
         position += element.length
         if element is next_element or position <= x_min:
             continue
@@ -130,7 +130,7 @@ def draw_sub_lattices(
     location: str = "bottom",
 ):
     x_min, x_max = ax.get_xlim()
-    length_gen = [0.0, *(obj.length for obj in lattice.tree)]
+    length_gen = [0.0, *(obj.length for obj in lattice.children)]
     position_list = np.add.accumulate(length_gen)
     i_min = np.searchsorted(position_list, x_min)
     i_max = np.searchsorted(position_list, x_max)
@@ -151,7 +151,7 @@ def draw_sub_lattices(
 
         ax.set_ylim(y_min, y_max)
         start = end = 0
-        for obj in lattice.tree:
+        for obj in lattice.children:
             end += obj.length
             if not isinstance(obj, Lattice) or start >= x_max or end <= x_min:
                 continue
@@ -343,7 +343,7 @@ class TwissPlot:
                 if isinstance(section, (str, Base)):
                     obj = self.lattice[section] if isinstance(section, str) else section
                     index = self.lattice.indices[obj][0]
-                    x_min = sum(obj.length for obj in self.lattice.arrangement[:index])
+                    x_min = sum(obj.length for obj in self.lattice.sequence[:index])
                     x_max = x_min + obj.length
                 else:
                     x_min, x_max = section
@@ -406,9 +406,9 @@ def floor_plan(
     end = np.zeros(2)
     x_min = y_min = 0
     x_max = y_max = 0
-    arrangement = lattice.arrangement
+    sequence = lattice.sequence
     sign = 1
-    for element, next_element in zip_longest(arrangement, arrangement[1:]):
+    for element, next_element in zip_longest(sequence, sequence[1:]):
         length = element.length
         if isinstance(element, Drift):
             color = Color.BLACK
