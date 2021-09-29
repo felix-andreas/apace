@@ -36,7 +36,7 @@ class Color:
     CYAN = "#06B6D4"
     WHITE = "white"
     BLACK = "black"
-    LIGHT_GRAY = "#E5E7EB"
+    LIGHT_GRAY = "#D1D5DB"
 
 
 ELEMENT_COLOR: Dict[type, str] = {
@@ -125,19 +125,16 @@ def draw_sub_lattices(
     lattice: Lattice,
     *,
     labels: bool = True,
-    location: str = "bottom",
+    location: str = "top",
 ):
     x_min, x_max = ax.get_xlim()
     length_gen = [0.0, *(obj.length for obj in lattice.children)]
     position_list = np.add.accumulate(length_gen)
     i_min = np.searchsorted(position_list, x_min)
-    i_max = np.searchsorted(position_list, x_max)
-    ticks = position_list[i_min : i_max + 1]
+    i_max = np.searchsorted(position_list, x_max, side="right")
+    ticks = position_list[i_min:i_max]
     ax.set_xticks(ticks)
-    # if len(ticks) < 5:
-    #     ax.xaxis.set_minor_locator(AutoMinorLocator())
-    #     ax.xaxis.set_minor_formatter(ScalarFormatter())
-    ax.grid(axis="x", color=Color.LIGHT_GRAY, linestyle="--", linewidth=1)
+    ax.grid(color=Color.LIGHT_GRAY, linestyle="--", linewidth=1)
 
     if labels:
         y_min, y_max = ax.get_ylim()
@@ -154,13 +151,12 @@ def draw_sub_lattices(
             if not isinstance(obj, Lattice) or start >= x_max or end <= x_min:
                 continue
 
-            x0 = end - obj.length / 2
+            x0 = (max(start, x_min) + min(end, x_max)) / 2
             ax.annotate(
                 obj.name,
                 xy=(x0, y0),
                 fontsize=FONT_SIZE + 2,
                 fontstyle="oblique",
-                alpha=0.5,
                 va="center",
                 ha="center",
                 clip_on=True,
@@ -229,16 +225,16 @@ def _twiss_plot_section(
     annotate_lattices=True,
     line_style="solid",
     line_width=1.3,
-    ref_twiss=None,
+    twiss_ref=None,
     scales={"eta_x": 10},
     overwrite=False,
 ):
     if overwrite:
         ax.clear()
-    if ref_twiss:
+    if twiss_ref:
         plot_twiss(
             ax,
-            ref_twiss,
+            twiss_ref,
             line_style="dashed",
             line_width=2.5,
             alpha=0.5,
@@ -254,8 +250,8 @@ def _twiss_plot_section(
 
     ax.set_xlim((x_min, x_max))
     ax.set_ylim((y_min, y_max))
-    draw_elements(ax, twiss.lattice, labels=annotate_elements)
     draw_sub_lattices(ax, twiss.lattice, labels=annotate_lattices)
+    draw_elements(ax, twiss.lattice, labels=annotate_elements)
 
 
 # TODO:
@@ -272,7 +268,7 @@ class TwissPlot:
     :param y_min float: Minimum y-limit
     :param main bool: Wheter to plot whole ring or only given sections
     :param scales Dict[str, int]: Optional scaling factors for optical functions
-    :param Twiss ref_twiss: Reference twiss values. Will be plotted as dashed lines.
+    :param Twiss twiss_ref: Reference twiss values. Will be plotted as dashed lines.
     :param pairs: List of (element, attribute)-pairs to create interactice sliders for.
     :type pairs: List[Tuple[Element, str]]
     """
@@ -287,7 +283,8 @@ class TwissPlot:
         y_max=None,
         main=True,
         scales={"eta_x": 10},
-        ref_twiss=None,
+        twiss_ref=None,
+        title=None,
         pairs: Optional[List[Tuple[Element, str]]] = None,
     ):
         self.fig = plt.figure()
@@ -300,6 +297,7 @@ class TwissPlot:
             len(height_ratios), 1, self.fig, height_ratios=height_ratios
         )
         self.axs_sections = []  # TODO: needed for update function
+        self.title = self.lattice.name if title is None else title
 
         if pairs:
             _, axs = plt.subplots(nrows=len(pairs))
@@ -323,7 +321,7 @@ class TwissPlot:
             _twiss_plot_section(
                 self.ax_main,
                 self.twiss,
-                ref_twiss=ref_twiss,
+                twiss_ref=twiss_ref,
                 y_min=y_min,
                 y_max=y_max,
                 annotate_elements=False,
@@ -349,7 +347,7 @@ class TwissPlot:
                 _twiss_plot_section(
                     self.axs_sections[i],
                     self.twiss,
-                    ref_twiss=ref_twiss,
+                    twiss_ref=twiss_ref,
                     x_min=x_min,
                     x_max=x_max,
                     y_min=y_min,
@@ -359,12 +357,11 @@ class TwissPlot:
                 )
 
         handles, labels = self.fig.axes[0].get_legend_handles_labels()
+        if twiss_ref:
+            handles = handles[len(twiss_functions) :]
+            labels = labels[len(twiss_functions) :]
         self.fig.legend(handles, labels, loc="upper left", ncol=10, frameon=False)
-        title = self.lattice.name
-        if self.lattice.info != "":
-            title += f"({self.lattice.info})"
-
-        self.fig.suptitle(title, ha="right", x=0.98)
+        self.fig.suptitle(self.title, ha="right", x=0.98)
         self.fig.tight_layout()
         self.fig.subplots_adjust(top=0.9)
 
@@ -395,7 +392,6 @@ def floor_plan(
     *,
     start_angle: float = 0,
     labels: bool = True,
-    direction: str = "clockwise",
 ):
     ax.set_aspect("equal")
     codes = Path.MOVETO, Path.LINETO

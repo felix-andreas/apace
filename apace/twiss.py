@@ -344,14 +344,14 @@ class Twiss(MatrixMethod):
 
     @property
     def tune_x_fractional(self) -> float:
-        """Fractional part of the horizontal tune (Calculated from one-turn matrix). """
+        """Fractional part of the horizontal tune (Calculated from one-turn matrix)."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_x_fractional
 
     @property
     def tune_y_fractional(self) -> float:
-        """Fractional part of the vertical tune (Calculated from one-turn matrix). """
+        """Fractional part of the vertical tune (Calculated from one-turn matrix)."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_y_fractional
