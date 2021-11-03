@@ -1,6 +1,5 @@
 from functools import partial
 import math
-from random import randrange
 
 import numpy as np
 import pytest
@@ -22,7 +21,7 @@ def twiss(fodo_cell):
 
 # Todo: use fodo-cell instead of ring for faster tests
 def test_optical_functions(twiss):
-    """reference values from madx"""
+    """reference values from madx (madx-reference.py)"""
     assert allclose_atol((9.818, 9.358, 7.068), twiss.beta_x[:3])
     assert allclose_atol((7.068, 9.358, 9.818), twiss.beta_x[-3:])
     assert allclose_atol((1.238, 1.331, 2.130), twiss.beta_y[:3])
@@ -39,7 +38,7 @@ def test_optical_functions(twiss):
 
 # TODO: get ref value for emittance
 def test_optical_parameters(fodo_cell):
-    """Reference values from elegant"""
+    """reference values from madx (madx-reference.py)"""
     # TODO: twiss should only be calculated once!
     twiss = ap.Twiss(fodo_cell, energy=1000, steps_per_meter=20)
     assert math.isclose(0.237, twiss.tune_x, abs_tol=1e-3)
@@ -55,6 +54,7 @@ def test_optical_parameters(fodo_cell):
     assert math.isclose(0.054, twiss.i3, abs_tol=1e-3)
     assert math.isclose(-0.003, twiss.i4, abs_tol=1e-3)
     assert math.isclose(0.070, twiss.i5, abs_tol=1e-3)
+    assert math.isclose(2.51e-10, twiss.emittance_x, abs_tol=1e-3)
 
 
 ONE_TURN_MATRIX = np.array(
