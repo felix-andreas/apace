@@ -11,8 +11,9 @@ CONST_C = 299_792_458  # m / s
 CONST_ME = 9.1093837015e-31  # kg
 CONST_MEV_TO_J = 1.602176634e-13  # J / MeV
 CONST_MEV_TO_GAMMA = CONST_MEV_TO_J / CONST_ME / CONST_C ** 2 * 2.4
-CONST_H_BAR = 6.62607015e-34 / TWO_PI # Js
+CONST_H_BAR = 6.62607015e-34 / TWO_PI  # Js
 CONST_Q = 55 / 32 / np.sqrt(3) / CONST_C / CONST_ME * CONST_H_BAR
+
 
 class Twiss(MatrixMethod):
     """Calculate the Twiss parameter for a given lattice.

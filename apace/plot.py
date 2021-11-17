@@ -31,7 +31,7 @@ class Color:
     YELLOW = "#FBBF24"
     GREEN = "#10B981"
     BLUE = "#3B82F6"
-    ORANGE = "F97316"
+    ORANGE = "#F97316"
     PURPLE = "#8B5CF6"
     CYAN = "#06B6D4"
     WHITE = "white"
@@ -99,7 +99,7 @@ def draw_elements(
 
         ax.add_patch(
             plt.Rectangle(
-                (max(start, x_min), y0_local - rect_height / 2),
+                (max(start, x_min), y0_local - 0.5 * rect_height),
                 min(end, x_max) - max(start, x_min),
                 rect_height,
                 facecolor=color,
@@ -111,10 +111,10 @@ def draw_elements(
             sign = -sign
             ax.annotate(
                 element.name,
-                xy=((start + end) / 2, y0 + sign * rect_height),
+                xy=(0.5 * (start + end), y0 + sign * rect_height),
                 fontsize=FONT_SIZE,
                 ha="center",
-                va="center",
+                va="bottom" if sign > 0 else "top",
                 annotation_clip=False,
                 zorder=11,
             )
@@ -140,7 +140,7 @@ def draw_sub_lattices(
         y_min, y_max = ax.get_ylim()
         height = 0.08 * (y_max - y_min)
         if location == "top":
-            y0, y_max = y_max, y_max + height
+            y0 = y_max - height
         else:
             y0, y_min = y_min - height / 3, y_min - height
 
@@ -151,7 +151,7 @@ def draw_sub_lattices(
             if not isinstance(obj, Lattice) or start >= x_max or end <= x_min:
                 continue
 
-            x0 = (max(start, x_min) + min(end, x_max)) / 2
+            x0 = 0.5 * (max(start, x_min) + min(end, x_max))
             ax.annotate(
                 obj.name,
                 xy=(x0, y0),
@@ -422,7 +422,7 @@ def floor_plan(
             rot = np.array([[cos, -sin], [sin, cos]])
             end += rot @ vec
 
-            angle_center = current_angle + np.pi / 2
+            angle_center = current_angle + 0.5 * np.pi
             center = start + radius * np.array(
                 [np.cos(angle_center), np.sin(angle_center)]
             )
@@ -458,9 +458,9 @@ def floor_plan(
         ax.add_patch(line)  # TODO: currently splitted elements get drawn twice
 
         if labels and isinstance(element, (Dipole, Quadrupole)):
-            angle_center = (current_angle - angle / 2) + np.pi / 2
+            angle_center = (current_angle - 0.5 * angle) + 0.5 * np.pi
             sign = -sign
-            center = (start + end) / 2 + sign * 0.5 * np.array(
+            center = 0.5 * (start + end) + 0.5 * sign * np.array(
                 [np.cos(angle_center), np.sin(angle_center)]
             )
             ax.annotate(
