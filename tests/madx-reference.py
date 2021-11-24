@@ -6,14 +6,13 @@ import latticejson
 from latticejson.convert import to_madx
 import numpy as np
 
-madx = Madx()
+madx = Madx(stdout=False)
 madx.options.info = False
 madx.command.beam(particle="electron", energy=1.0, charge=-1)
 lattice_path = Path(__file__).parent.parent / "data/lattices/fodo_cell.json"
 lattice = to_madx(latticejson.load(lattice_path))
 madx.input(lattice)
 twiss = madx.twiss(chrom=True)
-
 
 print("\ntest_optical_functions")  # for 0:3 and -4:-1 because s[-1] == s[-2]
 for name, madx_name in (
@@ -41,3 +40,7 @@ for name, madx_name in [
 ] + [(f"i{i}", f"synch_{i}") for i in range(1, 6)]:
     value = getattr(twiss.summary, madx_name)
     print(f"    assert math.isclose({value:.3f}, twiss.{name}, abs_tol=1e-3)")
+
+s = twiss.summary
+emittance_x = 3.832e-13 * s["gamma"] * s["synch_5"] / (s["synch_2"] - s["synch_4"])
+print(f"    assert math.isclose({emittance_x:.3}, twiss.emittance_x, abs_tol=1e-3)")

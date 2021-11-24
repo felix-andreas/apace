@@ -116,14 +116,14 @@ Its length should be 16 times the length of the :code:`dba_cell`::
    >>> dba_ring.length
    192.0
 
-The Base Tree
+Direct children
 ---------------
 
-The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the order of objects within a lattice is therefore called :attr:`~Lattice.tree`. Try to output the tree for the :code:`dba_ring` and :code:`dba_cell` objects::
+The structure which defines the order of elements in our DBA ring can be thought of as a `Tree <https://wikipedia.org/wiki/Tree_structure>`_, where :code:`dba_ring` is the root, the :code:`dba_cell` objects are the nodes and the :code:`bend`, :code:`drift` and :code:`quad` elements are the leafes. The attribute which stores the order of objects within a lattice is called :attr:`~Lattice.chilldren`. Try to pritn the children for the :code:`dba_ring` and :code:`dba_cell` objects::
 
-   >>> dba_ring.tree
+   >>> dba_ring.children
    [DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL, DBA_CELL]
-   >>> dba_cell.tree
+   >>> dba_cell.children
    [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
@@ -149,23 +149,23 @@ This can be also visualized by calling the :meth:`Lattice.print_tree` method::
        ├─── Dipole
        └─── Drift
 
-As a nested structure is not always convenient to work with, there are three other representations of :attr:`~Lattice.tree` (internally called :code:`tree_properties`):
+As a nested structure is not always convenient to work with, there are three other representations of the nested :attr:`~Lattice.children` attribute:
 
-#. The :attr:`~Lattice.lattice` attribute
+#. The :attr:`~Lattice.sequence` attribute
 
-   To loop over the exact arrangement of objects there is the :attr:`Lattice.lattice` attribute, which is a list of :class:`~Element` objects. It can be thought of a flattened version of the tree. The :attr:`~Lattice.lattice` attribute can be used in regular Python :code:`for ... in` loops::
+   To loop over the exact sequence of objects there is the :attr:`Lattice.sequence` attribute, which is a list of :class:`~Element` objects. It can be thought of a flattened version of :attr:`~Lattice.children`. The :attr:`~Lattice.sequence` attribute can be used in regular Python :code:`for ... in` loops::
 
-      >>> sum(element.length for element in dba_ring.lattice)
+      >>> sum(element.length for element in dba_ring.sequence)
       192
 
-   As the :code:`dba_cell` does not contain any other lattices, the :attr:`~Lattice.lattice` and :attr:`~Lattice.tree` attributes should be equal::
+   As the :code:`dba_cell` does not contain any other lattices, the :attr:`~Lattice.sequence` and :attr:`~Lattice.children` attributes should be equal::
 
-      >>> dba_cell.tree == dba_cell.arrangement
+      >>> dba_cell.children == dba_cell.sequence
       True
 
-   On the other hand, the :attr:`~Lattice.lattice` attribute of the :code:`dba_ring` should look different then its :attr:`~Lattice.tree`::
+   On the other hand, the :attr:`~Lattice.sequence` attribute of the :code:`dba_ring` should look different then its :attr:`~Lattice.children`::
 
-      >>> dba_ring.arrangement
+      >>> dba_ring.sequence
       [Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift, Drift, Dipole, Drift, Quadrupole, Drift, Dipole, Drift]
 
 
@@ -192,7 +192,7 @@ As a nested structure is not always convenient to work with, there are three oth
 
 #. The :attr:`~Lattice.sub_lattices` attribute
 
-    This attribute is equivalent to the :attr:`~Lattice.elements` attribute but for lattices. It contains all lattices within a given lattice, including grandchildren, great grandchildren, etc.
+    This attribute is equivalent to the :attr:`~Lattice.elements` attribute but for lattices. It contains all sub-lattices within a given lattice, including grandchildren, great grandchildren, etc.
     The :attr:`~Lattice.sub_lattices` attribute should be empty for the :code:`dba_cell` as it does not contain any other lattices::
 
       >>> dba_cell.sub_lattices
@@ -201,11 +201,7 @@ As a nested structure is not always convenient to work with, there are three oth
 Adding and Removing Objects
 ---------------------------
 
-As adding and removing objects from the :attr:`~Lattice.tree` significantly increased the
-code complextetiy, it was decided that :attr:`~Lattice.tree` cannont be altered after the
-:class:`Lattice` was created. If you needed to add/remove an object just create a new
-:class:`Lattice` object or initially add an :class:`Element` with length zero, which can
-be altered when needed.
+As adding and removing objects from the :attr:`~Lattice.children` significantly increased the code complextetiy, so it was decided that :attr:`~Lattice.children` cannont be altered after a :class:`Lattice` instance was created. If you needed to add/remove an object just create a new :class:`Lattice` instance or add an :class:`Element` with length zero, which can be altered when needed.
 
 Load and Save Lattice Files
 ---------------------------
@@ -288,7 +284,6 @@ Signals and Events
 ------------------
 
 As we have already seen in the :ref:`parent-lattices` section, the :attr:`~Lattice.length` of of a :class:`Lattice` gets updated whenever the length of one of its :class:`Element` objects changes. The same happens for the transfer matrices of  the :class:`Twiss` object. This is not only convenient - as one does not have to call an :func:`update` function every time an attribute changes - but is also more efficient, because apace has internal knowledge about which elements have changed and can accordingly only update the transfer matrices which have actually changed.
-
 
 This is achieved by a so called `Observer Pattern <https://wikipedia.org/wiki/Observer_pattern>`_, where an **subject** emits an **event** to all its **observers**  whenever its state changes.
 
