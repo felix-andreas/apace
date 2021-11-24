@@ -32,7 +32,7 @@ def twiss(location, output, interactive, ref_lattice, sections, y_min, y_max):
         )
 
     if ref_lattice:
-        options["ref_twiss"] = Twiss(ref_lattice)
+        options["twiss_ref"] = Twiss(ref_lattice)
 
     TwissPlot(**options)
     if output is None:

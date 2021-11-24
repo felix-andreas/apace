@@ -23,7 +23,7 @@ fodo_ring = ap.Lattice("FODO_RING", [fodo_cell] * 8)
 
 print(
     f"Overview of {fodo_ring.name}",
-    f"Num of elements: {len(fodo_ring.arrangement)}",
+    f"Num of elements: {len(fodo_ring.sequence)}",
     f"Lattice Length : {fodo_ring.length}",
     f"Cell Length    : {fodo_cell.length}",
     sep="\n",

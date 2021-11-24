@@ -6,12 +6,13 @@ from .utils import Signal
 from .exceptions import UnstableLatticeError
 from .classes import Dipole
 
-CONST_C = 299_792_458  # m / s
-CONST_Q = 3.832e-13  # m
-CONST_ME = 9.1093837015e-31  # kg
-CONST_E = 1.602176634e-19  # C
-CONST_MEV = 1.602176634e-13  # C
 TWO_PI = 2 * np.pi
+CONST_C = 299_792_458  # m / s
+CONST_ME = 9.1093837015e-31  # kg
+CONST_MEV_TO_J = 1.602176634e-13  # J / MeV
+CONST_MEV_TO_GAMMA = CONST_MEV_TO_J / CONST_ME / CONST_C ** 2 * 2.4
+CONST_H_BAR = 6.62607015e-34 / TWO_PI  # Js
+CONST_Q = 55 / 32 / np.sqrt(3) / CONST_C / CONST_ME * CONST_H_BAR
 
 
 class Twiss(MatrixMethod):
@@ -344,14 +345,14 @@ class Twiss(MatrixMethod):
 
     @property
     def tune_x_fractional(self) -> float:
-        """Fractional part of the horizontal tune (Calculated from one-turn matrix). """
+        """Fractional part of the horizontal tune (Calculated from one-turn matrix)."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_x_fractional
 
     @property
     def tune_y_fractional(self) -> float:
-        """Fractional part of the vertical tune (Calculated from one-turn matrix). """
+        """Fractional part of the vertical tune (Calculated from one-turn matrix)."""
         if self._tune_fractional_needs_update:
             self.update_fractional_tune()
         return self._tune_y_fractional
@@ -480,7 +481,7 @@ class Twiss(MatrixMethod):
 
     @property
     def gamma(self) -> float:
-        return self.energy * CONST_MEV / CONST_ME / CONST_C ** 2
+        return self.energy * CONST_MEV_TO_GAMMA
 
     @property
     def emittance_x(self) -> float:
