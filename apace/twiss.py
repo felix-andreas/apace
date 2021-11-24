@@ -23,11 +23,13 @@ class Twiss(MatrixMethod):
                       This index is also used to calculated the initial twiss parameter
                       using the periodicity condition.
     :type start_idx: int, optional
+    :param initial: Initial Twiss parameter, otherwise periodic solution is used.
+    :type initial: nd.ndarray, optional
     :param energy: Energy of the beam in mev
     :type energy: float, optional
     """
 
-    def __init__(self, lattice, start_idx=0, initial_twiss=None, **kwargs):
+    def __init__(self, lattice, *, initial=None, start_idx=0, **kwargs):
         super().__init__(lattice, **kwargs)
 
         self._start_idx = start_idx
@@ -50,10 +52,7 @@ class Twiss(MatrixMethod):
         self.twiss_array_changed.connect(self._on_twiss_array_changed)
         self._twiss_array_needs_update = True
         self._twiss_array = np.empty(0)
-        if initial_twiss is None:
-            self._initial_twiss = np.empty(8)
-        else:
-            self._initial_twiss = initial_twiss
+        self._initial_twiss = initial
 
         self.psi_changed = Signal(self.twiss_array_changed)
         """Gets emitted when the betatron phase changes."""
